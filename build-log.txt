@@ -1,0 +1,997 @@
+  ▲ Next.js 14.2.30
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/25) ...
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/login". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/login". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/terms". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/terms". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/blog". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/blog". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/vpn-blocked". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/vpn-blocked". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/settings". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/settings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/settings". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/settings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/spam". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/spam". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/users". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/users". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/categories". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/categories". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/privacy". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/privacy". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/advertising". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/advertising". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/topics". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/topics". Read more: https://nextjs.org/docs/messages/prerender-error
+
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+   Generating static pages (6/25) 
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+   Generating static pages (12/25) 
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/profile". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/profile". Read more: https://nextjs.org/docs/messages/prerender-error
+
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/404". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+   Generating static pages (18/25) 
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/content". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/content". Read more: https://nextjs.org/docs/messages/prerender-error
+
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/search". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/search". Read more: https://nextjs.org/docs/messages/prerender-error
+
+getSetting called but settings not loaded yet, returning default for key: banner_enabled
+getSetting called but settings not loaded yet, returning default for key: banner_message
+getSetting called but settings not loaded yet, returning default for key: banner_style
+getSetting called but settings not loaded yet, returning default for key: banner_dismissible
+StickyBanner values: {
+  isEnabled: false,
+  message: '',
+  style: 'info',
+  isDismissible: true,
+  messageLength: 0,
+  messageType: 'string'
+}
+Banner render check: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  message: '...',
+  isDismissed: false,
+  style: 'info'
+}
+Banner not showing because: {
+  isLoading: true,
+  isEnabled: false,
+  hasMessage: false,
+  isDismissed: false
+}
+getSetting called but settings not loaded yet, returning default for key: header_code
+getSetting called but settings not loaded yet, returning default for key: header_scripts
+getSetting called but settings not loaded yet, returning default for key: advertising_enabled
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/register". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/register". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/moderation". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/moderation". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/admin/seo". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/admin/seo". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/rules". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at n (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:99282)
+    at p (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\438.js:6:110174)
+    at O (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:6322)
+    at F (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\.next\server\chunks\1259.js:1:7887)
+    at nj (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nB (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:67539)
+    at nD (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:66681)
+    at nN (C:\Users\user\Documents\Software-Developer\Freelancer\sports-disscussing-field\nextjs\sports-disscussing-field\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64854)
+
+Error occurred prerendering page "/rules". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ✓ Generating static pages (25/25)
+
+> Export encountered errors on following paths:
+	/(main)/blog/page: /blog
+	/(main)/categories/page: /categories
+	/(main)/page: /
+	/(main)/privacy/page: /privacy
+	/(main)/profile/page: /profile
+	/(main)/rules/page: /rules
+	/(main)/search/page: /search
+	/(main)/settings/page: /settings
+	/(main)/terms/page: /terms
+	/(main)/topics/page: /topics
+	/(main)/vpn-blocked/page: /vpn-blocked
+	/_not-found/page: /_not-found
+	/admin/advertising/page: /admin/advertising
+	/admin/content/page: /admin/content
+	/admin/moderation/page: /admin/moderation
+	/admin/page: /admin
+	/admin/seo/page: /admin/seo
+	/admin/settings/page: /admin/settings
+	/admin/spam/page: /admin/spam
+	/admin/users/page: /admin/users
+	/login/page: /login
+	/register/page: /register

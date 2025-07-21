@@ -1,0 +1,23 @@
+{
+  "name": "Minor Hockey Talks",
+  "short_name": "Hockey Talks",
+  "description": "The Premier Community for Minor Hockey Discussion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1f2937",
+  "icons": [
+    {
+      "src": "/lovable-uploads/d27f0c5d-529f-45bd-9e66-45b3a46ab1a6.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/lovable-uploads/d27f0c5d-529f-45bd-9e66-45b3a46ab1a6.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}

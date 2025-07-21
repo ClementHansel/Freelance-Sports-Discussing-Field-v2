@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    // Inherited from your tsconfig.app.json
+    "target": "es2020", // Target ES2020 as per your original config
+    "useDefineForClassFields": true, // Inherited from your tsconfig.app.json
+    "lib": ["es2020", "dom", "dom.iterable"], // Inherited from your tsconfig.app.json
+    "module": "esnext", // Inherited from your tsconfig.app.json
+    "skipLibCheck": true, // Inherited from your tsconfig.app.json
+    /* Bundler mode (inherited and adjusted for Next.js) */
+    "moduleResolution": "bundler", // Inherited from your tsconfig.app.json
+    "allowImportingTsExtensions": true, // Inherited from your tsconfig.app.json
+    "isolatedModules": true, // Inherited from your tsconfig.app.json
+    "moduleDetection": "force", // Inherited from your tsconfig.app.json
+    "noEmit": true, // Inherited from your tsconfig.app.json
+    // Next.js specific JSX setting: must be "preserve" for Next.js to handle JSX transformation
+    "jsx": "preserve",
+    /* Linting (inherited from your tsconfig.app.json) */
+    "strict": true, // Keeping strict mode off as per your original config
+    "noUnusedLocals": false, // Inherited from your tsconfig.app.json
+    "noUnusedParameters": false, // Inherited from your tsconfig.app.json
+    "noImplicitAny": false, // Inherited from your tsconfig.app.json
+    "noFallthroughCasesInSwitch": false, // Inherited from your tsconfig.app.json
+    // Path aliases (inherited from your tsconfig.app.json)
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // Additional Next.js and general best practice compiler options
+    "esModuleInterop": true, // Recommended for Next.js and modern JS modules
+    "forceConsistentCasingInFileNames": true, // Ensures consistent file naming
+    "incremental": true, // Enables faster incremental builds
+    // Next.js TypeScript plugin
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "next-env.d.ts", // Next.js specific type definitions
+    "**/*.ts", // Include all TypeScript files
+    "**/*.tsx", // Include all TypeScript React files
+    "**/*.js", // Include all JavaScript files
+    "**/*.jsx", // Include all JavaScript React files
+    "**/*.cjs", // NEW: Include all CommonJS JavaScript files with .cjs extension
+    ".next/types/**/*.ts", // Include Next.js generated types for incremental builds
+    "next.config.js",
+    "eslint.config.mjs" // Explicitly include the ESLint config file
+  ],
+  "exclude": ["node_modules", "supabase/functions"] // Exclude node_modules and supabase edge function from compilation
+}

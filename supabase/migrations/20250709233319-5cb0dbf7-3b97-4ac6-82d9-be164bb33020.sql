@@ -1,0 +1,3 @@
+UPDATE forum_settings 
+SET setting_value = '"<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5447109336224364\"\n     crossorigin=\"anonymous\"></script>\n\n<!-- Google tag (gtag.js) -->\n<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-RFQVZPVL0N\"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag(''js'', new Date());\n  gtag(''config'', ''G-RFQVZPVL0N'');\n</script>"'::json
+WHERE setting_key = 'header_code'
