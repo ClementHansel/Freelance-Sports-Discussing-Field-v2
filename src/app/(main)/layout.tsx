@@ -56,7 +56,6 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
       {/* Top Components */}
       <DynamicRedirectHandler />
       <DynamicForumHeader />
-
       {/* Main Content Wrapper: grows to fill space if needed */}
       <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden">
         <div className="flex gap-6 w-full">
@@ -80,12 +79,9 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
           </main>
         </div>
       </div>
-
       {/* Footer (always shown) */}
       <DynamicFooter />
-
-      {/* Mobile nav (only on mobile) */}
-      {isMobile && <DynamicMobileBottomNav />}
+      <DynamicMobileBottomNav />{" "}
     </div>
   );
 }

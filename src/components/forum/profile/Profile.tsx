@@ -16,6 +16,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
+import Image from "next/image";
 
 // Define interfaces for profile and topic data for better type safety
 interface UserProfile {
@@ -139,7 +140,7 @@ export default function Profile() {
                 {" "}
                 {/* Added overflow-hidden */}
                 {profile?.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.username || user.username || "User Avatar"} // Use profile username first, then user, then fallback
                     className="w-full h-full object-cover" // Ensure image covers the div
