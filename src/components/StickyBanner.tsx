@@ -2,24 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { useForumSettings } from "@/hooks/useForumSettings"; // SUSPECT
+import { useForumSettings } from "@/hooks/useForumSettings";
 import { Button } from "@/components/ui/button";
 
 export const StickyBanner: React.FC = () => {
   const { getSetting, isLoading } = useForumSettings();
   const [isDismissed, setIsDismissed] = useState(false);
 
-  const isEnabled = getSetting("banner_enabled", false);
-  const message = getSetting("banner_message", "");
-  const style = getSetting("banner_style", "info");
-  const isDismissible = getSetting("banner_dismissible", true);
+  const isEnabled = getSetting("banner_enabled", false) as boolean; // Explicitly cast boolean settings
+  const message = getSetting("banner_message", "") as string; // Explicitly cast message to string
+  const style = getSetting("banner_style", "info") as string; // Explicitly cast style to string
+  const isDismissible = getSetting("banner_dismissible", true) as boolean; // Explicitly cast boolean settings
 
   console.log("StickyBanner values:", {
     isEnabled,
     message,
     style,
     isDismissible,
-    messageLength: message?.length,
+    messageLength: message.length, // Now safe
     messageType: typeof message,
   });
 
@@ -57,7 +57,7 @@ export const StickyBanner: React.FC = () => {
     isLoading,
     isEnabled,
     hasMessage: !!message,
-    message: message?.substring(0, 50) + "...",
+    message: message.substring(0, 50) + "...", // Now safe
     isDismissed,
     style,
   });

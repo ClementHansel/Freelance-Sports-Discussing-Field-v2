@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react"; // Added useMemo
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -40,71 +40,88 @@ import { AdBanner } from "@/components/ads/AdBanner";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Topic as TopicInterface } from "@/hooks/useTopics";
-import { Post as PostInterface } from "@/hooks/usePosts";
+import { Post as PostFromHooks } from "@/hooks/usePosts";
 import { AdminControls } from "./admin-ui/AdminControls";
+import { Post as PostForComponent } from "./PostComponent"; // Import Post type from PostComponent
+import { Topic as AdminTopicInfoTopic } from "./admin-ui/AdminTopicInfo"; // Import Topic type from AdminTopicInfo for compatibility
 
-// Define a more comprehensive type for the topic data received from hooks
-// This combines properties from useTopic and useTopicByPath and matches Supabase query results
-interface FullTopicDetails {
+// Define ModerationStatus as it's used in this file
+type ModerationStatus = "pending" | "approved" | "rejected";
+
+// Define the type for topic data directly from the useTopic and useTopicByPath hooks
+// This type should accurately reflect ALL properties that *might* be present on the fetched topic data,
+// even if TopicFromHooks (from a generic useTopics hook) doesn't explicitly list them.
+// Assume these properties are indeed returned by the hooks.
+interface FetchedTopicData {
   id: string;
   title: string;
   content: string | null;
   author_id: string | null;
   category_id: string;
-  is_pinned: boolean | null;
-  is_locked: boolean | null;
-  is_hidden: boolean | null; // Explicitly included
   created_at: string;
-  updated_at: string;
-  vote_score: number | null;
-  moderation_status: "pending" | "approved" | "rejected" | null; // Explicitly included
-  ip_address?: unknown;
-  is_anonymous?: boolean | null;
-  view_count?: number | null;
-  reply_count?: number | null;
+  updated_at: string | null;
   slug: string | null;
-  hot_score: number | null; // Explicitly included
+  canonical_url: string | null;
+  ip_address: string | null; // Corrected type: must be string | null for compatibility
+  is_anonymous: boolean | null;
+  is_locked: boolean | null;
+  is_pinned: boolean | null;
+  // Made optional because the error stated they might be "missing" entirely from the source object
+  is_hidden?: boolean | null;
+  is_public?: boolean | null;
   last_post_id?: string | null;
-  last_reply_at?: string | null;
-  canonical_url?: string | null;
-  meta_title?: string | null;
-  meta_description?: string | null;
-  meta_keywords?: string | null;
-  og_title?: string | null;
-  og_description?: string | null;
-  og_image?: string | null;
-
+  last_reply_at: string | null;
+  hot_score?: number | null;
+  reply_count: number;
+  view_count: number;
+  moderation_status: string | null; // It's string | null from DB, will be cast to ModerationStatus
+  // Expanded profiles to match AdminControls' expected type, and made optional
   profiles?: {
-    username: string;
+    username: string | null;
     avatar_url: string | null;
-  } | null;
+    id: string; // Ensure ID is present if used for profile links
+    bio: string | null; // Added for AdminControls compatibility
+    created_at: string | null; // Added for AdminControls compatibility
+    reputation: number | null; // Added for AdminControls compatibility
+    updated_at: string | null; // Added for AdminControls compatibility
+  } | null; // Made optional and nullable
   temporary_users?: {
-    display_name: string;
-  } | null;
+    id: string;
+    ip_address: string;
+    first_seen: string;
+    last_seen: string;
+  } | null; // Keep optional
+
+  // Added categories property
   categories?: {
-    id: string; // Crucial addition based on useTopicByPath's select
+    // Made optional as it might be missing from initial fetch
+    id: string;
     name: string;
-    color: string;
     slug: string;
-    parent_category_id?: string | null;
-    parent_category?: {
-      slug: string | null;
-      name: string | null;
-    } | null;
-  } | null;
+    color: string | null;
+  } | null; // categories object can be null
+}
+
+// FullTopicDetails now correctly extends FetchedTopicData
+interface FullTopicDetails extends FetchedTopicData {
+  moderation_status: ModerationStatus | null; // Ensure this is the stricter type here.
+}
+
+// Ensure PostInterface matches what PostComponent expects, especially for moderation_status
+interface PostInterface extends PostFromHooks {
+  is_anonymous: boolean | null;
+  moderation_status: ModerationStatus | null;
 }
 
 export const TopicView = () => {
-  // Next.js useParams gives an object. Access slugs directly from it.
   const params = useParams();
   const categorySlug = params.categorySlug as string | undefined;
-  const subcategorySlug = params.subcategorySlug as string | undefined; // Assuming this is a catch-all route for subcategories
-  const topicSlug = params.topicSlug as string | undefined; // Assuming this is a dynamic route segment
-  const topicId = params.topicId as string | undefined; // If you still use ID-based routes, though slug is preferred.
+  const subcategorySlug = params.subcategorySlug as string | undefined;
+  const topicSlug = params.topicSlug as string | undefined;
+  const topicId = params.topicId as string | undefined;
 
-  const router = useRouter(); // Next.js router for navigation
-  const searchParams = useSearchParams(); // Next.js search params
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { user } = useAuth();
   const [showTopicReply, setShowTopicReply] = useState(false);
@@ -112,7 +129,6 @@ export const TopicView = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  // Pagination state
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const postsPerPage = 20;
 
@@ -126,29 +142,45 @@ export const TopicView = () => {
     contentType: "post",
   });
 
-  // Handle both legacy UUID routing and new slug routing
-  // Prioritize slug routing if available, otherwise fall back to topicId
-  const isLegacyRoute = !!topicId; // Check if topicId param is present
+  const isLegacyRoute = !!topicId;
   const {
     data: legacyTopic,
     isLoading: legacyLoading,
     error: legacyError,
-  } = useTopic(topicId || ""); // Fetch by ID if legacy route
+  } = useTopic(topicId || "");
   const {
     data: slugTopic,
     isLoading: slugLoading,
     error: slugError,
-  } = useTopicByPath(categorySlug || "", subcategorySlug, topicSlug); // Fetch by path
+  } = useTopicByPath(categorySlug || "", subcategorySlug, topicSlug);
 
-  // Determine which topic data to use, explicitly typing it as FullTopicDetails | null | undefined
-  const topic: FullTopicDetails | null | undefined = isLegacyRoute
-    ? (legacyTopic as FullTopicDetails) // Access the data property of the useQuery result and cast
-    : (slugTopic as FullTopicDetails); // Access the data property of the useQuery result and cast
+  const topic: FullTopicDetails | null | undefined = useMemo(() => {
+    const fetchedTopic = isLegacyRoute ? legacyTopic : slugTopic;
+    if (fetchedTopic) {
+      // Safely cast `fetchedTopic` to `FetchedTopicData` first,
+      // then ensure specific properties have correct null handling and type casting.
+      const topicData = fetchedTopic as FetchedTopicData;
+      return {
+        ...topicData,
+        last_reply_at: topicData.last_reply_at ?? null,
+        last_post_id: topicData.last_post_id ?? null,
+        moderation_status:
+          (topicData.moderation_status as ModerationStatus) ?? null,
+        reply_count: topicData.reply_count ?? 0,
+        view_count: topicData.view_count ?? 0,
+        // Ensure optional fields are handled with nullish coalescing
+        is_hidden: topicData.is_hidden ?? null,
+        is_public: topicData.is_public ?? null,
+        hot_score: topicData.hot_score ?? null,
+        profiles: topicData.profiles ?? null,
+        categories: topicData.categories ?? null, // Ensure categories is handled
+      } as FullTopicDetails; // Final cast to FullTopicDetails
+    }
+    return fetchedTopic as FullTopicDetails | null | undefined;
+  }, [isLegacyRoute, legacyTopic, slugTopic]);
 
-  // Topic moderation status state - initialized after topic is defined
-  const [topicModerationStatus, setTopicModerationStatus] = useState(
-    topic?.moderation_status
-  );
+  const [topicModerationStatus, setTopicModerationStatus] =
+    useState<ModerationStatus | null>(topic?.moderation_status || null);
   const [isTopicVisible, setIsTopicVisible] = useState(
     topic?.moderation_status === "approved"
   );
@@ -163,16 +195,19 @@ export const TopicView = () => {
     }
   );
 
-  // Memoize posts to prevent unnecessary re-renders and address ESLint warning
   const posts: PostInterface[] = useMemo(
-    () => postsData?.posts || [],
+    () =>
+      (postsData?.posts || []).map((post) => ({
+        ...post,
+        is_anonymous: post.is_anonymous ?? null,
+        moderation_status: (post.moderation_status as ModerationStatus) ?? null, // Cast to ModerationStatus
+      })) as PostInterface[],
     [postsData]
   );
   const totalPosts = postsData?.totalCount || 0;
   const { mutate: editTopic, isPending: isUpdatingTopic } = useEditTopic();
   const { data: polls = [] } = usePollsByTopic(topic?.id || "");
 
-  // Real-time subscription for topic moderation status changes
   useEffect(() => {
     if (!topic?.id) return;
 
@@ -189,7 +224,7 @@ export const TopicView = () => {
         (payload) => {
           if (payload.new) {
             const newStatus = payload.new.moderation_status;
-            setTopicModerationStatus(newStatus);
+            setTopicModerationStatus(newStatus as ModerationStatus); // Cast to ModerationStatus
             setIsTopicVisible(newStatus === "approved");
 
             if (newStatus === "pending") {
@@ -208,9 +243,8 @@ export const TopicView = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [topic?.id]); // Removed 'toast' from dependencies as it's stable
+  }, [topic?.id]);
 
-  // Update local state when topic data changes
   useEffect(() => {
     if (topic) {
       setTopicModerationStatus(topic.moderation_status);
@@ -270,15 +304,12 @@ export const TopicView = () => {
     (page: number) => {
       const current = new URLSearchParams(searchParams.toString());
       current.set("page", page.toString());
-      // Use router.push to update the URL without a full page reload
       router.push(`${window.location.pathname}?${current.toString()}`);
     },
     [searchParams, router]
   );
 
-  // Extract post ID from hash for cross-page navigation - make it reactive
   const [hashPostId, setHashPostId] = useState(() => {
-    // Check window.location.hash only on client side
     if (typeof window !== "undefined") {
       const hash = window.location.hash;
       if (hash && hash.startsWith("#post-")) {
@@ -288,7 +319,6 @@ export const TopicView = () => {
     return null;
   });
 
-  // Listen for hash changes to update hashPostId
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -303,21 +333,19 @@ export const TopicView = () => {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  // Use the hook to find the correct page for the post
   const { data: postPageInfo, isLoading: isLoadingPostPage } = usePostPage(
     topic?.id || "",
     hashPostId || "",
     postsPerPage
   );
 
-  // Handle cross-page navigation and scrolling to specific posts
   useEffect(() => {
     if (!topic?.id || postsLoading) return;
 
     const hash = window.location.hash;
     if (!hash) return;
 
-    const targetId = hash.substring(1); // Remove the # symbol
+    const targetId = hash.substring(1);
 
     const scrollToElement = (elementId: string, retries = 3) => {
       const element = document.getElementById(elementId);
@@ -341,10 +369,8 @@ export const TopicView = () => {
     };
 
     if (targetId.startsWith("post-")) {
-      // Handle specific post
       const postId = targetId.substring("post-".length);
 
-      // If we have page info and need to navigate to a different page
       if (postPageInfo && postPageInfo.page !== currentPage) {
         console.log(
           "Navigating to page:",
@@ -353,10 +379,9 @@ export const TopicView = () => {
           postId
         );
         handlePageChange(postPageInfo.page);
-        return; // Exit early, the page change will trigger this effect again
+        return;
       }
 
-      // If we're on the right page, scroll to the post
       if (posts && posts.length > 0) {
         console.log(
           "Attempting to scroll to post:",
@@ -378,9 +403,6 @@ export const TopicView = () => {
   ]);
 
   const organizeReplies = (posts: PostInterface[]) => {
-    // Typed 'posts' parameter
-    // Create a flat list sorted by creation time to maintain chronological order
-    // All posts will be rendered at the same visual level, but parent relationships are preserved for quoting
     return posts.sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -418,7 +440,6 @@ export const TopicView = () => {
     );
   }
 
-  // Don't render topic content if it's not visible (pending/rejected)
   if (!isTopicVisible && topicModerationStatus !== "approved") {
     return (
       <div className="text-center py-8">
@@ -441,7 +462,6 @@ export const TopicView = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Breadcrumb - desktop only */}
       <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-primary">
           Forum
@@ -457,12 +477,11 @@ export const TopicView = () => {
         <span className="text-foreground">{topic.title}</span>
       </div>
 
-      {/* Back Button - mobile optimized */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => {
-          router.back(); // Use Next.js router.back()
+          router.back();
         }}
         className="md:hidden"
       >
@@ -470,26 +489,23 @@ export const TopicView = () => {
         Back
       </Button>
 
-      {/* Topic Header */}
       <div className="bg-card border-b border-border">
         <div className="p-3 md:p-6">
           <div className="space-y-4">
-            {/* Category and meta */}
             <div className="flex items-center flex-wrap gap-2">
               <Badge
                 variant="secondary"
                 className="text-xs"
                 style={{
-                  borderColor: topic.categories?.color ?? "", // Handle null
-                  color: topic.categories?.color ?? "", // Handle null
-                  backgroundColor: `${topic.categories?.color ?? ""}10`, // Handle null
+                  borderColor: topic.categories?.color ?? "",
+                  color: topic.categories?.color ?? "",
+                  backgroundColor: `${topic.categories?.color ?? ""}10`,
                 }}
               >
                 {topic.categories?.name}
               </Badge>
             </div>
 
-            {/* Title */}
             {isEditingTopic ? (
               <Input
                 value={editTitle}
@@ -502,15 +518,15 @@ export const TopicView = () => {
                 <h1 className="text-lg md:text-2xl font-bold text-foreground leading-tight">
                   {topic.title}
                 </h1>
+                {/* Cast topic to AdminTopicInfoTopic for AdminControls compatibility */}
                 <AdminControls
-                  content={topic}
+                  content={topic as AdminTopicInfoTopic}
                   contentType="topic"
-                  onDelete={() => router.push("/")} // Use router.push
+                  onDelete={() => router.push("/")}
                 />
               </div>
             )}
 
-            {/* Meta info */}
             <div className="flex items-center flex-wrap gap-3 text-xs md:text-sm text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <User className="h-3 w-3 md:h-4 md:w-4" />
@@ -518,11 +534,11 @@ export const TopicView = () => {
               </div>
               <span className="hidden sm:inline">•</span>
               <span>
-                Created {formatDistanceToNow(new Date(topic.created_at ?? ""))}{" "}
-                ago {/* Handle null */}
+                Created {formatDistanceToNow(new Date(topic.created_at))} ago
               </span>
+              {/* Use nullish coalescing for last_reply_at and reply_count */}
               {topic.last_reply_at &&
-                topic.reply_count &&
+                topic.reply_count !== null &&
                 topic.reply_count > 0 && (
                   <>
                     <span className="hidden sm:inline">•</span>
@@ -533,17 +549,17 @@ export const TopicView = () => {
                       >
                         Last reply{" "}
                         {formatDistanceToNow(
-                          new Date(topic.last_reply_at ?? "")
+                          new Date(topic.last_reply_at!) // Add non-null assertion
                         )}{" "}
-                        ago {/* Handle null */}
+                        ago
                       </Link>
                     ) : (
                       <span>
                         Last reply{" "}
                         {formatDistanceToNow(
-                          new Date(topic.last_reply_at ?? "")
+                          new Date(topic.last_reply_at!) // Add non-null assertion
                         )}{" "}
-                        ago {/* Handle null */}
+                        ago
                       </span>
                     )}
                   </>
@@ -555,7 +571,6 @@ export const TopicView = () => {
               </div>
             </div>
 
-            {/* Content */}
             {isEditingTopic ? (
               <div className="bg-muted/30 rounded-md p-3 md:p-4 border border-border/50 mb-4">
                 <WysiwygEditor
@@ -575,7 +590,6 @@ export const TopicView = () => {
               </div>
             ) : null}
 
-            {/* Save/Cancel buttons for editing */}
             {isEditingTopic && (
               <div className="flex items-center gap-2 mb-4">
                 <Button
@@ -596,9 +610,7 @@ export const TopicView = () => {
               </div>
             )}
 
-            {/* Action bar - consistent with PostComponent */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              {/* Edit button - only for authors and moderators */}
               {canEditTopic && !isEditingTopic && (
                 <Button
                   variant="ghost"
@@ -610,7 +622,6 @@ export const TopicView = () => {
                 </Button>
               )}
 
-              {/* Reply button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -620,13 +631,11 @@ export const TopicView = () => {
                 <MessageCircle className="h-3 w-3" />
               </Button>
 
-              {/* Reply count */}
               <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                 <MessageSquare className="h-3 w-3" />
                 <span>{topic.reply_count || 0}</span>
               </div>
 
-              {/* Share button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -634,8 +643,8 @@ export const TopicView = () => {
                 onClick={() => {
                   const shareUrl =
                     topic.categories?.slug && topic.slug
-                      ? `${window.location.origin}/category/${topic.categories.slug}/${topic.slug}` // Updated URL structure for Next.js
-                      : `${window.location.origin}/topic/${topic.id}`; // Fallback for legacy ID-based topics
+                      ? `${window.location.origin}/category/${topic.categories.slug}/${topic.slug}`
+                      : `${window.location.origin}/topic/${topic.id}`;
                   const shareData = {
                     title: topic.title,
                     text: `Check out this topic: ${topic.title}`,
@@ -647,47 +656,34 @@ export const TopicView = () => {
                     navigator.canShare &&
                     navigator.canShare(shareData)
                   ) {
-                    navigator
-                      .share(shareData)
-                      .then(() => {
-                        toast({
-                          title: "Shared successfully!",
-                          description:
-                            "Topic shared using your device's share menu",
-                        });
-                      })
-                      .catch((error: unknown) => {
-                        // Changed error: any to error: unknown
-                        if (
-                          error instanceof Error &&
-                          error.name !== "AbortError"
-                        ) {
-                          // Fallback to clipboard if share fails or is aborted
-                          // Using document.execCommand('copy') for broader compatibility in iframes
-                          const textArea = document.createElement("textarea");
-                          textArea.value = shareUrl;
-                          document.body.appendChild(textArea);
-                          textArea.select();
-                          try {
-                            document.execCommand("copy");
-                            toast({
-                              title: "Link copied!",
-                              description:
-                                "Topic link has been copied to clipboard",
-                            });
-                          } catch (err) {
-                            toast({
-                              title: "Share failed",
-                              description: "Could not copy link to clipboard",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            document.body.removeChild(textArea);
-                          }
+                    navigator.share(shareData).catch((error: unknown) => {
+                      if (
+                        error instanceof Error &&
+                        error.name !== "AbortError"
+                      ) {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = shareUrl;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                          document.execCommand("copy");
+                          toast({
+                            title: "Link copied!",
+                            description:
+                              "Topic link has been copied to clipboard",
+                          });
+                        } catch (err) {
+                          toast({
+                            title: "Share failed",
+                            description: "Could not copy link to clipboard",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          document.body.removeChild(textArea);
                         }
-                      });
+                      }
+                    });
                   } else {
-                    // Fallback for browsers that don't support Web Share API
                     const textArea = document.createElement("textarea");
                     textArea.value = shareUrl;
                     document.body.appendChild(textArea);
@@ -713,7 +709,6 @@ export const TopicView = () => {
                 <Share className="h-3 w-3" />
               </Button>
 
-              {/* Report button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -726,7 +721,6 @@ export const TopicView = () => {
           </div>
         </div>
 
-        {/* Reply to topic form - inline */}
         {showTopicReply && (
           <div className="border-t border-border p-3 md:p-6 bg-primary/5">
             <InlineReplyForm
@@ -741,7 +735,6 @@ export const TopicView = () => {
         )}
       </div>
 
-      {/* Polls */}
       {polls.length > 0 && (
         <div className="space-y-4">
           {polls.map((poll) => (
@@ -750,7 +743,6 @@ export const TopicView = () => {
         </div>
       )}
 
-      {/* Comments */}
       <div className="bg-card">
         <div className="p-3 md:p-6 border-b border-border">
           <h2 className="text-base md:text-lg font-semibold text-foreground">
@@ -772,12 +764,11 @@ export const TopicView = () => {
             {organizeReplies(posts).map((reply, index) => (
               <React.Fragment key={reply.id}>
                 <PostComponent
-                  post={reply}
+                  post={reply as PostForComponent}
                   topicId={topic.id || ""}
                   depth={0}
                   onReport={handleReport}
                 />
-                {/* Insert ad banner every 4 comments (desktop only) */}
                 {(index + 1) % 4 === 0 && index < posts.length - 1 && (
                   <AdBanner />
                 )}
@@ -790,7 +781,6 @@ export const TopicView = () => {
           </p>
         )}
 
-        {/* Pagination Controls */}
         {totalPosts > 0 && (
           <PaginationControls
             currentPage={currentPage}

@@ -32,13 +32,11 @@ import { usePinTopic } from "@/hooks/usePinTopic";
 import { Post } from "./AdminPostInfo"; // Post interface now allows content: string | null
 import { Category } from "../category/CategoryView"; // IMPORTED: Category interface
 import { Topic as AdminTopicInfoTopic } from "./AdminTopicInfo"; // Alias Topic from AdminTopicInfo
-import { PostCardTopic } from "../PostCard"; // IMPORTED: PostCardTopic
+// import { PostCardTopic } from "../PostCard"; // REMOVED: This type was causing issues.
 
 // Define a union type for the 'content' prop
-// Use AdminTopicInfoTopic for topics and PostCardTopic for compatibility where needed.
-// If PostCardTopic is a subset/superset of AdminTopicInfoTopic, we can simplify.
-// Given the error, let's make it explicit for now.
-type ContentType = Post | AdminTopicInfoTopic | Category | PostCardTopic; // CHANGED: Added PostCardTopic directly
+// The previous error suggests that AdminControls expects AdminTopicInfoTopic for topics.
+type ContentType = Post | AdminTopicInfoTopic | Category; // CHANGED: Removed PostCardTopic
 
 interface AdminControlsProps {
   content: ContentType;

@@ -13,7 +13,7 @@ import {
   MessageCircle,
   Share,
   Edit,
-} from "lucide-react"; // Removed unused imports
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  AlertDialog, // Removed unused AlertDialog components
+  AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -37,48 +37,48 @@ import { InlineReplyForm } from "./InlineReplyForm";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEditPost } from "@/hooks/useEditPost";
-import { useDeletePost } from "@/hooks/useDeletePost"; // Still imported for potential future use or if it's implicitly used elsewhere
+import { useDeletePost } from "@/hooks/useDeletePost";
 import { AdminPostInfo } from "./admin-ui/AdminPostInfo";
 import { AdminControls } from "./admin-ui/AdminControls";
 import { AdminTempUserInfo } from "@/components/dashboard/admin/AdminTempUserInfo";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types"; // Import Database for schema types
+import { Database } from "@/integrations/supabase/types";
 
-// Define the structure of a Profile using Supabase-generated types
+// Define a specific type for moderation status based on its usage
+type ModerationStatus = "pending" | "approved" | "rejected";
+
+// Define the structure of a Profile using the generated type
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
-// Define the structure of a Parent Post (a subset of a full Post)
-// This is used for the nested 'parent_post' object
+// Define the structure of a Parent Post with corrected types
 interface ParentPostData {
   id: string;
   content: string | null;
   created_at: string | null;
-  moderation_status: Database["public"]["Enums"]["moderation_status"] | null;
-  profiles: Profile | null; // Use the full Profile type
+  moderation_status: ModerationStatus | null; // Corrected Type
+  profiles: Profile | null;
 }
 
-// Define the full Post interface for this component
+// Define the full Post interface with corrected types
 export interface Post {
   id: string;
-  content: string; // content is a non-nullable string
+  content: string;
   author_id: string | null;
   is_anonymous: boolean | null;
   created_at: string | null;
   updated_at: string | null;
-  moderation_status: Database["public"]["Enums"]["moderation_status"] | null;
+  moderation_status: ModerationStatus | null; // Corrected Type
   parent_post_id: string | null;
-  profiles: Profile | null; // Use the full Profile type
+  profiles: Profile | null;
   parent_post: ParentPostData | null;
   topic_id: string;
   ip_address: string | null;
-  // Add any other properties from your 'posts' table that are used here
 }
 
-// Define the expected shape of the user object from useAuth
+// Define the user object from useAuth
 interface AuthUser {
   id: string;
-  role: "admin" | "moderator" | "user"; // Or whatever roles you have
-  // IMPORTANT: Ensure no 'moderation_status' is accidentally added here.
+  role: "admin" | "moderator" | "user";
 }
 
 interface PostComponentProps {
@@ -94,22 +94,20 @@ interface PostComponentProps {
 
 export const PostComponent: React.FC<PostComponentProps> = React.memo(
   ({ post, topicId, depth = 0, onReport }) => {
-    const { user } = useAuth(); // user is AuthUser | null
+    const { user } = useAuth();
     const { mutate: editPost, isPending: isEditingPost } = useEditPost();
     const { mutate: deletePost, isPending: isDeletingPost } = useDeletePost();
     const [showReplyForm, setShowReplyForm] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(false); // Not used, but keeping for consistency
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
     const [moderationStatus, setModerationStatus] = useState<
-      Database["public"]["Enums"]["moderation_status"]
+      ModerationStatus | "approved"
     >(post.moderation_status || "approved");
     const [isVisible, setIsVisible] = useState(
       (post.moderation_status || "approved") === "approved"
     );
     const { toast } = useToast();
 
-    // Real-time subscription for moderation status changes
     useEffect(() => {
       const channel = supabase
         .channel(`post-moderation-${post.id}`)
@@ -122,23 +120,19 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
             filter: `id=eq.${post.id}`,
           },
           (payload) => {
-            // Explicitly cast payload.new to the expected Post type for safer access
             const newPostData = payload.new as Post;
-            if (newPostData) {
+            if (newPostData && newPostData.moderation_status) {
               const newStatus = newPostData.moderation_status;
-              if (newStatus) {
-                // Check if newStatus is not null
-                setModerationStatus(newStatus);
-                setIsVisible(newStatus === "approved");
+              setModerationStatus(newStatus);
+              setIsVisible(newStatus === "approved");
 
-                if (newStatus === "pending") {
-                  toast({
-                    title: "Content flagged",
-                    description:
-                      "This post has been flagged and is now under review.",
-                    variant: "default",
-                  });
-                }
+              if (newStatus === "pending") {
+                toast({
+                  title: "Content flagged",
+                  description:
+                    "This post has been flagged and is now under review.",
+                  variant: "default",
+                });
               }
             }
           }
@@ -150,8 +144,7 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
       };
     }, [post.id, toast]);
 
-    // Don't render the post if it's not approved and not an admin
-    // Admins should always see the content, even if it's pending/rejected
+    // This logic is correct: It checks the POST's status and the USER's role.
     if (moderationStatus !== "approved" && (!user || user.role !== "admin")) {
       return (
         <div className="relative border-b border-border/50 pb-2 mb-2 w-full">
@@ -183,28 +176,10 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
     };
 
     const canEdit =
-      user && // Ensure user exists
+      user &&
       (user.id === post.author_id ||
         user.role === "admin" ||
         user.role === "moderator");
-
-    // Debug logging
-    console.log("PostComponent Debug:", {
-      postId: post.id,
-      postContent: post.content,
-      postContentLength: post.content.length,
-      moderationStatus: moderationStatus,
-      postModerationStatus: post.moderation_status,
-      isVisible: isVisible,
-      depth: depth,
-      parentPostId: post.parent_post_id,
-      hasParentPost: !!post.parent_post,
-      user: user,
-      postAuthorId: post.author_id,
-      postIsAnonymous: post.is_anonymous,
-      canEdit: canEdit,
-      userIdMatch: user?.id === post.author_id,
-    });
 
     const handleShare = async () => {
       const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
@@ -223,37 +198,24 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
       ) {
         try {
           await navigator.share(shareData);
-          toast({
-            title: "Shared successfully!",
-            description: "Post shared using your device's share menu",
-          });
         } catch (error: unknown) {
           if (error instanceof Error && error.name !== "AbortError") {
-            console.log("Web Share failed, falling back to clipboard:", error);
             handleClipboardShare(shareUrl);
           }
         }
       } else {
-        console.log("Web Share API not available, using clipboard fallback");
         handleClipboardShare(shareUrl);
       }
     };
 
     const handleClipboardShare = async (url: string) => {
       try {
-        const tempInput = document.createElement("textarea");
-        tempInput.value = url;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-
+        await navigator.clipboard.writeText(url);
         toast({
           title: "Link copied!",
           description: "Post link has been copied to clipboard",
         });
       } catch (error) {
-        console.error("Clipboard copy failed:", error);
         toast({
           title: "Share failed",
           description: "Could not copy link to clipboard",
@@ -262,25 +224,12 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
       }
     };
 
-    const replyTextColors = [
-      "text-primary",
-      "text-accent",
-      "text-secondary",
-      "text-muted-foreground",
-      "text-orange-600",
-    ];
-
-    const colorIndex = depth % replyTextColors.length;
-    const replyTextColor =
-      depth > 0 ? replyTextColors[colorIndex] : "text-foreground";
-
     return (
       <div
         id={`post-${post.id}`}
         className="relative border-b border-border/50 pb-2 mb-2 w-full"
       >
         <div className="bg-card p-3 md:p-4 rounded-md w-full">
-          {/* User info header */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center flex-wrap gap-2">
               <span className="font-medium text-foreground text-sm">
@@ -295,12 +244,10 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
             </div>
           </div>
 
-          {/* Admin tracking info for temporary users */}
           {user?.role === "admin" && !post.profiles?.username && (
             <AdminTempUserInfo userId={post.author_id || ""} className="mb-3" />
           )}
 
-          {/* Post content - Full width */}
           <div className="mb-4">
             {isEditing ? (
               <div className="space-y-3">
@@ -332,7 +279,6 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Show original comment being replied to */}
                 {post.parent_post_id && post.parent_post && (
                   <div className="bg-muted/30 border border-border rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
@@ -366,14 +312,14 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
                   </div>
                 )}
 
-                {/* MAIN REPLY CONTENT - This is the user's actual response */}
                 <div className="text-foreground text-base font-normal bg-background p-3 rounded border-l-4 border-primary">
                   <HTMLRenderer content={post.content} />
                 </div>
 
                 {post.updated_at &&
                   post.created_at &&
-                  post.updated_at !== post.created_at && (
+                  new Date(post.updated_at).getTime() !==
+                    new Date(post.created_at).getTime() && (
                     <p className="text-xs text-muted-foreground mt-1">
                       (edited {formatDistanceToNow(new Date(post.updated_at))}{" "}
                       ago)
@@ -383,23 +329,15 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
             )}
           </div>
 
-          {/* Compact action bar */}
           <TooltipProvider>
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              {/* Reply button - icon only */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                    onClick={() => {
-                      console.log(
-                        "PostComponent reply button clicked, current state:",
-                        showReplyForm
-                      );
-                      setShowReplyForm(!showReplyForm);
-                    }}
+                    onClick={() => setShowReplyForm(!showReplyForm)}
                   >
                     <MessageCircle className="h-3 w-3" />
                   </Button>
@@ -409,7 +347,6 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
                 </TooltipContent>
               </Tooltip>
 
-              {/* Edit button - icon only (show only for post author or moderators) */}
               {canEdit && !isEditing && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -428,7 +365,6 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
                 </Tooltip>
               )}
 
-              {/* Share button - icon only */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -445,12 +381,10 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
                 </TooltipContent>
               </Tooltip>
 
-              {/* Admin Controls - only for admins */}
               {user?.role === "admin" && (
                 <AdminControls content={post} contentType="post" />
               )}
 
-              {/* Report button - icon only with red color */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -469,7 +403,6 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
             </div>
           </TooltipProvider>
 
-          {/* Inline reply form */}
           {showReplyForm && (
             <InlineReplyForm
               topicId={topicId}

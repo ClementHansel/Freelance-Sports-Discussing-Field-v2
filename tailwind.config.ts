@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate"; // Correct ES Module import
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", ""], // Added an empty string as the second element to satisfy the type
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",

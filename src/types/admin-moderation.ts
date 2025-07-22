@@ -1,6 +1,15 @@
 // src/types/admin-moderation.ts
 
-import { Database } from "@/integrations/supabase/types"; // Assuming this path is correct for your Supabase types
+import { Database } from "@/integrations/supabase/types";
+
+// Define a common type for moderation status
+type ModerationStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "resolved"
+  | "dismissed"
+  | "closed";
 
 // Refined interfaces for better type safety
 export interface CategorySlug {
@@ -15,7 +24,7 @@ export interface TopicForReport {
   author_id: string | null;
   categories: CategorySlug | null;
   created_at: string | null;
-  moderation_status?: Database["public"]["Enums"]["moderation_status"] | null;
+  moderation_status?: ModerationStatus | null;
   ip_address: string | null;
 }
 
@@ -26,8 +35,8 @@ export interface PostForReport {
   topic_id: string | null;
   ip_address: string | null;
   created_at: string | null;
-  topics: TopicForReport | null; // Correctly named 'topics'
-  moderation_status?: Database["public"]["Enums"]["moderation_status"] | null;
+  topics: TopicForReport | null;
+  moderation_status?: ModerationStatus | null;
 }
 
 export interface ReporterProfile {
@@ -44,7 +53,7 @@ export interface ReportedPost {
   id: string;
   content: string | null;
   topic_id: string;
-  moderation_status: Database["public"]["Enums"]["moderation_status"] | null;
+  moderation_status: ModerationStatus | null;
   ip_address: string | null;
   topic?: {
     category_slug: string | null;
@@ -56,7 +65,7 @@ export interface ReportedTopic {
   id: string;
   title: string;
   content: string | null;
-  moderation_status: Database["public"]["Enums"]["moderation_status"] | null;
+  moderation_status: ModerationStatus | null;
   ip_address: string | null;
   category_slug: string | null;
   slug: string | null;
@@ -115,20 +124,20 @@ export interface SupabasePostRaw {
   author_id: string | null;
   topic_id: string | null;
   ip_address: string | null;
-  is_anonymous: boolean | null; // This is the property causing the error
-  moderation_status: string;
+  is_anonymous: boolean | null;
+  moderation_status: ModerationStatus; // Changed to ModerationStatus
   topics: {
     id: string;
     title: string | null;
     content: string | null;
     author_id: string | null;
     slug: string | null;
-    created_at: string | null; // Added this
-    ip_address: string | null; // Added this
-    moderation_status: string | null; // Added this
+    created_at: string | null;
+    ip_address: string | null;
+    moderation_status: ModerationStatus | null; // Changed to ModerationStatus | null
     categories: {
       slug: string | null;
-      requires_moderation: boolean | null; // This is the property causing the error
+      requires_moderation: boolean | null;
     } | null;
   } | null;
 }
@@ -140,11 +149,11 @@ export interface SupabaseTopicRaw {
   slug: string | null;
   created_at: string | null;
   author_id: string | null;
-  moderation_status: string;
-  ip_address: string | null; // Added this
+  moderation_status: ModerationStatus; // Changed to ModerationStatus
+  ip_address: string | null;
   categories: {
     slug: string | null;
-    requires_moderation: boolean | null; // This is the property causing the error
+    requires_moderation: boolean | null;
   } | null;
 }
 
