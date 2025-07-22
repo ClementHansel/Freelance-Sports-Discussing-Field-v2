@@ -1,19 +1,17 @@
-import dynamic from "next/dynamic";
+import SearchPageComponent from "@/components/forum/search/Search";
 import { Card } from "@/components/ui/card";
-
-const SearchClient = dynamic(() => import("@/components/forum/search/Search"), {
-  ssr: false, // Important for useSearchParams()
-  loading: () => (
-    <Card className="p-6">
-      <div className="text-center">Loading content...</div>
-    </Card>
-  ),
-});
+import { Suspense } from "react";
 
 export default function SearchPage() {
   return (
-    <div className="flex-1 w-full">
-      <SearchClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <SearchPageComponent />
+    </Suspense>
   );
 }

@@ -1,19 +1,17 @@
-import dynamic from "next/dynamic";
+import Privacy from "@/components/privacy/Privacy";
 import { Card } from "@/components/ui/card";
-
-const Privacy = dynamic(() => import("@/components/privacy/Privacy"), {
-  ssr: false,
-  loading: () => (
-    <Card className="p-6">
-      <div className="text-center">Loading content...</div>
-    </Card>
-  ),
-});
+import { Suspense } from "react";
 
 export default function PrivacyPage() {
   return (
-    <div className="flex-1 w-full">
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
       <Privacy />
-    </div>
+    </Suspense>
   );
 }

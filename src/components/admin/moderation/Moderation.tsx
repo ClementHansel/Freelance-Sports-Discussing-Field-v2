@@ -43,7 +43,7 @@ import {
   ContentAuthorProfile,
   SupabaseReportRow,
   Report,
-  SupabaseModerationItemRaw, // FIX: Correctly import SupabaseModerationItemRaw (now a union)
+  SupabaseModerationItemRaw,
   ModerationItem,
   SupabasePostRaw,
   SupabaseTopicRaw,
@@ -121,22 +121,26 @@ const ReportsTab = () => {
           topic_id,
           ip_address,
           created_at,
+          is_anonymous,
+          moderation_status,
           topics!inner (
             id,
             title,
             content,
             author_id,
             slug,
+            created_at,
+            ip_address,
+            moderation_status,
             categories!inner (
-              slug
+              slug,
+              requires_moderation
             )
           )
         `
         )
         .in("id", postIds);
 
-      // Cast postsRaw to an array of objects that match PostForReport's structure,
-      // explicitly handling ip_address to be string | null
       const posts: PostForReport[] = (
         (postsRaw as SupabasePostRaw[]) || []
       ).map((p) => ({
@@ -146,14 +150,34 @@ const ReportsTab = () => {
         topic_id: p.topic_id,
         ip_address: p.ip_address as string | null,
         created_at: p.created_at,
-        topics: p.topics as TopicForReport | null,
+        moderation_status:
+          p.moderation_status as PostForReport["moderation_status"],
+        topics: p.topics
+          ? {
+              id: p.topics.id,
+              title: p.topics.title,
+              content: p.topics.content,
+              author_id: p.topics.author_id,
+              slug: p.topics.slug,
+              created_at: p.topics.created_at,
+              ip_address: p.topics.ip_address,
+              moderation_status: p.topics.moderation_status,
+              categories: p.topics.categories
+                ? {
+                    slug: p.topics.categories.slug,
+                    requires_moderation:
+                      p.topics.categories.requires_moderation,
+                  }
+                : null,
+            }
+          : null,
       }));
 
       // Fetch topics with category info for navigation
       const topicIds = reportsData
         .map((r) => r.reported_topic_id)
         .filter(Boolean) as string[];
-      const { data: topics } = await supabase
+      const { data: topicsRaw } = await supabase
         .from("topics")
         .select(
           `
@@ -163,12 +187,35 @@ const ReportsTab = () => {
           author_id,
           slug,
           created_at,
+          ip_address,
+          moderation_status,
           categories!inner (
-            slug
+            slug,
+            requires_moderation
           )
         `
         )
         .in("id", topicIds);
+
+      const topics: TopicForReport[] = (
+        (topicsRaw as SupabaseTopicRaw[]) || []
+      ).map((t) => ({
+        id: t.id,
+        title: t.title,
+        content: t.content,
+        author_id: t.author_id,
+        slug: t.slug,
+        created_at: t.created_at,
+        ip_address: t.ip_address as string | null,
+        moderation_status:
+          t.moderation_status as TopicForReport["moderation_status"],
+        categories: t.categories
+          ? {
+              slug: t.categories.slug,
+              requires_moderation: t.categories.requires_moderation,
+            }
+          : null,
+      }));
 
       // Get author profiles for reported content
       const allAuthorIds = [
@@ -245,22 +292,26 @@ const ReportsTab = () => {
           topic_id,
           ip_address,
           created_at,
+          is_anonymous,
+          moderation_status,
           topics!inner (
             id,
             title,
             content,
             author_id,
             slug,
+            created_at,
+            ip_address,
+            moderation_status,
             categories!inner (
-              slug
+              slug,
+              requires_moderation
             )
           )
         `
         )
         .in("id", postIds);
 
-      // Cast postsRaw to an array of objects that match PostForReport's structure,
-      // explicitly handling ip_address to be string | null
       const posts: PostForReport[] = (
         (postsRaw as SupabasePostRaw[]) || []
       ).map((p) => ({
@@ -270,14 +321,34 @@ const ReportsTab = () => {
         topic_id: p.topic_id,
         ip_address: p.ip_address as string | null,
         created_at: p.created_at,
-        topics: p.topics as TopicForReport | null,
+        moderation_status:
+          p.moderation_status as PostForReport["moderation_status"], // Explicitly cast
+        topics: p.topics
+          ? {
+              id: p.topics.id,
+              title: p.topics.title,
+              content: p.topics.content,
+              author_id: p.topics.author_id,
+              slug: p.topics.slug,
+              created_at: p.topics.created_at,
+              ip_address: p.topics.ip_address, // Ensure ip_address is passed
+              moderation_status: p.topics.moderation_status, // Ensure moderation_status is passed
+              categories: p.topics.categories
+                ? {
+                    slug: p.topics.categories.slug,
+                    requires_moderation:
+                      p.topics.categories.requires_moderation,
+                  }
+                : null,
+            }
+          : null,
       }));
 
       // Fetch topics with category info for navigation
       const topicIds = reportsData
         .map((r) => r.reported_topic_id)
         .filter(Boolean) as string[];
-      const { data: topics } = await supabase
+      const { data: topicsRaw } = await supabase
         .from("topics")
         .select(
           `
@@ -287,12 +358,35 @@ const ReportsTab = () => {
           author_id,
           slug,
           created_at,
+          ip_address,
+          moderation_status,
           categories!inner (
-            slug
+            slug,
+            requires_moderation
           )
         `
         )
         .in("id", topicIds);
+
+      const topics: TopicForReport[] = (
+        (topicsRaw as SupabaseTopicRaw[]) || []
+      ).map((t) => ({
+        id: t.id,
+        title: t.title,
+        content: t.content,
+        author_id: t.author_id,
+        slug: t.slug,
+        created_at: t.created_at,
+        ip_address: t.ip_address as string | null,
+        moderation_status:
+          t.moderation_status as TopicForReport["moderation_status"],
+        categories: t.categories
+          ? {
+              slug: t.categories.slug,
+              requires_moderation: t.categories.requires_moderation,
+            }
+          : null,
+      }));
 
       // Get author profiles for reported content
       const allAuthorIds = [
@@ -826,6 +920,9 @@ export default function AdminModeration() {
             content,
             author_id,
             slug,
+            created_at,
+            ip_address,
+            moderation_status,
             categories!inner (
               slug,
               requires_moderation
@@ -837,7 +934,6 @@ export default function AdminModeration() {
         .order("created_at", { ascending: false });
 
       if (postsError) throw postsError;
-      // Cast raw data to SupabasePostRaw[]
       const posts: SupabasePostRaw[] = postsRaw as SupabasePostRaw[];
 
       // Get topics that require moderation (pending status from moderated categories)
@@ -852,6 +948,7 @@ export default function AdminModeration() {
           created_at,
           author_id,
           moderation_status,
+          ip_address,
           categories!inner (
             slug,
             requires_moderation
@@ -862,7 +959,6 @@ export default function AdminModeration() {
         .order("created_at", { ascending: false });
 
       if (topicsError) throw topicsError;
-      // Cast raw data to SupabaseTopicRaw[]
       const topics: SupabaseTopicRaw[] = topicsRaw as SupabaseTopicRaw[];
 
       // Get author profiles for both posts and topics
@@ -907,9 +1003,9 @@ export default function AdminModeration() {
             status: post.moderation_status as ModerationItem["status"],
             is_anonymous: !!post.is_anonymous, // Convert to boolean
             ip_address: post.ip_address as string | null,
-            topic_id: post.topic_id || undefined, // FIX: Convert null to undefined
-            topic_slug: post.topics?.slug || undefined, // FIX: Convert null to undefined
-            category_slug: post.topics?.categories?.slug || undefined, // FIX: Convert null to undefined
+            topic_id: post.topic_id || undefined,
+            topic_slug: post.topics?.slug || undefined,
+            category_slug: post.topics?.categories?.slug || undefined,
           })) || []),
         ...((topics || [])
           .filter(
@@ -927,9 +1023,9 @@ export default function AdminModeration() {
             reported_count: 0, // Not applicable for moderation queue directly
             status: topic.moderation_status as ModerationItem["status"],
             is_anonymous: false, // Topics are generally not anonymous in this context
-            ip_address: null, // Topics don't usually have a direct IP address column
-            slug: topic.slug || undefined, // FIX: Convert null to undefined
-            category_slug: topic.categories?.slug || undefined, // FIX: Convert null to undefined
+            ip_address: topic.ip_address as string | null, // Correctly assign ip_address
+            slug: topic.slug || undefined,
+            category_slug: topic.categories?.slug || undefined,
           })) || []),
       ];
 

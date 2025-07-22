@@ -16,13 +16,26 @@ import { useForumSettings } from "@/hooks/useForumSettings";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Home } from "lucide-react";
 
+// Define the shape of your SEO data state
+interface SeoDataState {
+  title: string;
+  description: string;
+  keywords: string;
+  canonical_url: string;
+  og_title: string;
+  og_description: string;
+  og_image: string;
+}
+
 export const HomePageSeoManager: React.FC = () => {
   const { getSetting, updateSetting, isUpdating, settings, isLoading } =
     useForumSettings();
   const { toast } = useToast();
   const [isDirty, setIsDirty] = useState(false);
 
-  const [seoData, setSeoData] = useState(() => ({
+  // Initialize seoData with empty strings.
+  // The useEffect will populate it with actual settings once loaded.
+  const [seoData, setSeoData] = useState<SeoDataState>({
     title: "",
     description: "",
     keywords: "",
@@ -30,30 +43,32 @@ export const HomePageSeoManager: React.FC = () => {
     og_title: "",
     og_description: "",
     og_image: "",
-  }));
+  });
 
   React.useEffect(() => {
     if (!isLoading && settings) {
       setSeoData({
-        title: getSetting("seo_home_title", ""),
-        description: getSetting("seo_home_description", ""),
-        keywords: getSetting("seo_home_keywords", ""),
-        canonical_url: getSetting("seo_home_canonical_url", ""),
-        og_title: getSetting("seo_home_og_title", ""),
-        og_description: getSetting("seo_home_og_description", ""),
-        og_image: getSetting("seo_home_og_image", ""),
+        // Cast the return of getSetting to string, as we expect these to be strings
+        title: getSetting("seo_home_title", "") as string,
+        description: getSetting("seo_home_description", "") as string,
+        keywords: getSetting("seo_home_keywords", "") as string,
+        canonical_url: getSetting("seo_home_canonical_url", "") as string,
+        og_title: getSetting("seo_home_og_title", "") as string,
+        og_description: getSetting("seo_home_og_description", "") as string,
+        og_image: getSetting("seo_home_og_image", "") as string,
       });
     }
-  }, [isLoading, settings]);
+  }, [isLoading, settings, getSetting]); // Added getSetting to dependencies
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof SeoDataState, value: string) => {
+    // Typed field
     setSeoData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
   };
 
   const handleSave = async () => {
     try {
-      const settings = [
+      const settingsToUpdate = [
         {
           key: "seo_home_title",
           value: seoData.title,
@@ -91,10 +106,11 @@ export const HomePageSeoManager: React.FC = () => {
         },
       ];
 
-      for (const setting of settings) {
+      for (const setting of settingsToUpdate) {
+        // Renamed 'settings' to 'settingsToUpdate' to avoid conflict
         await updateSetting({
           key: setting.key,
-          value: setting.value,
+          value: setting.value, // Value is already typed as string
           type: "string",
           category: "seo",
           description: setting.description,
@@ -107,6 +123,7 @@ export const HomePageSeoManager: React.FC = () => {
         description: "SEO metadata has been saved successfully.",
       });
     } catch (error) {
+      console.error("Failed to update SEO metadata:", error); // Log the error for debugging
       toast({
         title: "Error",
         description: "Failed to update SEO metadata.",

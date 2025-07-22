@@ -1,24 +1,17 @@
-import dynamic from "next/dynamic";
+import AdminModeration from "@/components/admin/moderation/Moderation";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-// Dynamically import AdminModeration, disabling server-side rendering
-const AdminModerationClient = dynamic(
-  () => import("@/components/admin/moderation/Moderation"),
-  {
-    ssr: false, // This prevents useSearchParams() from being called during SSR
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading moderation dashboard...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function ModerationPage() {
+export default function AdminModerationPage() {
   return (
-    <div className="flex-1 w-full">
-      {/* The client component will only be rendered in the browser */}
-      <AdminModerationClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <AdminModeration />
+    </Suspense>
   );
 }

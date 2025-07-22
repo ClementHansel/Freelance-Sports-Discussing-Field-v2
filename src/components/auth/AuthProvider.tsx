@@ -24,9 +24,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Initialize session manager for anonymous users
     const initializeApp = async () => {
       try {
-        await sessionManager.initializeSession();
+        // Guard window access for SSR safety
+        if (typeof window !== "undefined") {
+          await sessionManager.initializeSession();
+        }
       } catch (error) {
         console.error("Failed to initialize session manager:", error);
+      } finally {
+        // Ensure loading is set to false after initialization attempt
+        setLoading(false);
       }
     };
 
@@ -41,42 +47,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (session?.user) {
         // Clear temp session when user logs in
-        sessionManager.clearSession();
+        // Guard window access for SSR safety
+        if (typeof window !== "undefined") {
+          sessionManager.clearSession();
+        }
 
         // Fetch user role
         setTimeout(async () => {
           try {
-            const { data: roleData } = await supabase
+            const { data: roleData, error: roleError } = await supabase
               .from("user_roles")
               .select("role")
               .eq("user_id", session.user.id)
               .single();
 
-            if (roleData) {
+            if (roleError) {
+              console.error("Error fetching user role:", roleError);
+              setUserRole("user"); // Default to user on error
+            } else if (roleData) {
               setUserRole(roleData.role);
+            } else {
+              setUserRole("user"); // No role found, default to user
             }
-          } catch (error) {}
+          } catch (err) {
+            console.error("Unexpected error in auth state change:", err);
+            setUserRole("user"); // Default to user on unexpected error
+          } finally {
+            setLoading(false); // Set loading to false after role fetch
+          }
         }, 0);
       } else {
+        // User logged out or no session, ensure role is reset and loading is false
         setUserRole("user");
-        // Re-initialize temp session when user logs out
-        setTimeout(() => {
-          sessionManager.initializeSession();
-        }, 0);
+        setLoading(false);
+        console.log(
+          "User logged out or no session, AuthProvider finished loading."
+        ); // Added for re-evaluation
       }
-
-      setLoading(false);
     });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -93,7 +106,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signUp = async (email: string, password: string, username: string) => {
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/`;
+    // Guard window access for SSR safety
+    const redirectUrl =
+      typeof window !== "undefined" ? `${window.location.origin}/` : "/";
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -137,10 +152,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={{
         user: contextUser,
+        session,
+        loading,
         signIn,
         signUp,
         signOut,
-        loading,
         isAdmin,
         isModerator,
       }}

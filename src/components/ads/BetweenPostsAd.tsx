@@ -14,7 +14,10 @@ export const BetweenPostsAd: React.FC<BetweenPostsAdProps> = ({
   className = "",
 }) => {
   const { getSetting } = useForumSettings();
-  const frequency = parseInt(getSetting("ads_between_posts_frequency", "3"));
+  // Cast the return value of getSetting to string before passing to parseInt
+  const frequency = parseInt(
+    getSetting("ads_between_posts_frequency", "3") as string
+  );
 
   // Show ad after every N posts (where N is the frequency setting)
   const shouldShowAd = postIndex > 0 && (postIndex + 1) % frequency === 0;

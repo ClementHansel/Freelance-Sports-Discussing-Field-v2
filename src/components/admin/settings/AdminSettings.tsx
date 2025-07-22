@@ -55,16 +55,17 @@ export default function AdminSettings() {
   // Update local state when settings load
   React.useEffect(() => {
     if (settings) {
-      const headerCodeValue = getSetting("header_code", "");
-      const gaIdValue = getSetting("google_analytics_id", "");
-      const customCssValue = getSetting("custom_css", "");
-      const termsValue = getSetting("terms_content", "");
-      const privacyValue = getSetting("privacy_content", "");
-      const bannerMessageValue = getSetting("banner_message", "");
+      // Explicitly cast the return values to the expected string type
+      const headerCodeValue = getSetting("header_code", "") as string;
+      const gaIdValue = getSetting("google_analytics_id", "") as string;
+      const customCssValue = getSetting("custom_css", "") as string;
+      const termsValue = getSetting("terms_content", "") as string;
+      const privacyValue = getSetting("privacy_content", "") as string;
+      const bannerMessageValue = getSetting("banner_message", "") as string;
       const forumDescriptionValue = getSetting(
         "forum_description",
         "A community forum for minor hockey discussions"
-      );
+      ) as string;
 
       console.log("Loading settings:", {
         headerCodeValue,
@@ -86,7 +87,7 @@ export default function AdminSettings() {
     // Assuming updateSetting handles the actual save operation
     updateSetting({
       key: "forum_name",
-      value: getSetting("forum_name", "Minor Hockey Talks"), // Use current value from getSetting
+      value: getSetting("forum_name", "Minor Hockey Talks") as string, // Use current value from getSetting and cast
       type: "string",
       category: "general",
     });
@@ -98,13 +99,13 @@ export default function AdminSettings() {
     });
     updateSetting({
       key: "allow_registration",
-      value: getSetting("allow_registration", true),
+      value: getSetting("allow_registration", true) as boolean, // Cast to boolean
       type: "boolean",
       category: "general",
     });
     updateSetting({
       key: "allow_anonymous_posts",
-      value: getSetting("allow_anonymous_posts", true),
+      value: getSetting("allow_anonymous_posts", true) as boolean, // Cast to boolean
       type: "boolean",
       category: "general",
     });
@@ -248,7 +249,9 @@ export default function AdminSettings() {
                   <Label htmlFor="forum-name">Forum Name</Label>
                   <Input
                     id="forum-name"
-                    value={getSetting("forum_name", "Minor Hockey Talks")}
+                    value={
+                      getSetting("forum_name", "Minor Hockey Talks") as string
+                    } // Cast
                     onChange={(e) =>
                       updateSetting({
                         key: "forum_name",
@@ -279,7 +282,7 @@ export default function AdminSettings() {
                       </div>
                     </div>
                     <Switch
-                      checked={getSetting("banner_enabled", false)}
+                      checked={getSetting("banner_enabled", false) as boolean} // Cast
                       onCheckedChange={(checked) =>
                         updateSetting({
                           key: "banner_enabled",
@@ -315,7 +318,7 @@ export default function AdminSettings() {
                     <div className="space-y-2">
                       <Label htmlFor="banner-style">Banner Style</Label>
                       <Select
-                        value={getSetting("banner_style", "info")}
+                        value={getSetting("banner_style", "info") as string} // Cast
                         onValueChange={(value) =>
                           updateSetting({
                             key: "banner_style",
@@ -352,7 +355,9 @@ export default function AdminSettings() {
                         </div>
                       </div>
                       <Switch
-                        checked={getSetting("banner_dismissible", true)}
+                        checked={
+                          getSetting("banner_dismissible", true) as boolean
+                        } // Cast
                         onCheckedChange={(checked) =>
                           updateSetting({
                             key: "banner_dismissible",
@@ -365,18 +370,22 @@ export default function AdminSettings() {
                     </div>
                   </div>
 
-                  {getSetting("banner_enabled", false) && (
+                  {/* Cast the boolean value for conditional rendering */}
+                  {(getSetting("banner_enabled", false) as boolean) && (
                     <div className="bg-muted/50 border rounded-lg p-3">
                       <p className="text-sm font-medium mb-1">Preview:</p>
                       <div
                         className={`p-2 border rounded text-sm ${
-                          getSetting("banner_style", "info") === "warning"
+                          (getSetting("banner_style", "info") as string) ===
+                          "warning"
                             ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-800"
-                            : getSetting("banner_style", "info") === "success"
+                            : (getSetting("banner_style", "info") as string) ===
+                              "success"
                             ? "bg-green-500/10 border-green-500/20 text-green-800"
-                            : getSetting("banner_style", "info") === "error"
+                            : (getSetting("banner_style", "info") as string) ===
+                              "error"
                             ? "bg-red-500/10 border-red-500/20 text-red-800"
-                            : getSetting("banner_style", "info") ===
+                            : (getSetting("banner_style", "info") as string) ===
                               "announcement"
                             ? "bg-purple-500/10 border-purple-500/20 text-purple-800"
                             : "bg-blue-500/10 border-blue-500/20 text-blue-800"
@@ -417,7 +426,7 @@ export default function AdminSettings() {
                     </div>
                   </div>
                   <Switch
-                    checked={getSetting("allow_registration", true)}
+                    checked={getSetting("allow_registration", true) as boolean} // Cast
                     onCheckedChange={(checked) =>
                       updateSetting({
                         key: "allow_registration",
@@ -437,7 +446,9 @@ export default function AdminSettings() {
                     </div>
                   </div>
                   <Switch
-                    checked={getSetting("allow_anonymous_posts", true)}
+                    checked={
+                      getSetting("allow_anonymous_posts", true) as boolean
+                    } // Cast
                     onCheckedChange={(checked) =>
                       updateSetting({
                         key: "allow_anonymous_posts",
@@ -469,7 +480,7 @@ export default function AdminSettings() {
                       </Label>
                       <Input
                         id="facebook-url"
-                        value={getSetting("social_facebook", "")}
+                        value={getSetting("social_facebook", "") as string} // Cast
                         onChange={(e) =>
                           updateSetting({
                             key: "social_facebook",
@@ -492,7 +503,7 @@ export default function AdminSettings() {
                       </Label>
                       <Input
                         id="twitter-url"
-                        value={getSetting("social_twitter", "")}
+                        value={getSetting("social_twitter", "") as string} // Cast
                         onChange={(e) =>
                           updateSetting({
                             key: "social_twitter",
@@ -515,7 +526,7 @@ export default function AdminSettings() {
                       </Label>
                       <Input
                         id="instagram-url"
-                        value={getSetting("social_instagram", "")}
+                        value={getSetting("social_instagram", "") as string} // Cast
                         onChange={(e) =>
                           updateSetting({
                             key: "social_instagram",
@@ -538,7 +549,7 @@ export default function AdminSettings() {
                       </Label>
                       <Input
                         id="youtube-url"
-                        value={getSetting("social_youtube", "")}
+                        value={getSetting("social_youtube", "") as string} // Cast
                         onChange={(e) =>
                           updateSetting({
                             key: "social_youtube",
@@ -874,7 +885,9 @@ export default function AdminSettings() {
                           </div>
                         </div>
                         <Switch
-                          checked={getSetting("maintenance_mode", false)}
+                          checked={
+                            getSetting("maintenance_mode", false) as boolean
+                          } // Cast
                           onCheckedChange={(checked) => {
                             updateSetting({
                               key: "maintenance_mode",
@@ -906,10 +919,12 @@ export default function AdminSettings() {
                         </Label>
                         <Textarea
                           id="maintenance-message"
-                          value={getSetting(
-                            "maintenance_message",
-                            "We are currently performing scheduled maintenance. Please check back soon!"
-                          )}
+                          value={
+                            getSetting(
+                              "maintenance_message",
+                              "We are currently performing scheduled maintenance. Please check back soon!"
+                            ) as string
+                          } // Cast
                           onChange={(e) =>
                             updateSetting({
                               key: "maintenance_message",
@@ -927,7 +942,8 @@ export default function AdminSettings() {
                         </p>
                       </div>
 
-                      {getSetting("maintenance_mode", false) && (
+                      {/* Cast for conditional rendering */}
+                      {(getSetting("maintenance_mode", false) as boolean) && (
                         <div className="bg-orange-500/10 border border-orange-500/20 rounded p-3">
                           <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                             🔧 Maintenance mode is currently ACTIVE. Only admins
@@ -962,7 +978,9 @@ export default function AdminSettings() {
                           </div>
                         </div>
                         <Switch
-                          checked={getSetting("enable_rate_limiting", true)}
+                          checked={
+                            getSetting("enable_rate_limiting", true) as boolean
+                          } // Cast
                           onCheckedChange={(checked) =>
                             updateSetting({
                               key: "enable_rate_limiting",

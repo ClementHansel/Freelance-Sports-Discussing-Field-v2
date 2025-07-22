@@ -1,19 +1,17 @@
-import dynamic from "next/dynamic";
+import ForumRules from "@/components/rules/Rules";
 import { Card } from "@/components/ui/card";
-
-const Rules = dynamic(() => import("@/components/rules/Rules"), {
-  ssr: false,
-  loading: () => (
-    <Card className="p-6">
-      <div className="text-center">Loading content...</div>
-    </Card>
-  ),
-});
+import { Suspense } from "react";
 
 export default function RulesPage() {
   return (
-    <div className="flex-1 w-full">
-      <Rules />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <ForumRules />
+    </Suspense>
   );
 }

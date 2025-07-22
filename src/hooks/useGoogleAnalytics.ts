@@ -8,7 +8,9 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gtag?: (...args: any[]) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataLayer?: any[];
   }
 }
@@ -64,6 +66,7 @@ export const useGoogleAnalytics = () => {
 
   // Track custom events
   const trackEvent = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (eventName: string, parameters: Record<string, any> = {}) => {
       if (!canTrack || !window.gtag) return;
 

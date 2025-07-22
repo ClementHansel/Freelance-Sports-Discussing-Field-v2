@@ -3,13 +3,29 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserIPWithFallback } from "@/lib/utils/ipUtils";
+import { Json } from "@/integrations/supabase/types"; // Import Json type
+
+// Define the expected result from the 'check_ip_banned' RPC
+interface IpBanCheckResult {
+  is_banned: boolean;
+  ban_type?: string | null; // e.g., "permanent", "temporary", "shadowban"
+  expires_at?: string | null; // ISO string
+  reason?: string | null;
+}
+
+// Define the expected result from the 'analyze_content_for_spam' RPC
+interface ContentAnalysisResult {
+  is_spam: boolean;
+  confidence: number;
+  indicators: Record<string, Json>; // Use Json for dynamic object values
+}
 
 interface SpamCheckResult {
   allowed: boolean;
   reason?: string;
   message?: string;
   confidence?: number;
-  indicators?: Record<string, any>;
+  indicators?: Record<string, Json>;
   retryAfter?: number;
   blockExpiresAt?: string;
 }
@@ -25,6 +41,11 @@ export const useEnhancedSpamDetection = () => {
 
   // Generate browser fingerprint for additional tracking
   const generateFingerprint = useCallback((): string => {
+    // Ensure window and document are defined for client-side APIs
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return "server-side-fingerprint"; // Return a fallback for server-side rendering
+    }
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -51,7 +72,7 @@ export const useEnhancedSpamDetection = () => {
     }
 
     return Math.abs(hash).toString(36);
-  }, []);
+  }, []); // No dependencies needed for generateFingerprint as it uses global browser APIs
 
   const checkRateLimit = useCallback(
     async (
@@ -69,11 +90,14 @@ export const useEnhancedSpamDetection = () => {
             allowed: false,
             reason: "ip_detection_failed",
             message: "Unable to verify your connection. Please try again.",
+            remainingPostsHour: 0, // Default for RateLimitInfo when not allowed
+            remainingPostsDay: 0,
+            remainingTopicsDay: 0,
           };
         }
 
         // First check if IP is banned
-        const { data: ipCheck, error: ipError } = await supabase.rpc(
+        const { data: ipCheckRaw, error: ipError } = await supabase.rpc(
           "check_ip_banned",
           {
             user_ip: userIP,
@@ -83,21 +107,16 @@ export const useEnhancedSpamDetection = () => {
         if (ipError) {
           console.error("IP ban check failed:", ipError);
           // Continue with unlimited posting if IP check fails
-        } else if (ipCheck) {
-          const result = ipCheck as {
-            is_banned: boolean;
-            ban_type?: string;
-            expires_at?: string;
-            reason?: string;
-          };
+        } else if (ipCheckRaw) {
+          const ipCheck = ipCheckRaw as unknown as IpBanCheckResult; // Cast to specific interface
 
-          if (result.is_banned) {
-            const banType = result.ban_type;
-            const expires = result.expires_at;
+          if (ipCheck.is_banned) {
+            const banType = ipCheck.ban_type;
+            const expires = ipCheck.expires_at;
 
             let message = `Your IP address has been ${
               banType === "permanent" ? "permanently " : ""
-            }blocked: ${result.reason}`;
+            }blocked: ${ipCheck.reason || "No reason provided"}`; // Add fallback for reason
             if (banType === "temporary" && expires) {
               const expiryDate = new Date(expires);
               message += ` (expires: ${expiryDate.toLocaleDateString()})`;
@@ -107,7 +126,10 @@ export const useEnhancedSpamDetection = () => {
               allowed: banType === "shadowban", // Allow shadowbanned users to post but flag for review
               reason: "ip_banned",
               message,
-              blockExpiresAt: expires,
+              blockExpiresAt: expires || undefined, // Ensure undefined if null
+              remainingPostsHour: 0, // Default for RateLimitInfo when not allowed
+              remainingPostsDay: 0,
+              remainingTopicsDay: 0,
             };
           }
         }
@@ -132,7 +154,7 @@ export const useEnhancedSpamDetection = () => {
         setIsChecking(false);
       }
     },
-    [generateFingerprint]
+    [generateFingerprint] // generateFingerprint is a stable useCallback, so this is fine
   );
 
   const analyzeContent = useCallback(
@@ -141,10 +163,13 @@ export const useEnhancedSpamDetection = () => {
       contentType: "post" | "topic" = "post"
     ): Promise<SpamCheckResult> => {
       try {
-        const { data, error } = await supabase.rpc("analyze_content_for_spam", {
-          content_text: content,
-          content_type: contentType,
-        });
+        const { data: analysisDataRaw, error } = await supabase.rpc(
+          "analyze_content_for_spam",
+          {
+            content_text: content,
+            content_type: contentType,
+          }
+        );
 
         if (error) {
           console.error("Content analysis failed:", error);
@@ -153,11 +178,7 @@ export const useEnhancedSpamDetection = () => {
           };
         }
 
-        const result = data as {
-          is_spam: boolean;
-          confidence: number;
-          indicators: Record<string, any>;
-        };
+        const result = analysisDataRaw as unknown as ContentAnalysisResult; // Cast to specific interface
 
         return {
           allowed: !result.is_spam,
@@ -175,7 +196,7 @@ export const useEnhancedSpamDetection = () => {
         return { allowed: true }; // Fail open
       }
     },
-    []
+    [] // No dependencies needed for analyzeContent as it uses supabase and arguments
   );
 
   const recordActivity = useCallback(
@@ -200,7 +221,7 @@ export const useEnhancedSpamDetection = () => {
         // Don't throw - this shouldn't block posting
       }
     },
-    [generateFingerprint]
+    [generateFingerprint] // generateFingerprint is a stable useCallback, so this is fine
   );
 
   const reportSpam = useCallback(
@@ -208,7 +229,7 @@ export const useEnhancedSpamDetection = () => {
       contentType: "post" | "topic",
       contentId: string,
       reason: string,
-      reporterId?: string
+      reporterId?: string | null // Allow reporterId to be null
     ): Promise<boolean> => {
       try {
         const userIP = await getUserIPWithFallback();
@@ -216,7 +237,7 @@ export const useEnhancedSpamDetection = () => {
         const { error } = await supabase.from("spam_reports").insert({
           content_type: contentType,
           content_id: contentId,
-          reporter_id: reporterId || null,
+          reporter_id: reporterId || null, // Ensure null if undefined
           reporter_ip: userIP,
           report_reason: reason,
           automated_detection: false,
@@ -233,7 +254,7 @@ export const useEnhancedSpamDetection = () => {
         return false;
       }
     },
-    []
+    [] // No dependencies needed for reportSpam as it uses supabase and arguments
   );
 
   return {

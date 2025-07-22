@@ -48,10 +48,25 @@ interface BannedWord {
   created_at: string;
 }
 
+// New interfaces for test result
+interface ReplacementMade {
+  pattern: string;
+  replacement: string;
+}
+
+interface TestResult {
+  is_blocked: boolean;
+  replacements_count: number;
+  processed_content: string;
+  replacements_made: ReplacementMade[];
+  // Add any other properties that 'process_banned_words' might return
+}
+
 export const BannedWordsManager = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [testContent, setTestContent] = useState("");
-  const [testResult, setTestResult] = useState<any>(null);
+  // Changed 'any' to 'TestResult'
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [editingWord, setEditingWord] = useState<BannedWord | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
@@ -59,7 +74,8 @@ export const BannedWordsManager = () => {
   const queryClient = useQueryClient();
 
   // Fetch banned words
-  const { data: bannedWords, isLoading } = useQuery({
+  const { data: bannedWords, isLoading } = useQuery<BannedWord[]>({
+    // Explicitly type data
     queryKey: ["banned-words"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -120,13 +136,15 @@ export const BannedWordsManager = () => {
   });
 
   // Test content against banned words
-  const testContentMutation = useMutation({
+  const testContentMutation = useMutation<TestResult, Error, string>({
+    // Explicitly type mutation
     mutationFn: async (content: string) => {
       const { data, error } = await supabase.rpc("process_banned_words", {
         content_text: content,
       });
       if (error) throw error;
-      return data;
+      // Convert to unknown first, then to TestResult to satisfy TypeScript
+      return data as unknown as TestResult;
     },
     onSuccess: (data) => {
       setTestResult(data);
@@ -185,9 +203,12 @@ export const BannedWordsManager = () => {
     onSave,
   }: {
     word?: BannedWord;
-    onSave: (data: any) => void;
+    // Type 'data' to match the formData's structure
+    onSave: (data: Omit<BannedWord, "id" | "created_at">) => void;
   }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<
+      Omit<BannedWord, "id" | "created_at">
+    >({
       word_pattern: word?.word_pattern || "",
       severity: word?.severity || "moderate",
       category: word?.category || "general",
@@ -238,7 +259,10 @@ export const BannedWordsManager = () => {
             <Select
               value={formData.action}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, action: value as any }))
+                setFormData((prev) => ({
+                  ...prev,
+                  action: value as BannedWord["action"],
+                }))
               }
             >
               <SelectTrigger>
@@ -257,7 +281,10 @@ export const BannedWordsManager = () => {
             <Select
               value={formData.severity}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, severity: value as any }))
+                setFormData((prev) => ({
+                  ...prev,
+                  severity: value as BannedWord["severity"],
+                }))
               }
             >
               <SelectTrigger>
@@ -295,7 +322,10 @@ export const BannedWordsManager = () => {
             <Select
               value={formData.category}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, category: value as any }))
+                setFormData((prev) => ({
+                  ...prev,
+                  category: value as BannedWord["category"],
+                }))
               }
             >
               <SelectTrigger>
@@ -315,7 +345,10 @@ export const BannedWordsManager = () => {
             <Select
               value={formData.match_type}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, match_type: value as any }))
+                setFormData((prev) => ({
+                  ...prev,
+                  match_type: value as BannedWord["match_type"],
+                }))
               }
             >
               <SelectTrigger>
@@ -426,9 +459,10 @@ export const BannedWordsManager = () => {
                           <p className="text-sm text-muted-foreground mb-2">
                             Replacements made:
                           </p>
+                          {/* Corrected 'replacement: any' to 'replacement: ReplacementMade' */}
                           <div className="flex flex-wrap gap-1">
                             {testResult.replacements_made.map(
-                              (replacement: any, index: number) => (
+                              (replacement: ReplacementMade, index: number) => (
                                 <Badge
                                   key={index}
                                   variant="outline"

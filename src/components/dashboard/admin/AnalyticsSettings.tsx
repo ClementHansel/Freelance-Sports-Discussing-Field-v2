@@ -17,20 +17,22 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types"; // Import Json type
 
 export const AnalyticsSettings: React.FC = () => {
   const { getSetting, updateSetting, isUpdating } = useForumSettings();
   const { hasConsent } = useCookieConsent();
   const { toast } = useToast();
 
+  // Explicitly cast the return value of getSetting to string
   const [gaTrackingId, setGaTrackingId] = useState(
-    getSetting("google_analytics_id", "")
+    getSetting("google_analytics_id", "") as string
   );
 
   const handleSaveGA = async () => {
     updateSetting({
       key: "google_analytics_id",
-      value: gaTrackingId,
+      value: gaTrackingId as Json, // Explicitly cast to Json
       type: "string",
       category: "analytics",
       description: "Google Analytics tracking ID",
@@ -77,7 +79,7 @@ export const AnalyticsSettings: React.FC = () => {
             <Input
               id="ga-tracking-id"
               placeholder="G-XXXXXXXXXX"
-              value={gaTrackingId}
+              value={gaTrackingId} // gaTrackingId is already typed as string
               onChange={(e) => setGaTrackingId(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">

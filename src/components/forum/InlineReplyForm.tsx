@@ -11,11 +11,35 @@ import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { htmlToText } from "@/lib/utils/htmlToText";
+import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
+
+// Define a minimal Post interface for what's used in this component
+interface PostForReplyForm {
+  id: string;
+  content: string | null; // Content can be null in DB
+  is_anonymous: boolean | null; // Can be null in DB
+  created_at: string | null; // Can be null in DB
+  profiles?: {
+    // Joined profiles data
+    username: string | null; // Username can be null
+  } | null; // Profiles object itself can be null if not joined or no author
+}
+
+// Define a minimal Topic interface for what's used in this component
+interface TopicForReplyForm {
+  id: string;
+  title: string;
+  created_at: string | null; // Can be null in DB
+  // Add other topic properties if needed, but only those used by this component
+}
+
+// Union type for the parentPost prop
+type ParentPostType = PostForReplyForm | TopicForReplyForm;
 
 interface InlineReplyFormProps {
   topicId: string;
   parentPostId: string | null;
-  parentPost?: any; // Consider defining a more specific type for parentPost
+  parentPost?: ParentPostType; // Typed parentPost
   onCancel: () => void;
   onSuccess: () => void;
   isTopicReply?: boolean;
@@ -124,13 +148,14 @@ export const InlineReplyForm: React.FC<InlineReplyFormProps> = ({
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span>Replying to</span>
               <span className="font-medium text-slate-700">
-                {isTopicReply
-                  ? "Original Post"
-                  : `${
-                      parentPost.is_anonymous
-                        ? "Guest"
-                        : parentPost.profiles?.username || "Unknown"
-                    }`}
+                {
+                  isTopicReply
+                    ? "Original Post"
+                    : (parentPost as PostForReplyForm).is_anonymous // Cast for is_anonymous
+                    ? "Guest"
+                    : (parentPost as PostForReplyForm).profiles?.username ||
+                      "Unknown" // Cast for profiles
+                }
               </span>
               {!isTopicReply && parentPost.created_at && (
                 <>
@@ -144,8 +169,8 @@ export const InlineReplyForm: React.FC<InlineReplyFormProps> = ({
             <div className="text-xs text-slate-500 italic bg-white/50 rounded p-1">
               {(() => {
                 const text = isTopicReply
-                  ? parentPost.title
-                  : htmlToText(parentPost.content);
+                  ? (parentPost as TopicForReplyForm).title // Cast for title
+                  : htmlToText((parentPost as PostForReplyForm).content || ""); // Cast for content, provide fallback for htmlToText
                 return `"${
                   text.length > 150 ? `${text.substring(0, 150)}...` : text
                 }"`;
@@ -168,8 +193,6 @@ export const InlineReplyForm: React.FC<InlineReplyFormProps> = ({
             </div>
             <div className="text-xs mt-2 text-amber-600">
               <Link href="/register" className="underline hover:no-underline">
-                {" "}
-                {/* Changed 'to' to 'href' */}
                 Create account for unlimited posting + images/links
               </Link>
             </div>

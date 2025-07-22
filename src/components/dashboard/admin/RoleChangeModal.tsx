@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { AdminUser } from "@/hooks/useAdminUsers";
+import { AdminUser } from "@/hooks/useAdminUsers"; // Assuming AdminUser is correctly typed here
 
 interface RoleChangeModalProps {
   user: AdminUser | null;
@@ -50,9 +50,12 @@ export const RoleChangeModal = ({
       if (deleteError) throw deleteError;
 
       // Then insert new role
+      // The 'role' column in 'user_roles' table is likely an enum or a specific set of strings.
+      // We can assert `selectedRole` to that specific union type.
+      // Assuming 'admin', 'moderator', 'user' are the valid roles.
       const { error: insertError } = await supabase.from("user_roles").insert({
         user_id: user.id,
-        role: selectedRole as "admin" | "moderator" | "user",
+        role: selectedRole as "admin" | "moderator" | "user", // Explicit assertion
       });
 
       if (insertError) throw insertError;
@@ -64,10 +67,26 @@ export const RoleChangeModal = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Changed 'any' to 'unknown'
+      let errorMessage = "Failed to update user role";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
+
       toast({
         title: "Error",
-        description: error.message || "Failed to update user role",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

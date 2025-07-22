@@ -51,10 +51,29 @@ export const BanUserModal = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // 'unknown' is the safest type for caught errors
+      let errorMessage = "Failed to ban user";
+
+      if (error instanceof Error) {
+        // If it's a standard Error object
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        // If it's a string literal error
+        errorMessage = error;
+      } else if (
+        // Check if it's an object, not null, has a 'message' property, and that message is a string
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string" // Type assertion to an object with unknown message
+      ) {
+        errorMessage = (error as { message: string }).message; // Now safely assert to string
+      }
+
       toast({
         title: "Error",
-        description: error.message || "Failed to ban user",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -67,12 +86,12 @@ export const BanUserModal = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Ban User</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to ban <strong>{user?.username}</strong>? This
-            action cannot be undone and will permanently delete their account
-            and all associated data.
-          </AlertDialogDescription>
         </AlertDialogHeader>
+        <AlertDialogDescription>
+          Are you sure you want to ban <strong>{user?.username}</strong>? This
+          action cannot be undone and will permanently delete their account and
+          all associated data.
+        </AlertDialogDescription>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction

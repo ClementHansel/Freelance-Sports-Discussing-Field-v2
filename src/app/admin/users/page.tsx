@@ -1,24 +1,18 @@
-import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
+import AdminUsersPage from "../page";
+import UserManagement from "@/components/dashboard/admin/UserManagement";
 
-// Dynamically import UserManagement, disabling server-side rendering
-const UserManagementClient = dynamic(
-  () => import("@/components/dashboard/admin/UserManagement"),
-  {
-    ssr: false, // Prevents useSearchParams() (and other client-only APIs) from being called during SSR
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading user management...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function AdminUsers() {
+export default function AdminUserPage() {
   return (
-    <div className="flex-1 w-full">
-      {/* The client component will only be rendered in the browser */}
-      <UserManagementClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <UserManagement />
+    </Suspense>
   );
 }

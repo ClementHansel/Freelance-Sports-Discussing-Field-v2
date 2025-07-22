@@ -22,26 +22,39 @@ import { Input } from "@/components/ui/input";
 import { SeoMetadataForm, SeoMetadata } from "./SeoMetadataForm";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Search, ExternalLink } from "lucide-react";
+import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
 
-interface Topic {
+// Define the Topic interface to accurately reflect the final mapped data structure
+export interface Topic {
   id: string;
   title: string;
   slug: string;
-  view_count: number;
-  reply_count: number;
-  created_at: string;
+  view_count: number | null; // <--- CHANGED: Allow null
+  reply_count: number | null; // <--- CHANGED: Allow null
+  created_at: string | null; // <--- CHANGED: Allow null
   category: {
+    // This is the transformed category object
     name: string;
     slug: string;
   };
-  meta_title?: string;
-  meta_description?: string;
-  canonical_url?: string;
-  meta_keywords?: string;
-  og_title?: string;
-  og_description?: string;
-  og_image?: string;
+  // Explicitly allow null for SEO fields based on typical database nullable columns
+  meta_title: string | null;
+  meta_description: string | null;
+  canonical_url: string | null;
+  meta_keywords: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
 }
+
+// Define the type for the raw data returned by the Supabase query before mapping
+type TopicQueryResultRow = Database["public"]["Tables"]["topics"]["Row"] & {
+  // This matches the 'categories!inner(name, slug)' part of your select query
+  categories: {
+    name: string;
+    slug: string;
+  } | null; // Use '| null' if the join could potentially be null (though 'inner' usually prevents this)
+};
 
 export const TopicSeoManager: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
@@ -51,7 +64,8 @@ export const TopicSeoManager: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: topics, isLoading } = useQuery({
+  // Explicitly type the data returned by useQuery
+  const { data: topics, isLoading } = useQuery<Topic[]>({
     queryKey: ["topics-seo", searchQuery],
     queryFn: async () => {
       let query = supabase
@@ -62,7 +76,7 @@ export const TopicSeoManager: React.FC = () => {
           meta_title, meta_description, canonical_url,
           meta_keywords, og_title, og_description, og_image,
           categories!inner(name, slug)
-        `
+          `
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -71,17 +85,32 @@ export const TopicSeoManager: React.FC = () => {
         query = query.ilike("title", `%${searchQuery}%`);
       }
 
+      // The data here will be TopicQueryResultRow[]
       const { data, error } = await query;
 
       if (error) throw error;
 
-      return data?.map((topic: any) => ({
-        ...topic,
+      // Map the raw query result to the Topic interface
+      return (data as TopicQueryResultRow[]).map((topicItem) => ({
+        // Typed topicItem
+        id: topicItem.id,
+        title: topicItem.title,
+        slug: topicItem.slug,
+        view_count: topicItem.view_count, // Now correctly number | null
+        reply_count: topicItem.reply_count, // Now correctly number | null
+        created_at: topicItem.created_at, // Now correctly string | null
         category: {
-          name: topic.categories.name,
-          slug: topic.categories.slug,
+          name: topicItem.categories?.name || "", // Provide fallback for safety if categories can be null
+          slug: topicItem.categories?.slug || "", // Provide fallback for safety
         },
-      })) as Topic[];
+        meta_title: topicItem.meta_title,
+        meta_description: topicItem.meta_description,
+        canonical_url: topicItem.canonical_url,
+        meta_keywords: topicItem.meta_keywords,
+        og_title: topicItem.og_title,
+        og_description: topicItem.og_description,
+        og_image: topicItem.og_image,
+      }));
     },
   });
 
@@ -93,9 +122,10 @@ export const TopicSeoManager: React.FC = () => {
       topicId: string;
       seoData: SeoMetadata;
     }) => {
+      // Ensure seoData keys match the database columns for update
       const { error } = await supabase
         .from("topics")
-        .update(seoData)
+        .update(seoData) // seoData keys should align with 'topics' table columns
         .eq("id", topicId);
 
       if (error) throw error;
@@ -109,10 +139,24 @@ export const TopicSeoManager: React.FC = () => {
         description: "Topic SEO metadata has been updated successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      // Type error as unknown
+      let errorMessage = "Failed to update SEO metadata.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
       toast({
         title: "Error",
-        description: "Failed to update SEO metadata.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -145,11 +189,17 @@ export const TopicSeoManager: React.FC = () => {
     return !!(
       topic.meta_title ||
       topic.meta_description ||
-      topic.canonical_url
+      topic.canonical_url ||
+      topic.meta_keywords ||
+      topic.og_title ||
+      topic.og_description ||
+      topic.og_image
     );
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    // Allow null for dateString
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
@@ -191,9 +241,11 @@ export const TopicSeoManager: React.FC = () => {
                       /{topic.category.slug}/{topic.slug}
                     </span>
                     <span>•</span>
-                    <span>{topic.view_count} views</span>
+                    <span>{topic.view_count || 0} views</span>{" "}
+                    {/* Add fallback for display */}
                     <span>•</span>
-                    <span>{topic.reply_count} replies</span>
+                    <span>{topic.reply_count || 0} replies</span>{" "}
+                    {/* Add fallback for display */}
                     <span>•</span>
                     <span>{formatDate(topic.created_at)}</span>
                   </CardDescription>

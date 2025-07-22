@@ -1,22 +1,17 @@
-import dynamic from "next/dynamic";
+import CategorySlug from "@/components/forum/category/Category";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-const CategorySlugClient = dynamic(
-  () => import("@/components/forum/category/Category"),
-  {
-    ssr: false,
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading content...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function CategorySlugPage() {
+export default function CategoryPage() {
   return (
-    <div className="flex-1 w-full">
-      <CategorySlugClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <CategorySlug />
+    </Suspense>
   );
 }

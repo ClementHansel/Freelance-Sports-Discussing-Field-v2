@@ -26,7 +26,8 @@ export const InlineContentEditor: React.FC<InlineContentEditorProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
 
-  const content = getSetting(settingKey, defaultContent);
+  // Explicitly cast the result of getSetting to string
+  const content = getSetting(settingKey, defaultContent) as string;
 
   const cleanHtmlForEditor = (htmlContent: string) => {
     if (!htmlContent) return "";
@@ -59,10 +60,10 @@ export const InlineContentEditor: React.FC<InlineContentEditorProps> = ({
       "📊 Raw content from getSetting:",
       content ? "Content exists" : "No content"
     );
-    console.log("📏 Raw content length:", content?.length || 0);
+    console.log("📏 Raw content length:", content.length || 0); // content is now guaranteed string
 
     // Get the current content from database or fallback to default
-    const rawContent = content || defaultContent;
+    const rawContent = content || defaultContent; // rawContent is now guaranteed string
     const cleanedContent = cleanHtmlForEditor(rawContent);
 
     console.log("🔄 Loading content for editing:", {
@@ -84,8 +85,8 @@ export const InlineContentEditor: React.FC<InlineContentEditorProps> = ({
       await updateSetting({
         key: settingKey,
         value: editContent,
-        type: "code",
-        category: "legal",
+        type: "code", // Assuming 'code' is the correct type for HTML content
+        category: "legal", // Assuming 'legal' is the correct category
         description: `${title} content`,
       });
       setIsEditing(false);
@@ -155,6 +156,7 @@ export const InlineContentEditor: React.FC<InlineContentEditorProps> = ({
         </div>
       ) : (
         <div className="prose prose-slate max-w-none">
+          {/* Ensure content is always a string for HTMLRenderer */}
           {content ? (
             <HTMLRenderer content={content} />
           ) : (

@@ -6,6 +6,7 @@ import { useAuth } from "./useAuth";
 import { sessionManager } from "@/lib/utils/sessionManager";
 import { getMandatoryUserIP } from "@/lib/utils/ipUtils";
 import { useEnhancedSpamDetection } from "./useEnhancedSpamDetection";
+import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
 
 interface CreatePostData {
   content: string;
@@ -13,12 +14,34 @@ interface CreatePostData {
   parent_post_id?: string | null;
 }
 
+// Define the expected return type for check_banned_words RPC
+interface BannedWordsCheckResult {
+  is_blocked: boolean;
+  matches: Array<{ word: string; severity?: string; category?: string }>; // Added optional severity/category if they exist
+}
+
+// Define the expected structure for the topic data with joined categories
+type TopicWithCategory = Database["public"]["Tables"]["topics"]["Row"] & {
+  categories?: {
+    // Joined category data
+    level: number;
+    name: string;
+    requires_moderation: boolean;
+  } | null;
+};
+
+// Define the type for a new post inserted into the database
+type NewPost = Database["public"]["Tables"]["posts"]["Insert"];
+// Define the type for a post returned after insertion (with all columns)
+type InsertedPost = Database["public"]["Tables"]["posts"]["Row"];
+
 export const useCreatePost = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { checkRateLimit, analyzeContent } = useEnhancedSpamDetection();
 
-  return useMutation({
+  return useMutation<InsertedPost, Error, CreatePostData>({
+    // Explicitly type mutation: Result, Error, Variables
     mutationFn: async (data: CreatePostData) => {
       // For anonymous users, check spam content only (rate limits removed)
       if (!user) {
@@ -44,14 +67,12 @@ export const useCreatePost = () => {
         console.error("Banned words check failed:", bannedWordsError);
         // Continue with creation if check fails to avoid blocking legitimate posts
       } else if (bannedWordsResult) {
-        const result = bannedWordsResult as {
-          is_blocked: boolean;
-          matches: Array<{ word: string }>;
-        };
+        // Cast bannedWordsResult to the defined interface
+        const result = bannedWordsResult as unknown as BannedWordsCheckResult;
         if (result.is_blocked) {
           const matches = result.matches || [];
           const bannedWords = matches
-            .map((match: any) => match.word)
+            .map((match) => match.word) // 'match' is now typed, no 'any' needed
             .join(", ");
           throw new Error(
             `You are not allowed to make posts with: ${bannedWords}`
@@ -68,6 +89,11 @@ export const useCreatePost = () => {
 
       if (topicError) {
         throw new Error("Invalid topic");
+      }
+
+      if (!topic) {
+        // Add null check for topic
+        throw new Error("Topic not found.");
       }
 
       // Validate that the topic's category is level 2 or 3
@@ -90,18 +116,20 @@ export const useCreatePost = () => {
       }
 
       // Determine moderation status: all posts are auto-approved
-      let moderationStatus = "approved";
+      let moderationStatus: "approved" | "pending" = "approved"; // Explicitly type union
       if (topic.categories?.requires_moderation) {
         // Category-specific moderation requirements (currently disabled for all categories)
         moderationStatus = "pending";
       }
 
-      const postData: any = {
+      const postData: NewPost = {
+        // Typed postData as NewPost (Insert type)
         content: data.content,
         topic_id: data.topic_id,
         parent_post_id: data.parent_post_id || null,
         moderation_status: moderationStatus,
         ip_address: userIP,
+        // author_id and is_anonymous will be set conditionally below
       };
 
       if (user) {
@@ -128,6 +156,11 @@ export const useCreatePost = () => {
         throw error;
       }
 
+      if (!post) {
+        // Add null check for inserted post
+        throw new Error("Post creation failed: No post data returned.");
+      }
+
       // Update topic's last_reply_at using secure function
       const { error: updateError } = await supabase.rpc(
         "update_topic_last_reply",
@@ -152,11 +185,10 @@ export const useCreatePost = () => {
         console.error("Error incrementing reply count:", incrementError);
       }
 
-      // No need for manual rate limiting - it's handled by the temp user system
-
       return post;
     },
     onSuccess: (post, variables) => {
+      // 'post' is now InsertedPost, 'variables' is CreatePostData
       // Show appropriate success message based on moderation status
       if (post.moderation_status === "pending") {
         // This will be shown via toast in the component that calls this hook
@@ -170,12 +202,31 @@ export const useCreatePost = () => {
         // Invalidate ALL topics queries to ensure proper refresh
         queryClient.invalidateQueries({ queryKey: ["topics"] });
         queryClient.invalidateQueries({ queryKey: ["topics", undefined] });
-        queryClient.invalidateQueries({ queryKey: ["hot-topics"] });
+        queryClient.invalidateQueries({ queryKey: ["hot-topics"] }); // Invalidate hot topics too
 
         // Force refetch to ensure immediate update
         queryClient.refetchQueries({ queryKey: ["topics"] });
         queryClient.refetchQueries({ queryKey: ["topics", undefined] });
       }
+    },
+    onError: (error: unknown) => {
+      // Type error as unknown
+      let errorMessage = "Failed to create post";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
+      console.error("Post creation error:", error);
+      // You might want to add a toast here as well for user feedback
+      // toast({ title: "Error creating post", description: errorMessage, variant: "destructive" });
     },
   });
 };

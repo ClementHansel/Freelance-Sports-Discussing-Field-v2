@@ -25,6 +25,48 @@ import {
 } from "lucide-react";
 import { useComprehensiveIPActivity } from "@/hooks/useComprehensiveIPActivity";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
+
+// --- Interfaces reflecting the *expected* structure of the JSON blobs ---
+// These are for internal use within the component after casting from Json.
+interface ExpectedRecentActivity {
+  type: string; // e.g., "page_visit", "post_attempt", "topic_create", "search", "report_submit"
+  is_blocked: boolean;
+  created_at: string;
+  action_data?: {
+    // Data specific to the action type, optional
+    page_path?: string;
+    search_query?: string;
+    // Add other specific fields for action_data if they exist (e.g., post_content, topic_title)
+  } | null;
+  content_type?: string | null; // e.g., "post", "topic"
+  content_id?: string | null; // ID of the related content
+  blocked_reason?: string | null; // Reason if the activity was blocked
+}
+
+interface ExpectedBanStatus {
+  is_banned: boolean;
+  ban_type?: string | null; // e.g., "permanent", "temporary", "shadowban"
+  reason?: string | null;
+  expires_at?: string | null;
+  admin_notes?: string | null;
+}
+
+// --- Main interface for the comprehensive IP activity data, matching types.ts ---
+// This interface directly reflects the 'Returns' type of get_comprehensive_ip_activity from your types.ts
+export interface ComprehensiveIPActivityData {
+  ip_address: string; // Changed from unknown to string, assuming it's always a string IP
+  total_sessions: number;
+  total_page_visits: number;
+  total_posts: number;
+  total_topics: number;
+  total_reports: number;
+  blocked_attempts: number;
+  first_seen: string; // ISO string date
+  last_seen: string; // ISO string date
+  recent_activities: Json; // This comes as Json from Supabase RPC
+  ban_status: Json; // This comes as Json from Supabase RPC
+}
 
 interface IPActivityDetailsProps {
   ipAddress: string;
@@ -35,6 +77,8 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
   ipAddress,
   onClose,
 }) => {
+  // Explicitly type the data returned by the hook
+  // The hook itself should return ComprehensiveIPActivityData | undefined
   const {
     data: activity,
     isLoading,
@@ -67,12 +111,13 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
     }
   };
 
-  const getActivityBadge = (activity: any) => {
-    if (activity.is_blocked) {
+  // Cast 'act' to ExpectedRecentActivity for type safety within this function
+  const getActivityBadge = (act: ExpectedRecentActivity) => {
+    if (act.is_blocked) {
       return <Badge variant="destructive">Blocked</Badge>;
     }
 
-    switch (activity.type) {
+    switch (act.type) {
       case "page_visit":
         return <Badge variant="outline">Visit</Badge>;
       case "post_attempt":
@@ -84,11 +129,16 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
       case "report_submit":
         return <Badge variant="destructive">Report</Badge>;
       default:
-        return <Badge variant="outline">{activity.type}</Badge>;
+        return <Badge variant="outline">{act.type}</Badge>;
     }
   };
 
   const exportData = () => {
+    // Safely cast Json fields to their expected types for export using double-cast
+    const banStatusTyped = activity.ban_status as unknown as ExpectedBanStatus;
+    const recentActivitiesTyped =
+      activity.recent_activities as unknown as ExpectedRecentActivity[];
+
     const exportData = {
       ip_address: activity.ip_address,
       summary: {
@@ -101,8 +151,8 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
         first_seen: activity.first_seen,
         last_seen: activity.last_seen,
       },
-      ban_status: activity.ban_status,
-      recent_activities: activity.recent_activities,
+      ban_status: banStatusTyped, // Use the typed version
+      recent_activities: recentActivitiesTyped, // Use the typed version
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -122,6 +172,11 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
     toast({ title: "Activity data exported successfully" });
   };
 
+  // Safely cast ban_status and recent_activities for rendering using double-cast
+  const banStatus = activity.ban_status as unknown as ExpectedBanStatus;
+  const recentActivities =
+    activity.recent_activities as unknown as ExpectedRecentActivity[];
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-6xl max-h-[90vh] overflow-hidden">
@@ -129,10 +184,11 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
           <div className="flex items-center gap-3">
             <MapPin className="h-6 w-6" />
             <h2 className="text-2xl font-bold">IP Activity: {ipAddress}</h2>
-            {activity.ban_status.is_banned && (
+            {/* Access properties from the safely cast 'banStatus' */}
+            {banStatus.is_banned && (
               <Badge variant="destructive" className="flex items-center gap-1">
                 <Ban className="h-3 w-3" />
-                {activity.ban_status.ban_type}
+                {banStatus.ban_type}
               </Badge>
             )}
           </div>
@@ -180,28 +236,27 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
           </div>
 
           {/* Ban Status */}
-          {activity.ban_status.is_banned && (
+          {banStatus.is_banned && (
             <Card className="p-4 mb-6 border-destructive bg-destructive/5">
               <h3 className="font-semibold text-destructive mb-2">
                 Ban Information
               </h3>
               <div className="space-y-2">
                 <div>
-                  <strong>Type:</strong> {activity.ban_status.ban_type}
+                  <strong>Type:</strong> {banStatus.ban_type}
                 </div>
                 <div>
-                  <strong>Reason:</strong> {activity.ban_status.reason}
+                  <strong>Reason:</strong> {banStatus.reason}
                 </div>
-                {activity.ban_status.expires_at && (
+                {banStatus.expires_at && (
                   <div>
                     <strong>Expires:</strong>{" "}
-                    {new Date(activity.ban_status.expires_at).toLocaleString()}
+                    {new Date(banStatus.expires_at).toLocaleString()}
                   </div>
                 )}
-                {activity.ban_status.admin_notes && (
+                {banStatus.admin_notes && (
                   <div>
-                    <strong>Admin Notes:</strong>{" "}
-                    {activity.ban_status.admin_notes}
+                    <strong>Admin Notes:</strong> {banStatus.admin_notes}
                   </div>
                 )}
               </div>
@@ -214,7 +269,8 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
               Recent Activity Timeline
             </h3>
             <div className="space-y-3 max-h-96 overflow-auto">
-              {activity.recent_activities.map((act, index) => (
+              {/* Map over the safely cast 'recentActivities' */}
+              {recentActivities.map((act, index) => (
                 <div
                   key={index}
                   className={`flex items-center gap-3 p-3 rounded-lg ${
@@ -232,6 +288,7 @@ export const IPActivityDetails: React.FC<IPActivityDetailsProps> = ({
                       </span>
                     </div>
 
+                    {/* Access properties from act.action_data with optional chaining */}
                     {act.action_data?.page_path && (
                       <div className="text-sm">
                         <strong>Page:</strong> {act.action_data.page_path}

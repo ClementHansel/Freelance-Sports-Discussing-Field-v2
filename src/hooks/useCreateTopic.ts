@@ -6,6 +6,7 @@ import { generateSlugFromTitle } from "@/lib/utils/urlHelpers";
 import { useAuth } from "./useAuth";
 import { sessionManager } from "@/lib/utils/sessionManager";
 import { getMandatoryUserIP } from "@/lib/utils/ipUtils";
+import { Database, Json } from "@/integrations/supabase/types"; // Import Database and Json
 
 interface CreateTopicData {
   title: string;
@@ -13,11 +14,32 @@ interface CreateTopicData {
   category_id: string;
 }
 
+// Define the expected structure for the category data with joined categories
+type CategoryInfo = Database["public"]["Tables"]["categories"]["Row"] & {
+  level: number;
+  name: string;
+  requires_moderation: boolean;
+};
+
+// Define the type for a new topic inserted into the database
+type NewTopic = Database["public"]["Tables"]["topics"]["Insert"];
+
+// Define the type for a topic returned after insertion (with joined category data)
+type InsertedTopic = Database["public"]["Tables"]["topics"]["Row"] & {
+  categories: {
+    // This matches the 'select' query for categories
+    name: string;
+    slug: string;
+    color: string | null; // <--- CHANGED: Allow color to be null
+  } | null; // Can be null if the join fails or category doesn't exist
+};
+
 export const useCreateTopic = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<InsertedTopic, Error, CreateTopicData>({
+    // Explicitly type mutation: Result, Error, Variables
     mutationFn: async (data: CreateTopicData) => {
       console.log("Creating topic:", data);
 
@@ -44,6 +66,11 @@ export const useCreateTopic = () => {
         throw new Error("Invalid category selected");
       }
 
+      if (!category) {
+        // Add null check for category
+        throw new Error("Category not found.");
+      }
+
       if (category.level !== 2 && category.level !== 3) {
         throw new Error(
           `Topics can only be created in discussion or age group categories. "${category.name}" is for browsing only.`
@@ -59,11 +86,21 @@ export const useCreateTopic = () => {
 
       if (user) {
         // Check if this is a temporary user
-        const { data: tempUserCheck } = await supabase.rpc(
-          "is_temporary_user",
-          { user_id: user.id }
-        );
-        isTemporaryUser = tempUserCheck || false;
+        // The RPC 'is_temporary_user' should ideally return a boolean
+        const { data: tempUserCheck, error: tempUserCheckError } =
+          await supabase.rpc("is_temporary_user", { user_id: user.id });
+
+        if (tempUserCheckError) {
+          console.error(
+            "Error checking temporary user status:",
+            tempUserCheckError
+          );
+          // Decide whether to throw or default to false. Defaulting to false for now.
+          isTemporaryUser = false;
+        } else {
+          isTemporaryUser = (tempUserCheck as boolean) || false; // Cast to boolean
+        }
+
         authorId = user.id;
         console.log(
           "DEBUG TOPIC: Creating topic for user:",
@@ -86,7 +123,8 @@ export const useCreateTopic = () => {
         );
       }
 
-      const topicData: any = {
+      const topicData: NewTopic = {
+        // Typed topicData as NewTopic (Insert type)
         title: data.title,
         content: data.content,
         category_id: data.category_id,
@@ -122,6 +160,11 @@ export const useCreateTopic = () => {
         throw error;
       }
 
+      if (!topic) {
+        // Add null check for inserted topic
+        throw new Error("Topic creation failed: No topic data returned.");
+      }
+
       console.log("Topic created successfully:", topic);
 
       // Log IP activity for topic creation - IP is guaranteed to exist
@@ -135,15 +178,30 @@ export const useCreateTopic = () => {
           p_content_id: topic.id,
           p_content_type: "topic",
           p_action_data: {
+            // p_action_data expects Json
             title: data.title,
             category_id: data.category_id,
             author_type: user ? "authenticated" : "anonymous",
-          },
+          } as Json, // Explicitly cast to Json
         });
-      } catch (logError) {
+      } catch (logError: unknown) {
+        // Type error as unknown
+        let errorMessage = "Failed to log IP activity";
+        if (logError instanceof Error) {
+          errorMessage = logError.message;
+        } else if (typeof logError === "string") {
+          errorMessage = logError;
+        } else if (
+          typeof logError === "object" &&
+          logError !== null &&
+          "message" in logError &&
+          typeof (logError as { message: unknown }).message === "string"
+        ) {
+          errorMessage = (logError as { message: string }).message;
+        }
         console.error(
           "Failed to log IP activity for topic creation:",
-          logError
+          errorMessage
         );
         // Don't throw - topic creation was successful
       }
@@ -151,11 +209,35 @@ export const useCreateTopic = () => {
       return topic;
     },
     onSuccess: (topic) => {
+      // 'topic' is now InsertedTopic
       // Invalidate and refetch topics for the category
       queryClient.invalidateQueries({
         queryKey: ["topics", topic.category_id],
       });
       queryClient.invalidateQueries({ queryKey: ["topics"] });
+      // Invalidate specific topic queries if they exist
+      queryClient.invalidateQueries({ queryKey: ["hot-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["most-viewed-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["most-commented-topics"] });
+    },
+    onError: (error: unknown) => {
+      // Type error as unknown
+      let errorMessage = "Failed to create topic";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
+      console.error("Topic creation error:", errorMessage);
+      // You might want to add a toast here as well for user feedback
+      // toast({ title: "Error creating topic", description: errorMessage, variant: "destructive" });
     },
   });
 };

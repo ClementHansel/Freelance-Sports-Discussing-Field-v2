@@ -25,7 +25,7 @@ import { useCategoryStats } from "@/hooks/useCategoryStats";
 import { formatDistanceToNow } from "date-fns";
 import { QuickTopicModal } from "../QuickTopicModal";
 import { CategoryRequestModal } from "./CategoryRequestModal";
-import { AdminControls } from "../admin-ui/AdminControls";
+import { AdminControls } from "../admin-ui/AdminControls"; // Import AdminControls
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -35,9 +35,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
 
 // Define interfaces for better type checking
-interface Category {
+export interface Category {
   id: string;
   name: string;
   slug: string;
@@ -53,7 +54,7 @@ interface Category {
   last_activity_at?: string | null;
 }
 
-interface Topic {
+export interface Topic {
   id: string;
   created_at: string | null;
   title: string;
@@ -69,7 +70,9 @@ interface Topic {
   slug: string | null;
   hot_score: number | null;
   last_post_id: string | null;
-  profiles?: { username: string | null; avatar_url: string | null } | null;
+  profiles?: Database["public"]["Tables"]["profiles"]["Row"] | null; // CHANGED: Use full Supabase Profile type
+  updated_at: string | null;
+  ip_address: string | null;
 }
 
 // Helper function to build breadcrumb hierarchy
@@ -160,7 +163,7 @@ export const CategoryView = () => {
   } = useCategoryBySlug(currentCategorySlug || "") as {
     data: Category | undefined;
     isLoading: boolean;
-    error: any;
+    error: unknown;
   };
 
   const { data: subcategories, isLoading: subcategoriesLoading } =
@@ -263,6 +266,7 @@ export const CategoryView = () => {
                     {category.name}
                   </h1>
                 </div>
+                {/* AdminControls for category, ensure AdminControls accepts Category type */}
                 <AdminControls
                   content={category}
                   contentType="category"
@@ -427,6 +431,7 @@ export const CategoryView = () => {
                           >
                             {topic.title}
                           </Link>
+                          {/* AdminControls for topic, ensure AdminControls accepts Topic type */}
                           <AdminControls content={topic} contentType="topic" />
                         </div>
                         <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-xs sm:text-sm text-gray-500">

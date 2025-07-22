@@ -46,7 +46,8 @@ export const validatePassword = (
   }
 
   // Check for special characters
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  // Removed unnecessary escapes for [ ] and / inside the character class
+  if (!/[!@#$%^&*()_+\-={};':"\\|,.<>/?]/.test(password)) {
     errors.push("Password must contain at least one special character");
     suggestions.push("Add special characters (!@#$%^&*...)");
   } else {

@@ -64,11 +64,25 @@ const ContactFormModal = () => {
 
       setFormData({ name: "", email: "", subject: "", message: "" });
       setOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Contact form error:", error);
+      let errorMessage = "Failed to send message. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -179,30 +193,28 @@ export default function Footer() {
             <h4 className="font-medium">Quick Links</h4>
             <div className="flex flex-col space-y-2 text-sm">
               <Link
-                href="/rules" // Changed 'to' to 'href'
+                href="/rules"
                 className="hover:text-primary transition-colors"
               >
                 Forum Rules
               </Link>
               <Link
-                href="/terms" // Changed 'to' to 'href'
+                href="/terms"
                 className="hover:text-primary transition-colors"
               >
                 Terms & Conditions
               </Link>
               <Link
-                href="/privacy" // Changed 'to' to 'href'
+                href="/privacy"
                 className="hover:text-primary transition-colors"
               >
                 Privacy Policy
               </Link>
-              <ContactFormModal /> {/* Contact form modal */}
+              <ContactFormModal />
               <Link
                 href="/blog"
                 className="hover:text-primary transition-colors"
               >
-                {" "}
-                {/* Changed 'to' to 'href' */}
                 Blog
               </Link>
             </div>
@@ -213,12 +225,8 @@ export default function Footer() {
             <h4 className="font-medium">Follow Us</h4>
             <div className="flex space-x-3">
               {(() => {
-                const facebookUrl = getSetting("social_facebook", "");
-                // Ensure the URL is a string before replacing
-                const cleanUrl =
-                  typeof facebookUrl === "string"
-                    ? facebookUrl.replace(/^"(.*)"$/, "$1")
-                    : "";
+                const facebookUrl = getSetting("social_facebook", "") as string; // Cast to string
+                const cleanUrl = facebookUrl.replace(/^"(.*)"$/, "$1");
                 return (
                   cleanUrl &&
                   cleanUrl !== "" && (
@@ -227,6 +235,7 @@ export default function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-primary transition-colors"
+                      title="Follow us on Facebook" // Added title for accessibility
                     >
                       <Facebook className="h-5 w-5" />
                     </a>
@@ -234,11 +243,8 @@ export default function Footer() {
                 );
               })()}
               {(() => {
-                const twitterUrl = getSetting("social_twitter", "");
-                const cleanUrl =
-                  typeof twitterUrl === "string"
-                    ? twitterUrl.replace(/^"(.*)"$/, "$1")
-                    : "";
+                const twitterUrl = getSetting("social_twitter", "") as string; // Cast to string
+                const cleanUrl = twitterUrl.replace(/^"(.*)"$/, "$1");
                 return (
                   cleanUrl &&
                   cleanUrl !== "" && (
@@ -247,6 +253,7 @@ export default function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-primary transition-colors"
+                      title="Follow us on X (formerly Twitter)" // Added title for accessibility
                     >
                       <Twitter className="h-5 w-5" />
                     </a>
@@ -254,11 +261,11 @@ export default function Footer() {
                 );
               })()}
               {(() => {
-                const instagramUrl = getSetting("social_instagram", "");
-                const cleanUrl =
-                  typeof instagramUrl === "string"
-                    ? instagramUrl.replace(/^"(.*)"$/, "$1")
-                    : "";
+                const instagramUrl = getSetting(
+                  "social_instagram",
+                  ""
+                ) as string; // Cast to string
+                const cleanUrl = instagramUrl.replace(/^"(.*)"$/, "$1");
                 return (
                   cleanUrl &&
                   cleanUrl !== "" && (
@@ -267,6 +274,7 @@ export default function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-primary transition-colors"
+                      title="Follow us on Instagram" // Added title for accessibility
                     >
                       <Instagram className="h-5 w-5" />
                     </a>
@@ -274,11 +282,8 @@ export default function Footer() {
                 );
               })()}
               {(() => {
-                const youtubeUrl = getSetting("social_youtube", "");
-                const cleanUrl =
-                  typeof youtubeUrl === "string"
-                    ? youtubeUrl.replace(/^"(.*)"$/, "$1")
-                    : "";
+                const youtubeUrl = getSetting("social_youtube", "") as string; // Cast to string
+                const cleanUrl = youtubeUrl.replace(/^"(.*)"$/, "$1");
                 return (
                   cleanUrl &&
                   cleanUrl !== "" && (
@@ -287,6 +292,7 @@ export default function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-primary transition-colors"
+                      title="Subscribe to our YouTube channel" // Added title for accessibility
                     >
                       <Youtube className="h-5 w-5" />
                     </a>

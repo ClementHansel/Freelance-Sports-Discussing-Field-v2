@@ -6,7 +6,8 @@ import DOMPurify from "dompurify";
 
 export const HeaderCodeInjector = () => {
   const { getSetting } = useForumSettings();
-  const headerCode = getSetting("header_code", "");
+  // Explicitly cast the return value of getSetting to string
+  const headerCode = getSetting("header_code", "") as string;
 
   useEffect(() => {
     if (!headerCode) return;
@@ -16,6 +17,7 @@ export const HeaderCodeInjector = () => {
     existingElements.forEach((el) => el.remove());
 
     // Sanitize the header code to prevent XSS attacks
+    // headerCode is now guaranteed to be a string due to the cast above
     const sanitizedCode = DOMPurify.sanitize(headerCode, {
       ALLOWED_TAGS: ["script", "style", "meta", "link"],
       ALLOWED_ATTR: [

@@ -1,11 +1,7 @@
+// sports-disscussing-field/src/app/metadata.ts
 import type { Metadata } from "next";
-import Script from "next/script";
-import "./globals.css";
-import { Providers } from "./providers";
-import { Suspense } from "react";
-import { Card } from "@/components/ui/card";
 
-// Define metadata directly in layout.tsx as Next.js expects it here
+// Define metadata for the entire application, pulled from your original index.html
 export const metadata: Metadata = {
   title:
     "Minor Hockey Talks - The Premier Community for Minor Hockey Discussion",
@@ -69,53 +65,3 @@ export const metadata: Metadata = {
     images: ["/lovable-uploads/d27f0c5d-529f-45bd-9e66-45b3a46ab1a6.png?v=2"],
   },
 };
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        {/* Google Analytics Script */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-RFQVZPVL0N"
-        />
-        <Script
-          id="google-analytics-script"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-RFQVZPVL0N');
-            `,
-          }}
-        />
-
-        {/* Google AdSense Script */}
-        <Script
-          strategy="lazyOnload" // Use lazyOnload for AdSense to prevent blocking page render
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5447109336224364"
-          crossOrigin="anonymous"
-        />
-
-        {/* Wrap children with the new Providers component */}
-        <Providers>
-          <Suspense
-            fallback={
-              <Card className="p-6">
-                <div className="text-center">Loading content...</div>
-              </Card>
-            }
-          >
-            {children}
-          </Suspense>
-        </Providers>
-      </body>
-    </html>
-  );
-}

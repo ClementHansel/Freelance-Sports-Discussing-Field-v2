@@ -104,8 +104,9 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
               setIsInitialized(true);
               setHasError(false);
               console.log("WysiwygEditor: Successfully initialized.");
-            } catch (error: any) {
-              // Catch error as 'any' to access .message
+            } catch (error: unknown) {
+              // Changed 'any' to 'unknown'
+              // Catch error as 'unknown' and then safely access .message
               console.error(
                 "WysiwygEditor: Error initializing contentEditable:",
                 error
@@ -114,13 +115,14 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
               setUseFallback(true);
               setErrorMessage(
                 `Editor initialization failed: ${
-                  error.message || "Unknown error"
+                  error instanceof Error ? error.message : "Unknown error"
                 }`
               );
             }
           }
-        } catch (error: any) {
-          // Catch error as 'any' to access .message
+        } catch (error: unknown) {
+          // Changed 'any' to 'unknown'
+          // Catch error as 'unknown' and then safely access .message
           console.error(
             "WysiwygEditor: Unexpected error during initialization:",
             error
@@ -128,15 +130,18 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           setHasError(true);
           setUseFallback(true);
           setErrorMessage(
-            `Unexpected error: ${error.message || "Unknown error"}`
+            `Unexpected error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
           );
         } finally {
           setIsLoading(false);
         }
       };
 
+      // Added disabled and hideToolbar to dependencies
       initializeEditor();
-    }, [value, isInitialized]);
+    }, [value, isInitialized, disabled, hideToolbar]);
 
     // Improved cursor position utilities
     const saveCursorPosition = useCallback(() => {
@@ -154,7 +159,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           start: preSelectionRange.toString().length,
           end: preSelectionRange.toString().length + range.toString().length,
         };
-      } catch (error) {
+      } catch (error: unknown) {
+        // Changed 'any' to 'unknown'
         console.warn("WysiwygEditor: Error saving cursor position:", error);
         return null;
       }
@@ -180,8 +186,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           }
 
           let charIndex = 0;
-          let startNode: Text | null = null; // Changed type to Text | null
-          let endNode: Text | null = null; // Changed type to Text | null
+          let startNode: Text | null = null;
+          let endNode: Text | null = null;
           let startOffset = 0;
           let endOffset = 0;
 
@@ -219,7 +225,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
             selection.removeAllRanges();
             selection.addRange(range);
           }
-        } catch (error) {
+        } catch (error: unknown) {
+          // Changed 'any' to 'unknown'
           console.warn(
             "WysiwygEditor: Error restoring cursor position:",
             error
@@ -251,7 +258,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
               setEditorContent(cleanContent);
               onChangeRef.current(cleanContent);
             }
-          } catch (error) {
+          } catch (error: unknown) {
+            // Changed 'any' to 'unknown'
             console.error(
               "WysiwygEditor: Error in debouncedCleanContent:",
               error
@@ -277,11 +285,15 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
             debouncedCleanContent(content);
           }
         }
-      } catch (error: any) {
-        // Catch error as 'any' to access .message
+      } catch (error: unknown) {
+        // Changed 'any' to 'unknown'
         console.error("WysiwygEditor: Error in handleInput:", error);
         setHasError(true);
-        setErrorMessage(`Input error: ${error.message || "Unknown error"}`);
+        setErrorMessage(
+          `Input error: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }, [editorContent, debouncedCleanContent]);
 
@@ -314,7 +326,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
             }, 50);
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        // Changed 'any' to 'unknown'
         console.error("WysiwygEditor: Error in handleBlur:", error);
       }
     }, []);
@@ -347,15 +360,19 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           }
 
           handleInput();
-        } catch (error: any) {
-          // Catch error as 'any' to access .message
+        } catch (error: unknown) {
+          // Changed 'any' to 'unknown'
           console.error(
             "WysiwygEditor: Error executing command:",
             command,
             error
           );
           setHasError(true);
-          setErrorMessage(`Command error: ${error.message || "Unknown error"}`);
+          setErrorMessage(
+            `Command error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
         }
       },
       [useFallback, saveCursorPosition, restoreCursorPosition, handleInput]
@@ -370,13 +387,6 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
     };
 
     const insertLink = useCallback(() => {
-      // The original code had `if (!allowImages) return;` here.
-      // Assuming this was a copy-paste error and links should be allowed regardless of image setting.
-      // If links should ONLY be allowed when images are allowed, keep the original condition.
-      // For now, removing the `allowImages` check for links.
-      // If you want to control links separately, add a new prop `allowLinks?: boolean;`
-      // For now, assuming links are generally allowed when the editor is active.
-
       const url = prompt("Enter URL:");
       if (url) {
         const selection = window.getSelection();
@@ -386,7 +396,7 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`
         );
       }
-    }, [execCommand]); // Removed allowImages from dependencies
+    }, [execCommand]);
 
     const insertImage = useCallback(() => {
       if (!allowImages) return;
@@ -419,7 +429,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
 
       // Create preview URL and insert into editor
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        // Explicitly type e
         const imageUrl = e.target?.result as string;
         const imageHtml = `<img src="${imageUrl}" alt="Uploaded image" style="max-width: 100%; height: auto; margin: 10px 0;" />`;
         execCommand("insertHTML", imageHtml);
@@ -458,7 +469,6 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
       { icon: AlignRight, command: "justifyRight", title: "Align Right" },
     ];
 
-    // Define handleFallbackChange here
     const handleFallbackChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
@@ -510,7 +520,7 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           )}
           <Textarea
             value={editorContent}
-            onChange={handleFallbackChange} // Now correctly referenced
+            onChange={handleFallbackChange}
             placeholder={placeholder}
             disabled={disabled}
             className="min-h-[200px] resize-vertical"
@@ -620,7 +630,7 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
           accept="image/*"
           onChange={handleImageUpload}
           className="hidden"
-          aria-label="Upload image file" // Added aria-label for accessibility
+          aria-label="Upload image file"
         />
 
         {/* Scrollable Editor Container */}
@@ -656,7 +666,8 @@ export const WysiwygEditor: React.FC<WysiwygEditorProps> = React.memo(
               data-placeholder={placeholder}
               dir="ltr"
               suppressContentEditableWarning={true}
-              onError={(e) => {
+              onError={(e: React.SyntheticEvent<HTMLDivElement, Event>) => {
+                // Explicitly type e
                 console.error("WysiwygEditor: ContentEditable error:", e);
                 setHasError(true);
                 setUseFallback(true);

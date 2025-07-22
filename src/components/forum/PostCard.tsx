@@ -23,7 +23,8 @@ import { AdminControls } from "./admin-ui/AdminControls";
 
 // Define PostCardTopic based on how PostCard.tsx actually uses the 'topic' object
 // and aligning with common Supabase nullability patterns.
-interface PostCardTopic {
+export interface PostCardTopic {
+  // Exported for use in Forum.tsx
   id: string;
   created_at: string | null;
   title: string;
@@ -39,6 +40,7 @@ interface PostCardTopic {
   slug: string | null; // Allows null
   hot_score: number | null;
   last_post_id: string | null;
+  ip_address?: string | null; // CHANGED: Made optional to match varying data sources
 
   // Denormalized properties directly on the topic object (from HotTopic's typical structure)
   parent_category_id: string | null;

@@ -15,14 +15,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useForumSettings } from "@/hooks/useForumSettings";
 import { Monitor, Smartphone, AlertTriangle, BarChart3 } from "lucide-react";
+import { Json } from "@/integrations/supabase/types"; // Import Json type
 
 export const AdvertisingSettings = () => {
   const { getSetting, updateSetting } = useForumSettings();
 
-  const handleSettingChange = (key: string, value: any, type?: string) => {
+  // Ensure value is explicitly cast to Json before being passed to updateSetting
+  const handleSettingChange = (key: string, value: unknown, type?: string) => {
     updateSetting({
       key,
-      value,
+      value: value as Json, // Cast to Json
       type: type || "string",
       category: "advertising",
     });
@@ -58,7 +60,10 @@ export const AdvertisingSettings = () => {
                 </p>
               </div>
               <Switch
-                checked={getSetting("advertising_enabled", "true") === "true"}
+                checked={
+                  (getSetting("advertising_enabled", "true") as string) ===
+                  "true"
+                } // Cast to string before comparison
                 onCheckedChange={(checked) =>
                   handleSettingChange(
                     "advertising_enabled",
@@ -76,7 +81,7 @@ export const AdvertisingSettings = () => {
                 type="number"
                 min="1"
                 max="10"
-                value={getSetting("ads_between_posts_frequency", "3")}
+                value={getSetting("ads_between_posts_frequency", "3") as string} // Cast to string
                 onChange={(e) =>
                   handleSettingChange(
                     "ads_between_posts_frequency",
@@ -115,7 +120,10 @@ export const AdvertisingSettings = () => {
                 </div>
               </div>
               <Switch
-                checked={getSetting("ads_desktop_enabled", "true") === "true"}
+                checked={
+                  (getSetting("ads_desktop_enabled", "true") as string) ===
+                  "true"
+                } // Cast to string before comparison
                 onCheckedChange={(checked) =>
                   handleSettingChange(
                     "ads_desktop_enabled",
@@ -137,7 +145,10 @@ export const AdvertisingSettings = () => {
                 </div>
               </div>
               <Switch
-                checked={getSetting("ads_mobile_enabled", "true") === "true"}
+                checked={
+                  (getSetting("ads_mobile_enabled", "true") as string) ===
+                  "true"
+                } // Cast to string before comparison
                 onCheckedChange={(checked) =>
                   handleSettingChange(
                     "ads_mobile_enabled",
@@ -166,10 +177,12 @@ export const AdvertisingSettings = () => {
               <Label htmlFor="ad_blocker_message">Ad Blocker Message</Label>
               <Textarea
                 id="ad_blocker_message"
-                value={getSetting(
-                  "ad_blocker_message",
-                  "Please consider disabling your ad blocker to support our site."
-                )}
+                value={
+                  getSetting(
+                    "ad_blocker_message",
+                    "Please consider disabling your ad blocker to support our site."
+                  ) as string // Cast to string
+                }
                 onChange={(e) =>
                   handleSettingChange(
                     "ad_blocker_message",
@@ -201,7 +214,7 @@ export const AdvertisingSettings = () => {
               <Label htmlFor="header_code">Header Code</Label>
               <Textarea
                 id="header_code"
-                value={getSetting("header_code", "")}
+                value={getSetting("header_code", "") as string} // Cast to string
                 onChange={(e) =>
                   handleSettingChange("header_code", e.target.value, "string")
                 }

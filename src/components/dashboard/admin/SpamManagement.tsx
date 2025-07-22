@@ -20,7 +20,9 @@ import { toast } from "@/hooks/use-toast";
 import { BannedWordsManager } from "./BannedWordsManager";
 import { BannedIPsManager } from "./BannedIPsManager";
 import { IPActivityDetails } from "./IPActivityDetails";
-import { useAllSuspiciousIPs } from "@/hooks/useComprehensiveIPActivity";
+import { useAllSuspiciousIPs } from "@/hooks/useComprehensiveIPActivity"; // Assuming this hook returns the correct type
+
+// --- Interfaces for Spam Management Data ---
 
 interface SpamReport {
   id: string;
@@ -33,29 +35,46 @@ interface SpamReport {
   created_at: string;
   reviewed_at?: string;
   admin_notes?: string;
-  reporter_ip?: string;
+  reporter_ip?: string; // Assuming this is a string IP address
+}
+
+// Define a more specific type for spam_indicators
+interface SpamIndicators {
+  [key: string]: boolean | number | string; // Adjust this union type based on actual data
 }
 
 interface ContentAnalysis {
   id: string;
   content_hash: string;
   content_type: string;
-  spam_indicators: Record<string, any>;
+  spam_indicators: SpamIndicators; // Changed from Record<string, any>
   is_spam: boolean;
   confidence_score: number;
   created_at: string;
 }
 
-interface AnonymousTracking {
-  id: string;
-  ip_address: string;
-  session_id: string;
+// Interface for the banned_ips data that might be joined to suspicious IPs
+interface BannedIPJoin {
+  reason: string | null;
+  ban_type: string | null; // <--- CHANGED: From specific literals to general string | null
+  is_active: boolean;
+  // Add other fields from banned_ips if they are joined (e.g., id, expires_at)
+}
+
+// Interface for individual suspicious IP entries
+export interface SuspiciousIP {
+  // Exported for use in useAllSuspiciousIPs hook
+  id: string; // ID from anonymous_post_tracking or similar
+  ip_address: string; // Assuming IP address is string
+  session_id: string | null; // From anonymous_post_tracking
   post_count: number;
   topic_count: number;
-  is_blocked: boolean;
-  block_reason?: string;
-  last_post_at: string;
-  created_at: string;
+  is_blocked: boolean; // From anonymous_post_tracking
+  block_reason?: string | null; // From anonymous_post_tracking
+  last_post_at: string; // From anonymous_post_tracking
+  created_at: string | null; // <--- THIS MUST BE 'string | null'
+  // Joined data from banned_ips table
+  banned_ips: BannedIPJoin | null;
 }
 
 export default function SpamManagement() {
@@ -64,7 +83,10 @@ export default function SpamManagement() {
   const queryClient = useQueryClient();
 
   // Fetch spam reports
-  const { data: spamReports, isLoading: reportsLoading } = useQuery({
+  const { data: spamReports, isLoading: reportsLoading } = useQuery<
+    SpamReport[]
+  >({
+    // Explicitly type data
     queryKey: ["spam-reports"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -79,7 +101,10 @@ export default function SpamManagement() {
   });
 
   // Fetch content analysis
-  const { data: contentAnalysis, isLoading: analysisLoading } = useQuery({
+  const { data: contentAnalysis, isLoading: analysisLoading } = useQuery<
+    ContentAnalysis[]
+  >({
+    // Explicitly type data
     queryKey: ["content-analysis"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -95,6 +120,7 @@ export default function SpamManagement() {
   });
 
   // Fetch all suspicious IPs with enhanced data
+  // Assuming useAllSuspiciousIPs returns SuspiciousIP[]
   const { data: suspiciousIPs, isLoading: activityLoading } =
     useAllSuspiciousIPs();
 
@@ -106,8 +132,8 @@ export default function SpamManagement() {
       notes,
     }: {
       id: string;
-      status: string;
-      notes?: string;
+      status: string; // Consider making this a union type if known (e.g., "pending" | "reviewed" | "resolved")
+      notes?: string | null; // Allow null for notes
     }) => {
       const { error } = await supabase
         .from("spam_reports")
@@ -124,9 +150,27 @@ export default function SpamManagement() {
       queryClient.invalidateQueries({ queryKey: ["spam-reports"] });
       toast({ title: "Report updated successfully" });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      // Changed 'any' to 'unknown'
+      let errorMessage = "Failed to update report";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
       console.error("Error updating report:", error);
-      toast({ title: "Failed to update report", variant: "destructive" });
+      toast({
+        title: "Failed to update report",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
@@ -139,10 +183,10 @@ export default function SpamManagement() {
     }: {
       id: string;
       block: boolean;
-      reason?: string;
+      reason?: string | null; // Allow null for reason
     }) => {
       const { error } = await supabase
-        .from("anonymous_post_tracking")
+        .from("anonymous_post_tracking") // This table name seems to be for tracking, not direct banning
         .update({
           is_blocked: block,
           block_reason: reason,
@@ -155,12 +199,31 @@ export default function SpamManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suspicious-activity"] });
+      queryClient.invalidateQueries({ queryKey: ["suspicious-activity"] }); // Invalidate relevant query
+      queryClient.invalidateQueries({ queryKey: ["all-suspicious-ips"] }); // Invalidate the hook's query key
       toast({ title: "User status updated successfully" });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      // Changed 'any' to 'unknown'
+      let errorMessage = "Failed to update user status";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
       console.error("Error updating user status:", error);
-      toast({ title: "Failed to update user status", variant: "destructive" });
+      toast({
+        title: "Failed to update user status",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
@@ -348,9 +411,10 @@ export default function SpamManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
+                          {/* Iterate over typed spam_indicators */}
                           {Object.entries(analysis.spam_indicators).map(
                             ([key, value]) =>
-                              value && (
+                              value && ( // Only render if value is truthy
                                 <Badge
                                   key={key}
                                   variant="outline"
@@ -433,7 +497,7 @@ export default function SpamManagement() {
                       <TableCell>
                         <Badge
                           variant={
-                            ip.banned_ips?.reason?.includes("report")
+                            ip.banned_ips?.reason?.includes("report") // Accessing typed properties
                               ? "destructive"
                               : "outline"
                           }
@@ -443,7 +507,7 @@ export default function SpamManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {ip.banned_ips?.ban_type === "shadowban" && (
+                          {ip.banned_ips?.ban_type === "shadowban" && ( // Accessing typed properties
                             <Badge
                               variant="outline"
                               className="bg-orange-50 text-orange-700 border-orange-200"
@@ -451,7 +515,7 @@ export default function SpamManagement() {
                               Shadow Banned
                             </Badge>
                           )}
-                          {ip.banned_ips?.ban_type === "permanent" && (
+                          {ip.banned_ips?.ban_type === "permanent" && ( // Accessing typed properties
                             <Badge variant="destructive">Permanent Ban</Badge>
                           )}
                           {ip.is_blocked && (
@@ -482,7 +546,7 @@ export default function SpamManagement() {
                                 id: ip.id,
                                 block: !ip.is_blocked,
                                 reason: ip.is_blocked
-                                  ? undefined
+                                  ? null // Changed undefined to null for consistency with DB
                                   : "Enhanced monitoring - suspicious activity",
                               })
                             }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,11 +28,22 @@ import {
   AlertTriangle,
   TrendingUp,
 } from "lucide-react";
+import { Database } from "@/integrations/supabase/types"; // Import Database for schema types
+
+// IMPORT ALL NECESSARY INTERFACES FROM YOUR SHARED TYPES FILE
+import {
+  Report,
+  ReporterProfile,
+  PostForReport, // Changed from ReportedPost
+  TopicForReport, // Changed from ReportedTopic
+  ReporterBehavior,
+  PreviousReports,
+} from "@/types/admin-moderation"; // Adjust path if necessary
 
 interface ReportDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  report: any; // Consider defining a more specific type for 'report' if possible
+  report: Report | null; // Use the imported Report interface
   onUpdate: () => void;
 }
 
@@ -44,48 +55,60 @@ export const ReportDetailsModal = ({
 }: ReportDetailsModalProps) => {
   const [adminNotes, setAdminNotes] = useState(report?.admin_notes || "");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [reporterBehavior, setReporterBehavior] = useState<any>(null);
-  const [previousReports, setPreviousReports] = useState<any>(null);
+  const [reporterBehavior, setReporterBehavior] =
+    useState<ReporterBehavior | null>(null);
+  const [previousReports, setPreviousReports] =
+    useState<PreviousReports | null>(null);
   const { toast } = useToast();
 
-  // Load reporter behavior data when modal opens
+  const loadReporterData = useCallback(async () => {
+    if (!report) return;
+
+    try {
+      const { data: behavior, error } = await supabase.rpc(
+        "get_reporter_behavior",
+        {
+          p_reporter_id: report.reporter_id || undefined,
+          p_reporter_ip: report.reporter_ip_address || undefined,
+        }
+      );
+      if (error) throw error;
+      setReporterBehavior(behavior as unknown as ReporterBehavior);
+    } catch (error: unknown) {
+      console.error(
+        "Error loading reporter behavior:",
+        error instanceof Error ? error.message : error
+      );
+    }
+  }, [report]);
+
+  const loadPreviousReports = useCallback(async () => {
+    if (!report) return;
+
+    try {
+      const { data: previousStatus, error } = await supabase.rpc(
+        "check_previous_report_status",
+        {
+          p_post_id: report.reported_post_id || undefined,
+          p_topic_id: report.reported_topic_id || undefined,
+        }
+      );
+      if (error) throw error;
+      setPreviousReports(previousStatus as unknown as PreviousReports);
+    } catch (error: unknown) {
+      console.error(
+        "Error loading previous reports:",
+        error instanceof Error ? error.message : error
+      );
+    }
+  }, [report]);
+
   useEffect(() => {
     if (isOpen && report) {
       loadReporterData();
       loadPreviousReports();
     }
-  }, [isOpen, report]);
-
-  const loadReporterData = async () => {
-    if (!report) return;
-
-    try {
-      const { data: behavior } = await supabase.rpc("get_reporter_behavior", {
-        p_reporter_id: report.reporter_id || null,
-        p_reporter_ip: report.reporter_ip_address || null,
-      });
-      setReporterBehavior(behavior);
-    } catch (error) {
-      console.error("Error loading reporter behavior:", error);
-    }
-  };
-
-  const loadPreviousReports = async () => {
-    if (!report) return;
-
-    try {
-      const { data: previousStatus } = await supabase.rpc(
-        "check_previous_report_status",
-        {
-          p_post_id: report.reported_post_id || null,
-          p_topic_id: report.reported_topic_id || null,
-        }
-      );
-      setPreviousReports(previousStatus);
-    } catch (error) {
-      console.error("Error loading previous reports:", error);
-    }
-  };
+  }, [isOpen, report, loadReporterData, loadPreviousReports]);
 
   const handleSaveNotes = async () => {
     if (!report) return;
@@ -104,10 +127,12 @@ export const ReportDetailsModal = ({
         description: "Admin notes have been updated successfully",
       });
       onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to save notes",
+        description:
+          (error instanceof Error ? error.message : String(error)) ||
+          "Failed to save notes",
         variant: "destructive",
       });
     } finally {
@@ -120,7 +145,6 @@ export const ReportDetailsModal = ({
 
     setIsUpdating(true);
     try {
-      // Add specific notes for repeat reports
       let finalNotes = adminNotes.trim() || "";
       if (previousReports?.was_previously_approved && status === "dismissed") {
         finalNotes = finalNotes
@@ -145,10 +169,12 @@ export const ReportDetailsModal = ({
       });
       onUpdate();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update report",
+        description:
+          (error instanceof Error ? error.message : String(error)) ||
+          "Failed to update report",
         variant: "destructive",
       });
     } finally {
@@ -161,7 +187,6 @@ export const ReportDetailsModal = ({
 
     setIsUpdating(true);
     try {
-      // Restore the content by setting moderation status to approved
       if (report.reported_post_id) {
         const { error } = await supabase
           .from("posts")
@@ -176,7 +201,6 @@ export const ReportDetailsModal = ({
         if (error) throw error;
       }
 
-      // Update report status to resolved
       const { error: reportError } = await supabase
         .from("reports")
         .update({
@@ -195,10 +219,12 @@ export const ReportDetailsModal = ({
       });
       onUpdate();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to restore content",
+        description:
+          (error instanceof Error ? error.message : String(error)) ||
+          "Failed to restore content",
         variant: "destructive",
       });
     } finally {
@@ -209,25 +235,16 @@ export const ReportDetailsModal = ({
   const handleDeleteContent = async () => {
     if (!report) return;
 
-    // Replaced window.confirm with a custom modal for better UI/UX and Next.js compatibility
-    // You would typically implement a custom confirmation dialog component here
-    const confirmed = await new Promise((resolve) => {
-      // This is a placeholder for a custom confirmation dialog.
-      // In a real application, you would render a dialog component
-      // and pass resolve/reject functions to its buttons.
-      const userConfirmed = window.confirm(
-        `Are you sure you want to permanently delete this ${
-          report.reported_post_id ? "post" : "topic"
-        }? This action cannot be undone.`
-      );
-      resolve(userConfirmed);
-    });
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete this ${
+        report.reported_post_id ? "post" : "topic"
+      }? This action cannot be undone.`
+    );
 
     if (!confirmed) return;
 
     setIsUpdating(true);
     try {
-      // Delete the content
       if (report.reported_post_id) {
         const { error } = await supabase
           .from("posts")
@@ -242,7 +259,6 @@ export const ReportDetailsModal = ({
         if (error) throw error;
       }
 
-      // Update report status
       const { error: reportError } = await supabase
         .from("reports")
         .update({
@@ -260,10 +276,12 @@ export const ReportDetailsModal = ({
       });
       onUpdate();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete content",
+        description:
+          (error instanceof Error ? error.message : String(error)) ||
+          "Failed to delete content",
         variant: "destructive",
       });
     } finally {
@@ -271,17 +289,22 @@ export const ReportDetailsModal = ({
     }
   };
 
-  const getReportedContentUrl = (report: any) => {
-    if (report.reported_post_id && report.post) {
-      if (report.post.topic?.category_slug && report.post.topic?.slug) {
-        return `/category/${report.post.topic.category_slug}/${report.post.topic.slug}`;
+  const getReportedContentUrl = (currentReport: Report) => {
+    if (currentReport.reported_post_id && currentReport.post) {
+      // Use currentReport.post.topics (plural)
+      if (
+        currentReport.post.topics?.categories?.slug &&
+        currentReport.post.topics?.slug
+      ) {
+        return `/category/${currentReport.post.topics.categories.slug}/${currentReport.post.topics.slug}#post-${currentReport.reported_post_id}`;
       }
-      return `/topic/${report.post.topic_id}`;
-    } else if (report.reported_topic_id && report.topic) {
-      if (report.topic.category_slug && report.topic.slug) {
-        return `/category/${report.topic.category_slug}/${report.topic.slug}`;
+      return `/topic/${currentReport.post.topic_id}#post-${currentReport.reported_post_id}`;
+    } else if (currentReport.reported_topic_id && currentReport.topic) {
+      // Use currentReport.topic.categories?.slug (nested)
+      if (currentReport.topic.categories?.slug && currentReport.topic.slug) {
+        return `/category/${currentReport.topic.categories.slug}/${currentReport.topic.slug}`;
       }
-      return `/topic/${report.topic.id}`;
+      return `/topic/${currentReport.topic.id}`;
     }
     return "#";
   };
@@ -319,19 +342,23 @@ export const ReportDetailsModal = ({
                 variant="outline"
                 className={
                   report.post?.moderation_status === "pending" ||
-                  report.topic?.moderation_status === "pending"
+                  report.topic?.moderation_status === "pending" // Access moderation_status directly
                     ? "border-orange-500 text-orange-700"
                     : "border-green-500 text-green-700"
                 }
               >
                 Content:{" "}
                 {report.post?.moderation_status ||
-                  report.topic?.moderation_status ||
+                  report.topic?.moderation_status || // Access moderation_status directly
                   "approved"}
               </Badge>
             </div>
             <span className="text-sm text-muted-foreground">
-              Reported {formatDistanceToNow(new Date(report.created_at))} ago
+              Reported{" "}
+              {report.created_at
+                ? formatDistanceToNow(new Date(report.created_at))
+                : "N/A"}{" "}
+              ago
             </span>
           </div>
 
@@ -389,7 +416,7 @@ export const ReportDetailsModal = ({
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Success Rate</p>
+                    <p className="font-semibold">Success Rate</p>
                     <p className="font-semibold">
                       {reporterBehavior.total_reports > 0
                         ? Math.round(
@@ -468,10 +495,10 @@ export const ReportDetailsModal = ({
                   Full Content
                 </Label>
                 <Link
-                  href={getReportedContentUrl(report)} // Changed 'to' to 'href'
+                  href={getReportedContentUrl(report)}
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  target="_blank" // Open in new tab
-                  rel="noopener noreferrer" // Security best practice for target="_blank"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   View on site <ExternalLink className="h-3 w-3" />
                 </Link>
@@ -498,7 +525,7 @@ export const ReportDetailsModal = ({
             </div>
 
             {/* Content Creator IP (if available) */}
-            {(report.post?.ip_address || report.topic?.author_id) && (
+            {(report.post?.ip_address || report.topic?.ip_address) && ( // Access ip_address directly
               <div className="mt-2">
                 <Label className="text-muted-foreground">
                   Content Creator IP
@@ -506,7 +533,7 @@ export const ReportDetailsModal = ({
                 <p className="font-mono text-sm">
                   {formatIPAddress(
                     report.post?.ip_address ||
-                      report.topic?.ip_address ||
+                      report.topic?.ip_address || // Access ip_address directly
                       "Not available"
                   )}
                 </p>

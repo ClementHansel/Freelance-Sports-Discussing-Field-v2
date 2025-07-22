@@ -13,13 +13,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export interface SeoMetadata {
-  meta_title?: string;
-  meta_description?: string;
-  canonical_url?: string;
-  meta_keywords?: string;
-  og_title?: string;
-  og_description?: string;
-  og_image?: string;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  canonical_url?: string | null;
+  meta_keywords?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
 }
 
 interface SeoMetadataFormProps {

@@ -1,17 +1,8 @@
-"use client";
-
-import dynamic from "next/dynamic";
+import AdminContent from "@/components/admin/content/Content";
+import { Card } from "@/components/ui/card";
 import { Suspense } from "react";
-import { Card } from "@/components/ui/card"; // Optional fallback UI
 
-const AdminContent = dynamic(
-  () => import("@/components/admin/content/Content"),
-  {
-    ssr: false,
-  }
-);
-
-export default function ContentPage() {
+export default function AdminContentPage() {
   return (
     <Suspense
       fallback={

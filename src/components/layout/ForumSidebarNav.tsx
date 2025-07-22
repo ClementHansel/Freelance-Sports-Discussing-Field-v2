@@ -2,27 +2,56 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation"; // Import useSearchParams
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Clock, Star, Plus, Home, Users } from "lucide-react";
-import { useCategories } from "@/hooks/useCategories";
-import { useCategoriesByActivity } from "@/hooks/useCategoriesByActivity";
-import { useCategoryStats } from "@/hooks/useCategoryStats";
-import { useEnhancedForumStats } from "@/hooks/useEnhancedForumStats";
+import {
+  TrendingUp,
+  Clock,
+  Star,
+  Plus,
+  Home,
+  Users,
+  LucideIcon,
+} from "lucide-react"; // Import LucideIcon type
+import { useCategories } from "@/hooks/useCategories"; // Assuming this hook returns Category[]
+import { useCategoriesByActivity } from "@/hooks/useCategoriesByActivity"; // Assuming this hook returns Category[]
+import { useCategoryStats } from "@/hooks/useCategoryStats"; // Assuming this hook returns { topic_count: number }
+import { useEnhancedForumStats } from "@/hooks/useEnhancedForumStats"; // Assuming this hook returns relevant stats
 import { QuickTopicModal } from "../forum/QuickTopicModal";
 import { SidebarAdBanner } from "@/components/ads/SidebarAdBanner";
 import { cn } from "@/lib/utils";
 
+// Define the Category interface based on its usage
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  // Add other properties if they are part of the category object returned by your hooks
+  // e.g., parent_category_id?: string | null;
+  // e.g., description?: string | null;
+}
+
 // Component to display category stats
-const CategoryItem = ({ category }: { category: any }) => {
+const CategoryItem = ({ category }: { category: Category }) => {
+  // Typed category prop
+  // Assuming useCategoryStats returns an object with a topic_count property
   const { data: stats, isLoading } = useCategoryStats(category.id);
+
+  const pathname = usePathname(); // Get pathname for category active state
+  const isCategoryActive = pathname === `/category/${category.slug}`;
 
   return (
     <Link
       href={`/category/${category.slug}`}
-      className="flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors hover:bg-muted/50 group"
+      className={cn(
+        "flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
+        isCategoryActive
+          ? "bg-primary/10 text-primary font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      )}
     >
       <div className="flex items-center space-x-2">
         <div
@@ -41,23 +70,38 @@ const CategoryItem = ({ category }: { category: any }) => {
 };
 
 export default function ForumSidebarNav() {
-  const pathname = usePathname(); // Initialize usePathname
+  const pathname = usePathname();
+  const searchParams = useSearchParams(); // Initialize useSearchParams
   const { data: categories } = useCategoriesByActivity(); // All active categories by activity
-  const { data: forumStats } = useEnhancedForumStats();
+  const { data: forumStats } = useEnhancedForumStats(); // Forum wide stats
 
-  // Adjusted isActive to work with Next.js usePathname
+  // Adjusted isActive to work with Next.js usePathname and useSearchParams
   const isActive = (path: string) => {
-    // For root path, exact match
+    const currentPath = pathname;
+    const currentSearchParams = searchParams.toString();
+
+    // Handle root path with no query params
     if (path === "/") {
-      return pathname === "/";
+      return currentPath === "/" && currentSearchParams === "";
     }
-    // For paths with query params, check if pathname starts with the base path
-    // e.g., /?sort=hot should match /
-    const basePath = path.split("?")[0];
-    return pathname === basePath || pathname.startsWith(`${basePath}/`);
+
+    // Handle paths with specific query params (e.g., /?sort=hot)
+    if (path.includes("?")) {
+      const [basePath, queryString] = path.split("?");
+      return currentPath === basePath && currentSearchParams === queryString;
+    }
+
+    // Handle regular paths (e.g., /categories)
+    return currentPath === path || currentPath.startsWith(`${path}/`);
   };
 
-  const navItems = [
+  interface NavItem {
+    label: string;
+    path: string;
+    icon: LucideIcon; // Type for Lucide icons
+  }
+
+  const navItems: NavItem[] = [
     { label: "Home", path: "/", icon: Home },
     { label: "Hot", path: "/?sort=hot", icon: TrendingUp },
     { label: "New", path: "/?sort=new", icon: Clock },
@@ -96,13 +140,13 @@ export default function ForumSidebarNav() {
           Categories
         </h3>
         <div className="space-y-2">
+          {/* Ensure categories is an array before mapping */}
           {categories?.slice(0, 8).map((category) => (
             <CategoryItem key={category.id} category={category} />
           ))}
 
           {categories && categories.length > 8 && (
             <Link href="/categories">
-              {" "}
               <Button
                 variant="ghost"
                 size="sm"

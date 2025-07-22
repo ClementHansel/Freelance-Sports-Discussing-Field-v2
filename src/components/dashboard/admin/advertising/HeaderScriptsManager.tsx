@@ -110,7 +110,7 @@ export const HeaderScriptsManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let updatedScripts = [...headerScripts];
+    const updatedScripts = [...headerScripts];
 
     if (editingScript) {
       // Update existing script

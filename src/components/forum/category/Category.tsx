@@ -20,12 +20,12 @@ import {
 import { useCategoriesByActivity } from "@/hooks/useCategoriesByActivity";
 import {
   useCategoryBySlug,
-  Category as BaseCategory,
-} from "@/hooks/useCategories"; // Import base Category
+  // Removed 'Category as BaseCategoryFromHook' as we're no longer extending it
+} from "@/hooks/useCategories";
 import {
   useTopicsLegacy as useTopics,
-  Topic as BaseTopic,
-} from "@/hooks/useTopicsLegacy"; // Import base Topic
+  // Removed 'Topic as BaseTopicFromHook' as we're no longer extending it
+} from "@/hooks/useTopicsLegacy";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategoryStats } from "@/hooks/useCategoryStats";
 import { formatDistanceToNow } from "date-fns";
@@ -42,16 +42,36 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-// Define augmented interfaces for better type checking, extending the base types from hooks
-interface Category extends BaseCategory {
-  parent_category?: Category | null; // Recursive definition for breadcrumbs, now optional
-  requires_moderation?: boolean | null; // Added as it's an extension not in BaseCategory
-  last_activity_at?: string | null;
+// Import the comprehensive Topic interface from AdminTopicInfo.
+// We will use this directly instead of creating a redundant alias.
+import { Topic as AdminTopicInfoTopic } from "@/components/forum/admin-ui/AdminTopicInfo";
+import { Post } from "@/components/forum/admin-ui/AdminPostInfo"; // Import Post for ContentType
+
+// Define the Category interface. This is the canonical Category interface for this file
+// and is also exported for use by AdminControls (via CategoryView.tsx).
+// It no longer extends BaseCategoryFromHook to avoid the 'level' type incompatibility.
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  description: string | null;
+  level: number | null; // Explicitly allow null, as intended by your application logic
+  parent_category_id: string | null;
+  parent_category: Category | null; // Recursive definition, allowing null
+  requires_moderation?: boolean | null; // Specific to this app's category logic
+  last_activity_at?: string | null; // Specific to this app's category logic
+  region?: string | null; // Specific to this app's category logic
+  birth_year?: number | null; // Specific to this app's category logic
+  play_level?: string | null; // Specific to this app's category logic
 }
 
-interface Topic extends BaseTopic {
-  profiles?: { username: string; avatar_url: string | null };
-}
+// REMOVED: The redundant 'Topic' interface.
+// We will now use 'AdminTopicInfoTopic' directly where 'Topic' was previously used.
+
+// Define a union type for the 'content' prop for AdminControls
+// This should now be compatible with the updated Topic and Category interfaces
+type ContentType = Post | AdminTopicInfoTopic | Category; // CHANGED: Used AdminTopicInfoTopic directly
 
 // Helper function to build breadcrumb hierarchy
 const buildBreadcrumbHierarchy = (category: Category | null) => {
@@ -120,20 +140,15 @@ const SubcategoryCard = ({ subcat }: { subcat: Category }) => {
 
 // Main page component
 export default function CategorySlug() {
-  // Changed to default export for Next.js page
   const params = useParams();
   const router = useRouter();
 
-  // params.categorySlug can be string or string[]
   const categorySlugParam = params.categorySlug;
   let currentCategorySlug: string | undefined;
 
-  // Handle both single slug and array of slugs (for nested categories)
   if (Array.isArray(categorySlugParam)) {
-    // If it's an array, the last segment is the current category slug
     currentCategorySlug = categorySlugParam[categorySlugParam.length - 1];
   } else {
-    // If it's a single string, that's the current category slug
     currentCategorySlug = categorySlugParam;
   }
 
@@ -145,7 +160,8 @@ export default function CategorySlug() {
     error: categoryError,
   } = useCategoryBySlug(currentCategorySlug || "");
 
-  // Explicitly cast the raw data to our augmented Category type
+  // Explicitly cast the raw data to our Category type.
+  // This is necessary because we no longer extend BaseCategoryFromHook directly.
   const category: Category | undefined = rawCategory as Category | undefined;
 
   const { data: rawSubcategories, isLoading: subcategoriesLoading } =
@@ -158,7 +174,10 @@ export default function CategorySlug() {
     | undefined;
 
   const { data: rawTopics, isLoading: topicsLoading } = useTopics(category?.id);
-  const topics: Topic[] | undefined = rawTopics as Topic[] | undefined;
+  // CHANGED: Use AdminTopicInfoTopic directly for 'topics'
+  const topics: AdminTopicInfoTopic[] | undefined = rawTopics as
+    | AdminTopicInfoTopic[]
+    | undefined;
 
   if (categoryLoading) {
     return (
@@ -252,7 +271,7 @@ export default function CategorySlug() {
                   </h1>
                 </div>
                 <AdminControls
-                  content={category}
+                  content={category} // Pass the category directly
                   contentType="category"
                   onDelete={() => router.push("/")} // Redirect to home after delete
                 />
@@ -367,7 +386,7 @@ export default function CategorySlug() {
             </div>
           </div>
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
-            {subcategories.map((subcat) => (
+            {subcategories!.map((subcat) => (
               <SubcategoryCard key={subcat.id} subcat={subcat} />
             ))}
           </div>
@@ -415,6 +434,7 @@ export default function CategorySlug() {
                           >
                             {topic.title}
                           </Link>
+                          {/* Pass the topic directly, now that its type is fully compatible */}
                           <AdminControls content={topic} contentType="topic" />
                         </div>
                         <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-xs sm:text-sm text-gray-500">

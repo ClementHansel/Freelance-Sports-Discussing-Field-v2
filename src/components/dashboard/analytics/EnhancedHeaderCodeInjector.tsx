@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react"; // Import useMemo
 import { useForumSettings } from "@/hooks/useForumSettings";
 import DOMPurify from "dompurify";
 
@@ -16,25 +16,35 @@ export const EnhancedHeaderCodeInjector = () => {
   const { getSetting } = useForumSettings();
 
   // Get both legacy header code and new header scripts
-  const legacyHeaderCode = getSetting("header_code", "");
-  const headerScriptsRaw = getSetting("header_scripts", "[]");
+  // Explicitly cast the return value of getSetting to string
+  const legacyHeaderCode = getSetting("header_code", "") as string;
+  const headerScriptsRaw = getSetting("header_scripts", "[]") as string;
 
-  let headerScripts: HeaderScript[] = [];
-  try {
-    headerScripts =
-      headerScriptsRaw && headerScriptsRaw !== ""
-        ? JSON.parse(headerScriptsRaw)
-        : [];
-  } catch (error) {
-    console.error("Error parsing header scripts:", error);
-    headerScripts = [];
-  }
+  // Use useMemo to memoize the headerScripts array
+  const headerScripts: HeaderScript[] = useMemo(() => {
+    try {
+      // Ensure headerScriptsRaw is a non-empty string before parsing
+      if (headerScriptsRaw && headerScriptsRaw !== "") {
+        // Cast the parsed JSON to HeaderScript[]
+        return JSON.parse(headerScriptsRaw) as HeaderScript[];
+      }
+    } catch (error) {
+      console.error("Error parsing header scripts:", error);
+    }
+    return []; // Return an empty array on error or if raw string is empty
+  }, [headerScriptsRaw]); // Only re-run this memoization if headerScriptsRaw changes
 
   // Check if advertising is enabled
+  // Explicitly cast the return value of getSetting to string
   const advertisingEnabled =
-    getSetting("advertising_enabled", "true") === "true";
+    (getSetting("advertising_enabled", "true") as string) === "true";
 
   useEffect(() => {
+    // Ensure window is defined for client-side operations
+    if (typeof window === "undefined") {
+      return;
+    }
+
     // Remove any existing custom header elements to avoid duplicates
     const existingElements = document.querySelectorAll("[data-custom-header]");
     existingElements.forEach((el) => el.remove());
@@ -45,6 +55,7 @@ export const EnhancedHeaderCodeInjector = () => {
 
     // Inject legacy header code if it exists
     if (legacyHeaderCode) {
+      // Ensure legacyHeaderCode is treated as a string for DOMPurify
       const sanitizedLegacyCode = DOMPurify.sanitize(legacyHeaderCode, {
         ALLOWED_TAGS: ["script", "style", "meta", "link", "ins"],
         ALLOWED_ATTR: [
@@ -79,6 +90,7 @@ export const EnhancedHeaderCodeInjector = () => {
     headerScripts
       .filter((script) => script.is_active)
       .forEach((script, index) => {
+        // Ensure script.script is treated as a string for DOMPurify
         const sanitizedScript = DOMPurify.sanitize(script.script, {
           ALLOWED_TAGS: ["script", "style", "meta", "link", "ins"],
           ALLOWED_ATTR: [
@@ -117,7 +129,7 @@ export const EnhancedHeaderCodeInjector = () => {
       const elements = document.querySelectorAll("[data-custom-header]");
       elements.forEach((el) => el.remove());
     };
-  }, [legacyHeaderCode, headerScripts, advertisingEnabled]);
+  }, [legacyHeaderCode, headerScripts, advertisingEnabled]); // headerScripts is now stable due to useMemo
 
   return null;
 };

@@ -11,9 +11,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
 
-interface AdminPostInfoProps {
-  post: any;
+// Define the Post interface based on usage and your Supabase schema
+// This should ideally reflect the 'posts' table row, plus any joined data.
+export interface Post {
+  id: string;
+  content: string | null; // Allow content to be null
+  author_id: string | null;
+  topic_id: string;
+  created_at: string | null; // Allow created_at to be null
+  updated_at: string | null; // Allow updated_at to be null
+  ip_address: string | null;
+  is_anonymous: boolean | null; // Allow null, as per common DB schemas
+  // Assuming 'profiles' is a joined table from 'posts'
+  profiles?: Database["public"]["Tables"]["profiles"]["Row"] | null; // Use Supabase-generated type for profiles
+  // Add other post properties if they exist in your database and are used here
+}
+
+export interface AdminPostInfoProps {
+  post: Post;
 }
 
 export const AdminPostInfo: React.FC<AdminPostInfoProps> = ({ post }) => {
@@ -54,18 +71,26 @@ export const AdminPostInfo: React.FC<AdminPostInfoProps> = ({ post }) => {
           <div>
             <span className="font-medium">Created:</span>
             <span className="ml-2">
-              {formatDistanceToNow(new Date(post.created_at))} ago
+              {post.created_at
+                ? formatDistanceToNow(new Date(post.created_at))
+                : "N/A"}{" "}
+              ago
             </span>
           </div>
 
-          {post.updated_at !== post.created_at && (
-            <div>
-              <span className="font-medium">Last edited:</span>
-              <span className="ml-2">
-                {formatDistanceToNow(new Date(post.updated_at))} ago
-              </span>
-            </div>
-          )}
+          {post.updated_at &&
+            post.created_at &&
+            post.updated_at !== post.created_at && (
+              <div>
+                <span className="font-medium">Last edited:</span>
+                <span className="ml-2">
+                  {post.updated_at
+                    ? formatDistanceToNow(new Date(post.updated_at))
+                    : "N/A"}{" "}
+                  ago
+                </span>
+              </div>
+            )}
 
           <div>
             <span className="font-medium">Post ID:</span>

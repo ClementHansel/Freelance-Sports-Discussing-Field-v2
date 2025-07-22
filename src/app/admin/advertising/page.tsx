@@ -1,19 +1,17 @@
-import dynamic from "next/dynamic";
+import AdminAdvertising from "@/components/dashboard/admin/AdminAdvertising";
 import { Card } from "@/components/ui/card";
-
-// Dynamically import the client component with SSR disabled
-const AdminAdvertising = dynamic(
-  () => import("@/components/dashboard/admin/AdminAdvertising"),
-  {
-    ssr: false,
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading content...</div>
-      </Card>
-    ),
-  }
-);
+import { Suspense } from "react";
 
 export default function AdminAdvertisingPage() {
-  return <AdminAdvertising />;
+  return (
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <AdminAdvertising />
+    </Suspense>
+  );
 }

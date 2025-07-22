@@ -43,7 +43,8 @@ interface BannedIP {
   expires_at?: string;
   is_active: boolean;
   admin_notes?: string;
-  appeal_status: "none" | "pending" | "approved" | "denied";
+  // Make appeal_status optional in the interface itself
+  appeal_status?: "none" | "pending" | "approved" | "denied";
   created_at: string;
 }
 
@@ -72,7 +73,8 @@ export const BannedIPsManager = () => {
   const queryClient = useQueryClient();
 
   // Fetch banned IPs
-  const { data: bannedIPs, isLoading: bannedLoading } = useQuery({
+  const { data: bannedIPs, isLoading: bannedLoading } = useQuery<BannedIP[]>({
+    // Explicitly type the data
     queryKey: ["banned-ips"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -86,7 +88,10 @@ export const BannedIPsManager = () => {
   });
 
   // Fetch whitelisted IPs
-  const { data: whitelistIPs, isLoading: whitelistLoading } = useQuery({
+  const { data: whitelistIPs, isLoading: whitelistLoading } = useQuery<
+    IPWhitelist[]
+  >({
+    // Explicitly type the data
     queryKey: ["whitelist-ips"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -228,15 +233,21 @@ export const BannedIPsManager = () => {
     onSave,
   }: {
     ip?: BannedIP;
-    onSave: (data: any) => void;
+    // Type 'data' to match the formData's structure, now with appeal_status being optional
+    onSave: (data: Omit<BannedIP, "id" | "created_at">) => void;
   }) => {
-    const [formData, setFormData] = useState({
+    // Ensure formData matches the type expected by onSave
+    const [formData, setFormData] = useState<
+      Omit<BannedIP, "id" | "created_at">
+    >({
       ip_address: ip?.ip_address || "",
       ban_type: ip?.ban_type || "temporary",
       reason: ip?.reason || "",
       expires_at: ip?.expires_at || "",
       is_active: ip?.is_active ?? true,
       admin_notes: ip?.admin_notes || "",
+      // Initialize appeal_status as it's part of the Omit type, even if optional
+      appeal_status: ip?.appeal_status || "none",
     });
 
     return (
@@ -259,7 +270,11 @@ export const BannedIPsManager = () => {
             <Select
               value={formData.ban_type}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, ban_type: value as any }))
+                // Assert the value to the specific union type
+                setFormData((prev) => ({
+                  ...prev,
+                  ban_type: value as BannedIP["ban_type"],
+                }))
               }
             >
               <SelectTrigger>
@@ -338,9 +353,12 @@ export const BannedIPsManager = () => {
     onSave,
   }: {
     ip?: IPWhitelist;
-    onSave: (data: any) => void;
+    // Type 'data' to match the formData's structure
+    onSave: (data: Omit<IPWhitelist, "id" | "created_at">) => void;
   }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<
+      Omit<IPWhitelist, "id" | "created_at">
+    >({
       ip_address: ip?.ip_address || "",
       description: ip?.description || "",
       bypass_level: ip?.bypass_level || "basic",
@@ -378,7 +396,11 @@ export const BannedIPsManager = () => {
           <Select
             value={formData.bypass_level}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, bypass_level: value as any }))
+              // Assert the value to the specific union type
+              setFormData((prev) => ({
+                ...prev,
+                bypass_level: value as IPWhitelist["bypass_level"],
+              }))
             }
           >
             <SelectTrigger>

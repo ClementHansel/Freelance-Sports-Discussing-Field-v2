@@ -2,7 +2,57 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Json, Database } from "@/integrations/supabase/types"; // Import Database and Json
+import { SuspiciousIP } from "@/components/dashboard/admin/SpamManagement"; // Import SuspiciousIP
 
+// --- Interfaces for ComprehensiveIPActivity ---
+// These interfaces reflect the *expected* structure of the JSON blobs
+// returned by the 'get_comprehensive_ip_activity' RPC.
+
+// Specific action data types (adjust as needed based on actual data)
+interface PageVisitActionData {
+  page_path?: string;
+  search_query?: string;
+}
+
+interface PostAttemptActionData {
+  // Define fields relevant to a post attempt
+  content_preview?: string;
+  // ... other fields
+}
+
+interface TopicCreateActionData {
+  // Define fields relevant to a topic creation
+  topic_title?: string;
+  // ... other fields
+}
+
+// Union type for action_data (not directly used in ComprehensiveIPActivity, but good for context)
+type ActionData =
+  | PageVisitActionData
+  | PostAttemptActionData
+  | TopicCreateActionData
+  | null;
+
+interface RecentActivity {
+  type: string;
+  content_type?: string | null;
+  content_id?: string | null;
+  is_blocked: boolean;
+  blocked_reason?: string | null;
+  created_at: string;
+  action_data?: Json; // This comes as Json from Supabase RPC
+}
+
+interface BanStatus {
+  is_banned: boolean;
+  ban_type?: string | null;
+  reason?: string | null;
+  expires_at?: string | null;
+  admin_notes?: string | null;
+}
+
+// Main ComprehensiveIPActivity interface, reflecting the RPC return
 interface ComprehensiveIPActivity {
   ip_address: string;
   total_sessions: number;
@@ -13,26 +63,14 @@ interface ComprehensiveIPActivity {
   blocked_attempts: number;
   first_seen: string;
   last_seen: string;
-  recent_activities: Array<{
-    type: string;
-    content_type?: string;
-    content_id?: string;
-    is_blocked: boolean;
-    blocked_reason?: string;
-    created_at: string;
-    action_data?: any;
-  }>;
-  ban_status: {
-    is_banned: boolean;
-    ban_type?: string;
-    reason?: string;
-    expires_at?: string;
-    admin_notes?: string;
-  };
+  recent_activities: Json; // This comes as Json from Supabase RPC
+  ban_status: Json; // This comes as Json from Supabase RPC
 }
 
+// --- End Interfaces for ComprehensiveIPActivity ---
+
 export const useComprehensiveIPActivity = (ipAddress?: string) => {
-  return useQuery({
+  return useQuery<ComprehensiveIPActivity | null>({
     queryKey: ["comprehensive-ip-activity", ipAddress],
     queryFn: async () => {
       if (!ipAddress) return null;
@@ -45,29 +83,28 @@ export const useComprehensiveIPActivity = (ipAddress?: string) => {
       );
 
       if (error) throw error;
-      return (data?.[0] as ComprehensiveIPActivity) || null;
+      return (data?.[0] as unknown as ComprehensiveIPActivity) || null;
     },
     enabled: !!ipAddress,
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time monitoring
+    refetchInterval: 30000,
   });
 };
 
-interface SuspiciousIP {
-  id: string;
-  ip_address: string;
-  post_count: number;
-  topic_count: number;
-  is_blocked: boolean;
-  last_post_at: string;
-  banned_ips?: {
-    ban_type: string;
-    reason: string;
-    is_active: boolean;
-  };
-}
+// --- Supabase generated types for tables ---
+import { Database as SupabaseDatabase } from "@/integrations/supabase/types"; // Renamed to avoid conflict with local Database type if any
+
+type AnonymousPostTrackingRow =
+  SupabaseDatabase["public"]["Tables"]["anonymous_post_tracking"]["Row"];
+type BannedIpsRow = SupabaseDatabase["public"]["Tables"]["banned_ips"]["Row"]; // <-- Moved this line UP
+
+// Define a specific type for the selected columns from banned_ips
+type BannedIpsSelectedColumns = Pick<
+  BannedIpsRow,
+  "id" | "ip_address" | "ban_type" | "reason" | "is_active"
+>;
 
 export const useAllSuspiciousIPs = () => {
-  return useQuery({
+  return useQuery<SuspiciousIP[]>({
     queryKey: ["all-suspicious-ips"],
     queryFn: async () => {
       // Get all IPs with significant activity
@@ -82,20 +119,22 @@ export const useAllSuspiciousIPs = () => {
       // Get banned IPs
       const { data: bannedData, error: bannedError } = await supabase
         .from("banned_ips")
-        .select("ip_address, ban_type, reason, is_active")
-        .eq("is_active", true);
+        .select("id, ip_address, ban_type, reason, is_active");
 
       if (bannedError) throw bannedError;
 
       // Merge the data
       const result: SuspiciousIP[] =
-        trackingData?.map((tracking) => {
+        trackingData?.map((tracking: AnonymousPostTrackingRow) => {
           const banInfo = bannedData?.find(
-            (ban) => String(ban.ip_address) === String(tracking.ip_address)
+            (ban: BannedIpsSelectedColumns) =>
+              String(ban.ip_address) === String(tracking.ip_address)
           );
+
           return {
             id: tracking.id,
             ip_address: String(tracking.ip_address),
+            session_id: tracking.session_id || null,
             post_count: tracking.post_count || 0,
             topic_count: tracking.topic_count || 0,
             is_blocked: tracking.is_blocked || false,
@@ -103,18 +142,19 @@ export const useAllSuspiciousIPs = () => {
               tracking.last_post_at ||
               tracking.created_at ||
               new Date().toISOString(),
+            created_at: tracking.created_at || null, // This must match SuspiciousIP's definition
             banned_ips: banInfo
               ? {
-                  ban_type: banInfo.ban_type,
-                  reason: banInfo.reason,
-                  is_active: banInfo.is_active,
+                  ban_type: banInfo.ban_type || null,
+                  reason: banInfo.reason || null,
+                  is_active: banInfo.is_active || false,
                 }
-              : undefined,
+              : null,
           };
         }) || [];
 
       return result;
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
   });
 };

@@ -195,13 +195,15 @@ export default function Forum() {
       {/* Header - Re-added missing section */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          {getSetting("forum_name", "Minor Hockey Talks")}
+          {getSetting("forum_name", "Minor Hockey Talks") as string}
         </h1>
         <p className="text-muted-foreground">
-          {getSetting(
-            "forum_description",
-            "A community forum for minor hockey discussions"
-          )}
+          {
+            getSetting(
+              "forum_description",
+              "A community forum for minor hockey discussions"
+            ) as string
+          }
         </p>
       </div>
 

@@ -1,22 +1,17 @@
-import dynamic from "next/dynamic";
+import SettingsForum from "@/components/forum/settings/Settings";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-const SettingsForumClient = dynamic(
-  () => import("@/components/forum/settings/Settings"),
-  {
-    ssr: false, // Prevents build errors caused by useSearchParams
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading content...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function SettingsForumPage() {
+export default function SettingsPage() {
   return (
-    <div className="flex-1 w-full">
-      <SettingsForumClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <SettingsForum />
+    </Suspense>
   );
 }

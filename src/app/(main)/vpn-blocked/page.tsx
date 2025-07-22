@@ -1,22 +1,17 @@
-import dynamic from "next/dynamic";
+import VPNBlocked from "@/components/forum/vpn-blocked/Vpn-Blocked";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-const VPNBlockedClient = dynamic(
-  () => import("@/components/forum/vpn-blocked/Vpn-Blocked"),
-  {
-    ssr: false, // Important for hooks like useSearchParams or useRouter
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading content...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function VPNBlockedPage() {
+export default function VpnBlockedPage() {
   return (
-    <div className="flex-1 w-full">
-      <VPNBlockedClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <VPNBlocked />
+    </Suspense>
   );
 }

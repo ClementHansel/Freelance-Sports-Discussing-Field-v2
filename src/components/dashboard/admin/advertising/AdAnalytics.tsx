@@ -174,22 +174,26 @@ export const AdAnalytics = () => {
                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
-                        {item.impressions.toLocaleString()} impressions
+                        {/* Use nullish coalescing to provide default 0 for null values */}
+                        {(item.impressions ?? 0).toLocaleString()} impressions
                       </span>
                       <span className="flex items-center gap-1">
                         <MousePointer className="h-3 w-3" />
-                        {item.clicks} clicks
+                        {/* Use nullish coalescing to provide default 0 for null values */}
+                        {(item.clicks ?? 0).toLocaleString()} clicks
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="secondary">
-                        {item.ctr.toFixed(2)}% CTR
+                        {/* Use nullish coalescing to provide default 0 for null values */}
+                        {(item.ctr ?? 0).toFixed(2)}% CTR
                       </Badge>
                     </div>
                     <div className="font-medium">
-                      ${item.revenue.toFixed(2)}
+                      {/* Use nullish coalescing to provide default 0 for null values */}
+                      ${(item.revenue ?? 0).toFixed(2)}
                     </div>
                   </div>
                 </div>

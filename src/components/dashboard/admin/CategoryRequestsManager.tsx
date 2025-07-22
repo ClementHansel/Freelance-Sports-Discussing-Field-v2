@@ -16,7 +16,8 @@ import {
 import {
   useCategoryRequests,
   useUpdateCategoryRequest,
-} from "@/hooks/useCategoryRequests";
+  CategoryRequest, // <-- IMPORT CategoryRequest from the hook file
+} from "@/hooks/useCategoryRequests"; // <-- Ensure this path is correct
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle,
@@ -26,10 +27,16 @@ import {
   Calendar,
 } from "lucide-react";
 
+// IMPORTANT: Remove any local CategoryRequest interface definition from here if it exists.
+// It should now be imported from "@/hooks/useCategoryRequests".
+
 export const CategoryRequestsManager = () => {
   const { requests, isLoading } = useCategoryRequests();
   const updateRequest = useUpdateCategoryRequest();
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+
+  // Now correctly typed using the imported interface
+  const [selectedRequest, setSelectedRequest] =
+    useState<CategoryRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
@@ -39,7 +46,11 @@ export const CategoryRequestsManager = () => {
     await updateRequest.mutateAsync({
       id: selectedRequest.id,
       status,
-      adminNotes: adminNotes.trim() || undefined,
+      // Ensure adminNotes is passed as null if empty string, matching DB schema
+      adminNotes: adminNotes.trim() === "" ? null : adminNotes.trim(),
+      // These fields are now handled by the useUpdateCategoryRequest hook internally
+      // reviewed_at: new Date().toISOString(),
+      // reviewer_user_id: "CURRENT_ADMIN_USER_ID", // This should be handled by the hook
     });
 
     setIsReviewDialogOpen(false);
@@ -154,7 +165,9 @@ export const CategoryRequestsManager = () => {
               </div>
               {request.reviewed_at && (
                 <div className="flex items-center gap-1">
-                  <span>Reviewed by {request.reviewer?.username}</span>
+                  <span>
+                    Reviewed by {request.reviewer?.username || "Unknown"}
+                  </span>
                   <span>
                     {formatDistanceToNow(new Date(request.reviewed_at))} ago
                   </span>

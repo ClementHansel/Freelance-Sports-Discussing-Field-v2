@@ -10,6 +10,21 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getUserIP, getIPGeolocation } from "@/lib/utils/ipUtils";
 import { sessionManager } from "@/lib/utils/sessionManager";
+import { Json } from "@/integrations/supabase/types"; // Import Json type
+
+// Define the expected structure for Geolocation data
+interface GeolocationData {
+  country_code: string;
+  country_name: string;
+  city: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  is_vpn: boolean;
+  is_proxy: boolean;
+  isp: string;
+}
 
 export const useIPTracker = () => {
   const pathname = usePathname();
@@ -31,7 +46,8 @@ export const useIPTracker = () => {
         if (!ip || !sessionId) return;
 
         // Get geolocation data
-        const geoData = await getIPGeolocation(ip);
+        // Explicitly type geoData as GeolocationData | null
+        const geoData: GeolocationData | null = await getIPGeolocation(ip);
 
         // BACKUP VPN PROTECTION: Block VPN users immediately at tracking level
         if (geoData?.is_vpn && pathname !== "/vpn-blocked") {
@@ -45,22 +61,35 @@ export const useIPTracker = () => {
         let categoryId: string | null = null;
         let topicId: string | null = null;
 
-        if (params.categorySlug) {
+        // Type params.categorySlug and params.topicSlug as string | string[]
+        // Next.js useParams can return string or string[] for dynamic routes
+        const categorySlugParam = params.categorySlug;
+        const topicSlugParam = params.topicSlug;
+
+        if (categorySlugParam) {
+          // Ensure it's a string before using
+          const categorySlug = Array.isArray(categorySlugParam)
+            ? categorySlugParam[0]
+            : categorySlugParam;
           const { data: category } = await supabase
             .from("categories")
             .select("id")
-            .eq("slug", params.categorySlug as string)
+            .eq("slug", categorySlug)
             .single();
           categoryId = category?.id || null;
         }
-        if (params.topicSlug) {
+        if (topicSlugParam) {
+          // Ensure it's a string before using
+          const topicSlug = Array.isArray(topicSlugParam)
+            ? topicSlugParam[0]
+            : topicSlugParam;
           const { data: topic } = await supabase
             .from("topics")
             .select("id, category_id")
-            .eq("slug", params.topicSlug as string)
+            .eq("slug", topicSlug)
             .single();
           topicId = topic?.id || null;
-          categoryId = topic?.category_id || null;
+          categoryId = topic?.category_id || null; // Update categoryId based on topic's category
         }
 
         const searchQuery = searchParams.get("q") || searchParams.get("search");
@@ -116,7 +145,7 @@ export const useIPTracker = () => {
     activityType: string,
     contentId?: string | null,
     contentType?: string | null,
-    actionData?: any | null,
+    actionData?: Json | null, // Changed 'any' to 'Json'
     isBlocked = false,
     blockedReason?: string | null
   ) => {
@@ -136,7 +165,7 @@ export const useIPTracker = () => {
         p_activity_type: activityType,
         p_content_id: contentId ?? undefined,
         p_content_type: contentType ?? undefined,
-        p_action_data: actionData ?? undefined,
+        p_action_data: actionData ?? undefined, // actionData is now Json
         p_is_blocked: isBlocked,
         p_blocked_reason: blockedReason ?? undefined,
       });

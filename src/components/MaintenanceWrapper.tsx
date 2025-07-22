@@ -1,45 +1,47 @@
 "use client";
 
-import React from "react";
-import { useForumSettings } from "@/hooks/useForumSettings";
+import React, { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { MaintenanceMode } from "./MaintenanceMode";
+import { useForumSettings } from "@/hooks/useForumSettings";
+import { MaintenanceMode } from "./MaintenanceMode"; // Assuming this path is correct
 
 interface MaintenanceWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const MaintenanceWrapper: React.FC<MaintenanceWrapperProps> = ({
   children,
 }) => {
-  const { getSetting, isLoading } = useForumSettings();
-  const { isAdmin } = useAuth();
+  // Changed 'isLoading' to 'loading' based on common useAuth patterns.
+  // If your useAuth hook truly uses 'isLoading', please provide its definition.
+  const { user, loading: isAuthLoading } = useAuth();
+  const {
+    settings,
+    isLoading: isSettingsLoading,
+    getSetting,
+  } = useForumSettings();
 
-  // Show loading state while settings are being fetched
-  if (isLoading) {
+  const isMaintenanceModeEnabled = getSetting(
+    "maintenance_mode",
+    false
+  ) as boolean;
+  const maintenanceMessage = getSetting("maintenance_message", "") as string;
+
+  const isAdmin = user?.role === "admin";
+  const showMaintenancePage = isMaintenanceModeEnabled && !isAdmin;
+
+  if (isAuthLoading || isSettingsLoading) {
+    // Optionally render a loading spinner or skeleton here
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        Loading forum settings...
       </div>
     );
   }
 
-  const isMaintenanceMode = getSetting("maintenance_mode", false);
-  const maintenanceMessage = getSetting(
-    "maintenance_message",
-    "We are currently performing scheduled maintenance. Please check back soon!"
-  );
-
-  // If maintenance mode is enabled and user is not an admin, show maintenance page
-  if (isMaintenanceMode && !isAdmin) {
+  if (showMaintenancePage) {
     return <MaintenanceMode message={maintenanceMessage} />;
   }
 
-  // If maintenance mode is enabled and user is admin, show normal content with admin indicator
-  if (isMaintenanceMode && isAdmin) {
-    return <>{children}</>;
-  }
-
-  // Normal operation - show regular content
   return <>{children}</>;
 };

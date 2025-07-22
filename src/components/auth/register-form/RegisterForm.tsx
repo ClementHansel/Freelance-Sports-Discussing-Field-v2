@@ -223,7 +223,7 @@ export const RegisterForm = () => {
             <div>
               <HCaptchaComponent
                 ref={captchaRef}
-                siteKey={siteKey}
+                siteKey={siteKey as string | undefined} // Explicitly cast siteKey
                 onVerify={handleCaptchaVerify}
                 onError={handleCaptchaError}
               />

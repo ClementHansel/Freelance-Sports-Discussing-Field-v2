@@ -1,22 +1,17 @@
-import dynamic from "next/dynamic";
+import Topic from "@/components/forum/category/topic/Topic";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-const TopicClient = dynamic(
-  () => import("@/components/forum/category/topic/Topic"),
-  {
-    ssr: false,
-    loading: () => (
-      <Card className="p-6">
-        <div className="text-center">Loading content...</div>
-      </Card>
-    ),
-  }
-);
-
-export default function CategorySlugPage() {
+export default function TopicPage() {
   return (
-    <div className="flex-1 w-full">
-      <TopicClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <Topic />
+    </Suspense>
   );
 }

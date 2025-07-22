@@ -1,21 +1,17 @@
-import dynamic from "next/dynamic";
+import AdminSEO from "@/components/admin/seo/Seo";
 import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 
-// Dynamically import AdminSEO, disabling server-side rendering
-const AdminSEOClient = dynamic(() => import("@/components/admin/seo/Seo"), {
-  ssr: false, // This prevents useSearchParams() from being called during SSR
-  loading: () => (
-    <Card className="p-6">
-      <div className="text-center">Loading SEO settings...</div>
-    </Card>
-  ),
-});
-
-export default function SeoPage() {
+export default function AdminSeoPage() {
   return (
-    <div className="flex-1 w-full">
-      {/* The client component will only be rendered in the browser */}
-      <AdminSEOClient />
-    </div>
+    <Suspense
+      fallback={
+        <Card className="p-6">
+          <div className="text-center">Loading content...</div>
+        </Card>
+      }
+    >
+      <AdminSEO />
+    </Suspense>
   );
 }

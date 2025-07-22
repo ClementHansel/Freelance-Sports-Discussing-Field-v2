@@ -4,21 +4,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Database, Json } from "@/integrations/supabase/types"; // Import Database and Json
 
-interface ForumSetting {
-  id: string;
-  setting_key: string;
-  setting_value: any;
-  setting_type: string;
+// Type for a single row from the forum_settings table as it comes from Supabase
+type ForumSettingRow = Database["public"]["Tables"]["forum_settings"]["Row"];
+
+// Type for the value stored in the settingsMap (after processing)
+interface MappedSettingValue {
+  value: Json; // The processed value, can be any JSON-compatible type
+  type: string;
   category: string;
   description: string | null;
-  is_public: boolean | null;
-  created_at: string;
-  updated_at: string;
+  isPublic: boolean | null;
 }
 
-interface ForumSettings {
-  [key: string]: any;
+// Type for the final settings map returned by the hook
+interface ForumSettingsMap {
+  [key: string]: MappedSettingValue;
 }
 
 export const useForumSettings = () => {
@@ -29,7 +31,8 @@ export const useForumSettings = () => {
     data: settings,
     isLoading,
     refetch,
-  } = useQuery({
+  } = useQuery<ForumSettingsMap>({
+    // Explicitly type the data returned by useQuery
     queryKey: ["forum-settings"],
     queryFn: async () => {
       console.log("Fetching forum settings from database");
@@ -46,10 +49,10 @@ export const useForumSettings = () => {
       }
 
       // Convert to a more usable format
-      const settingsMap: ForumSettings = {};
-      data?.forEach((setting: ForumSetting) => {
-        // Type 'setting' as ForumSetting
-        let value = setting.setting_value;
+      const settingsMap: ForumSettingsMap = {};
+      data?.forEach((setting: ForumSettingRow) => {
+        // Type 'setting' as ForumSettingRow
+        let value: Json = setting.setting_value; // Use Json type for value
 
         console.log(
           "Processing setting:",
@@ -61,11 +64,10 @@ export const useForumSettings = () => {
         );
 
         if (value === null || value === undefined) {
-          value = "";
+          value = ""; // Default to empty string if null/undefined
         } else {
-          // The value is already parsed from JSON by Supabase
-          // No need to parse again, just use it directly
-          value = value;
+          // No need for 'value = value;' as it's redundant (no-self-assign fix)
+          // The value is already correctly typed as Json from Supabase.
         }
 
         console.log(
@@ -92,37 +94,34 @@ export const useForumSettings = () => {
     refetchOnMount: false, // Don't always refetch on mount
   });
 
-  const updateSettingMutation = useMutation({
+  const updateSettingMutation = useMutation<
+    void,
+    Error,
+    {
+      // Explicitly type mutation: Result, Error, Variables
+      key: string;
+      value: Json; // Changed 'any' to 'Json'
+      type?: string;
+      category?: string;
+      description?: string;
+    }
+  >({
     mutationFn: async ({
       key,
       value,
       type = "string",
       category = "general",
       description,
-    }: {
-      key: string;
-      value: any;
-      type?: string;
-      category?: string;
-      description?: string;
     }) => {
       console.log("Updating forum setting:", { key, value, type, category });
 
-      // Convert value to JSON format
-      let jsonValue = value;
-      if (type === "boolean") {
-        jsonValue = value;
-      } else if (type === "number") {
-        jsonValue = value.toString(); // Ensure number is stored as string if JSONB column expects string representation
-      } else {
-        // For strings and code, don't JSON.stringify since the database column is already JSONB
-        // and will handle the JSON conversion automatically
-        jsonValue = value;
-      }
-
+      // For JSONB columns, you can often pass the value directly.
+      // Supabase's RPC will handle the serialization/deserialization.
+      // No need for manual toString() or JSON.stringify() unless the DB column expects a string representation
+      // of a specific type (e.g., a number stored as text). Given it's a 'setting_value' likely JSONB, direct pass is best.
       const { error } = await supabase.rpc("set_forum_setting", {
         key_name: key,
-        value: jsonValue,
+        value: value, // Pass value directly as Json
         setting_type: type,
         category,
         description,
@@ -140,17 +139,33 @@ export const useForumSettings = () => {
         description: "Forum settings have been saved successfully",
       });
     },
-    onError: (error) => {
-      console.error("Failed to update setting:", error);
+    onError: (error: unknown) => {
+      // Type error as unknown
+      let errorMessage = "Failed to update forum settings";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
+      console.error("Failed to update setting:", errorMessage);
       toast({
         title: "Error",
-        description: "Failed to update forum settings",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
-  const getSetting = (key: string, defaultValue: any = "") => {
+  // getSetting function now returns 'unknown' to force type narrowing by consumer
+  const getSetting = (key: string, defaultValue: unknown = ""): unknown => {
+    // Changed 'any' to 'unknown'
     if (!settings) {
       console.log(
         "getSetting called but settings not loaded yet, returning default for key:",
@@ -193,8 +208,9 @@ export const useForumSettings = () => {
   const getSettingsByCategory = (category: string) => {
     if (!settings) return {};
 
-    const categorySettings: ForumSettings = {};
+    const categorySettings: ForumSettingsMap = {}; // Type as ForumSettingsMap
     Object.entries(settings).forEach(([key, setting]) => {
+      // setting is implicitly MappedSettingValue due to ForumSettingsMap type
       if (setting.category === category) {
         categorySettings[key] = setting;
       }

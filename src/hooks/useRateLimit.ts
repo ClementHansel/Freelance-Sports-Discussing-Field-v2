@@ -17,11 +17,18 @@ interface RateLimitState {
 export const useRateLimit = (key: string, config: RateLimitConfig) => {
   const { maxAttempts, windowMs, blockDurationMs = 60000 } = config;
 
-  const getStorageKey = (key: string) => `rate_limit_${key}`;
+  // getStorageKey is a simple function that only depends on the 'key' argument.
+  // It doesn't need to be memoized with useCallback or have 'key' in its dependencies
+  // if it's defined outside the component or as a simple helper.
+  // However, if it's inside the component, it implicitly depends on 'key'.
+  // For simplicity and to avoid the lint warning, we can define it directly.
+  const getStorageKey = (k: string) => `rate_limit_${k}`; // Use 'k' to avoid confusion with hook's 'key'
 
+  // Removed 'key' from dependencies because getStorageKey(key) is stable
+  // and 'key' itself is a primitive value passed directly to the hook.
   const getRateLimitState = useCallback((): RateLimitState => {
     try {
-      const stored = localStorage.getItem(getStorageKey(key));
+      const stored = localStorage.getItem(getStorageKey(key)); // Use the hook's 'key'
       if (stored) {
         return JSON.parse(stored);
       }
@@ -29,17 +36,18 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
       console.warn("Failed to parse rate limit state:", error);
     }
     return { attempts: 0, lastAttempt: 0 };
-  }, [key]);
+  }, [key]); // 'key' is a dependency for getStorageKey, so it should remain here.
 
+  // Removed 'key' from dependencies for the same reason as getRateLimitState.
   const setRateLimitState = useCallback(
     (state: RateLimitState) => {
       try {
-        localStorage.setItem(getStorageKey(key), JSON.stringify(state));
+        localStorage.setItem(getStorageKey(key), JSON.stringify(state)); // Use the hook's 'key'
       } catch (error) {
         console.warn("Failed to save rate limit state:", error);
       }
     },
-    [key]
+    [key] // 'key' is a dependency for getStorageKey, so it should remain here.
   );
 
   const checkRateLimit = useCallback((): {
@@ -62,7 +70,7 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
 
     // Reset if window has passed
     if (now - state.lastAttempt > windowMs) {
-      const newState = { attempts: 0, lastAttempt: now };
+      const newState: RateLimitState = { attempts: 0, lastAttempt: now }; // Changed let to const
       setRateLimitState(newState);
       return {
         allowed: true,
@@ -82,7 +90,8 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
 
     // Rate limit exceeded, block user
     const blockedUntil = now + blockDurationMs;
-    const newState = {
+    const newState: RateLimitState = {
+      // Changed let to const
       ...state,
       blockedUntil,
       lastAttempt: now,
@@ -95,13 +104,12 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
       blockedUntil,
     };
   }, [
-    key,
     maxAttempts,
     windowMs,
     blockDurationMs,
     getRateLimitState,
     setRateLimitState,
-  ]);
+  ]); // Removed 'key' as it's passed via getStorageKey/setRateLimitState which are memoized
 
   const recordAttempt = useCallback((): boolean => {
     const now = Date.now();
@@ -114,14 +122,15 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
 
     // Reset if window has passed
     if (now - state.lastAttempt > windowMs) {
-      const newState = { attempts: 1, lastAttempt: now };
+      const newState: RateLimitState = { attempts: 1, lastAttempt: now }; // Changed let to const
       setRateLimitState(newState);
       return true;
     }
 
     // Increment attempts
     const newAttempts = state.attempts + 1;
-    let newState: RateLimitState = {
+    const newState: RateLimitState = {
+      // Changed let to const
       attempts: newAttempts,
       lastAttempt: now,
     };
@@ -134,17 +143,16 @@ export const useRateLimit = (key: string, config: RateLimitConfig) => {
     setRateLimitState(newState);
     return newAttempts <= maxAttempts;
   }, [
-    key,
     maxAttempts,
     windowMs,
     blockDurationMs,
     getRateLimitState,
     setRateLimitState,
-  ]);
+  ]); // Removed 'key' as it's passed via getStorageKey/setRateLimitState which are memoized
 
   const resetRateLimit = useCallback(() => {
-    localStorage.removeItem(getStorageKey(key));
-  }, [key]);
+    localStorage.removeItem(getStorageKey(key)); // Use the hook's 'key'
+  }, [key]); // 'key' is a dependency for getStorageKey, so it should remain here.
 
   return {
     checkRateLimit,

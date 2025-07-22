@@ -11,16 +11,19 @@ import { Switch } from "@/components/ui/switch";
 import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateTopic } from "@/hooks/useCreateTopic";
-import { useCreatePoll } from "@/hooks/useCreatePoll";
+import { useCreatePoll, CreatePollData } from "@/hooks/useCreatePoll"; // Import CreatePollData
 import { useTempUser } from "@/hooks/useTempUser";
 import { useEnhancedSpamDetection } from "@/hooks/useEnhancedSpamDetection";
 import { SmartCategorySelector } from "./category/SmartCategorySelector";
 import { PollCreator } from "./PollCreator";
 import { toast } from "@/hooks/use-toast";
 
+// Removed the local PollOption and PollData interfaces.
+// We will now use CreatePollData imported from useCreatePoll.ts.
+
 export const CreateTopic = () => {
-  const router = useRouter(); // Changed from useNavigate
-  const searchParams = useSearchParams(); // Changed from useSearchParams
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
 
   // Debug auth state
@@ -128,15 +131,20 @@ export const CreateTopic = () => {
       }
     } catch (error) {
       console.error("Error creating topic:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create topic. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create topic. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
-  const handleCreatePoll = async (pollData: any) => {
+  const handleCreatePoll = async (pollData: CreatePollData) => {
+    // Now correctly typed as CreatePollData
     // First create the topic
     if (!formData.title || !formData.content || !formData.category_id) {
       toast({
@@ -170,9 +178,13 @@ export const CreateTopic = () => {
       }
     } catch (error) {
       console.error("Error creating topic with poll:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create topic with poll. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create topic with poll. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -287,7 +299,7 @@ export const CreateTopic = () => {
               </div>
               {showPollCreator && (
                 <PollCreator
-                  onCreatePoll={handleCreatePoll}
+                  onCreatePoll={handleCreatePoll} // This prop now expects CreatePollData
                   onCancel={() => setShowPollCreator(false)}
                   isLoading={
                     createTopicMutation.isPending ||
@@ -316,6 +328,8 @@ export const CreateTopic = () => {
                     formData.category_id
                   ) {
                     // Poll creation is handled in PollCreator component
+                    // No direct action needed here, as PollCreator calls handleCreatePoll
+                    // when its internal form is submitted.
                   } else {
                     toast({
                       title: "Error",
