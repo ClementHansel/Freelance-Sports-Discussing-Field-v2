@@ -50,27 +50,30 @@ export default function ForumHeader() {
 
     return (
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        {" "}
-        {/* Corrected onOpenChange handler */}
         <SheetTrigger asChild>
-          {/* Reverted span back to Button */}
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="transition-colors hover:bg-muted"
+          >
+            <Menu className="h-5 w-5 text-foreground" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-[90vw] max-w-sm p-0">
+        <SheetContent
+          side="right"
+          className="w-[90vw] max-w-sm p-0 bg-background text-foreground border-l border-border"
+        >
           <div className="flex flex-col h-full">
-            <div className="p-4 border-b">
+            <div className="p-4 border-b border-border">
               <h2 className="text-lg font-semibold">Menu</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
-                {/* Search in mobile menu */}
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search forums..."
-                    className="pl-10 pr-4"
+                    className="pl-10 pr-4 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -87,21 +90,20 @@ export default function ForumHeader() {
   };
 
   return (
-    <header className="bg-background border-b border-border shadow-sm sticky top-0 z-50">
+    <header className="bg-foreground border-b border-border shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-4">
         <div className="flex items-center justify-between h-12 sm:h-14">
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs sm:text-sm">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-background rounded-md flex items-center justify-center">
+              <span className="text-black bg-background font-bold text-xs sm:text-sm">
                 MHT
               </span>
             </div>
-            <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
+            <span className="font-bold text-base sm:text-lg text-white hidden xs:block">
               Minor Hockey Talks
             </span>
-            <span className="font-bold text-sm text-foreground xs:hidden">
-              MHT
+            <span className="font-bold text-sm text-white xs:hidden">
+              Minor Hockey Talks
             </span>
           </Link>
 
@@ -109,10 +111,10 @@ export default function ForumHeader() {
           {!isMobile && (
             <div className="flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search forums..."
-                  className="pl-10 pr-4"
+                  className="pl-10 pr-4 transition-colors"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -125,19 +127,31 @@ export default function ForumHeader() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <Button variant="ghost" size="icon">
-                    <Bell className="h-5 w-5" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="transition-colors hover:bg-muted"
+                  >
+                    <Bell className="h-5 w-5 text-foreground" />
                   </Button>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      {/* Reverted span back to Button */}
-                      <Button variant="ghost" size="icon">
-                        <User className="h-5 w-5" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="transition-colors hover:bg-muted"
+                      >
+                        <User className="h-5 w-5 text-foreground" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white">
-                      <DropdownMenuLabel>{user.username}</DropdownMenuLabel>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-popover text-popover-foreground border border-border"
+                    >
+                      <DropdownMenuLabel className="text-foreground">
+                        {user.username}
+                      </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link href="/profile">
@@ -153,7 +167,7 @@ export default function ForumHeader() {
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/admin" className="text-red-600">
+                            <Link href="/admin" className="text-destructive">
                               <span>
                                 <Shield className="mr-2 h-4 w-4" />
                                 Admin Panel
@@ -171,12 +185,17 @@ export default function ForumHeader() {
                 </>
               ) : (
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="transition-colors"
+                  >
                     <Link href="/login">
                       <span>Sign In</span>
                     </Link>
                   </Button>
-                  <Button size="sm" asChild>
+                  <Button size="sm" asChild className="transition-colors">
                     <Link href="/register">
                       <span>Register</span>
                     </Link>
@@ -185,8 +204,6 @@ export default function ForumHeader() {
               )}
             </div>
           ) : (
-            /* Mobile Navigation */
-            // Re-enabled MobileNav
             <MobileNav />
           )}
         </div>

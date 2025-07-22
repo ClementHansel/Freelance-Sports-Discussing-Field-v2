@@ -76,14 +76,15 @@ export default function Forum() {
   });
 
   // Pagination state for each tab
-  const [hotPage, setHotPage] = useState(1);
+
   const [newPage, setNewPage] = useState(1);
+  const [hotPage, setHotPage] = useState(1);
   const [topPage, setTopPage] = useState(1); // State for 'top' topics pagination
   const [mostCommentedPage, setMostCommentedPage] = useState(1);
   const [mostViewedPage, setMostViewedPage] = useState(1);
 
-  // Get current sort order from URL, default to 'hot'
-  const currentSort = searchParams.get("sort") || "hot"; // `searchParams` is URLSearchParams
+  // Get current sort order from URL, default to 'new'
+  const currentSort = searchParams.get("sort") || "new"; // `searchParams` is URLSearchParams
 
   // Fetch data for each tab
   const { data: hotTopicsData, isLoading: hotTopicsLoading } = useHotTopics(
@@ -105,10 +106,6 @@ export default function Forum() {
     "view_count", // Order by view_count for 'top'
     false // Descending order (highest views first)
   );
-  const { data: mostCommentedTopicsData, isLoading: mostCommentedLoading } =
-    useMostCommentedTopics(mostCommentedPage, 10);
-  const { data: mostViewedTopicsData, isLoading: mostViewedLoading } =
-    useMostViewedTopics(mostViewedPage, 10);
 
   // Fetch categories for forum sections
   // Changed 'null' to 'undefined' for parent_category_id to fetch all categories at the given level
@@ -119,6 +116,10 @@ export default function Forum() {
   const { data: level2Forums, isLoading: level2ForumsLoading } = useCategories(
     undefined, // Changed from null
     2
+  ) as { data: CategoryWithActivity[] | undefined; isLoading: boolean };
+  const { data: level3Forums, isLoading: level3ForumsLoading } = useCategories(
+    undefined, // Changed from null
+    3
   ) as { data: CategoryWithActivity[] | undefined; isLoading: boolean };
 
   const handleTabChange = (value: string) => {
@@ -194,10 +195,10 @@ export default function Forum() {
     <div className="w-full space-y-6">
       {/* Header - Re-added missing section */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
           {getSetting("forum_name", "Minor Hockey Talks") as string}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="mt-2 text-sm md:text-base text-muted-foreground leading-relaxed">
           {
             getSetting(
               "forum_description",
@@ -208,91 +209,102 @@ export default function Forum() {
       </div>
 
       {/* Social Media Links */}
-      <div className="flex justify-center space-x-6 py-4">
-        {(() => {
-          const facebookUrl = getSetting("social_facebook", "");
-          const cleanUrl =
-            typeof facebookUrl === "string"
-              ? facebookUrl.replace(/^"(.*)"$/, "$1")
-              : "";
-          return (
-            cleanUrl &&
-            cleanUrl !== "" && (
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Facebook" // Add aria-label for accessibility
-              >
-                <Facebook className="h-6 w-6" />
-              </a>
-            )
-          );
-        })()}
-        {(() => {
-          const twitterUrl = getSetting("social_twitter", "");
-          const cleanUrl =
-            typeof twitterUrl === "string"
-              ? twitterUrl.replace(/^"(.*)"$/, "$1")
-              : "";
-          return (
-            cleanUrl &&
-            cleanUrl !== "" && (
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Twitter" // Add aria-label for accessibility
-              >
-                <Twitter className="h-6 w-6" />
-              </a>
-            )
-          );
-        })()}
-        {(() => {
-          const instagramUrl = getSetting("social_instagram", "");
-          const cleanUrl =
-            typeof instagramUrl === "string"
-              ? instagramUrl.replace(/^"(.*)"$/, "$1")
-              : "";
-          return (
-            cleanUrl &&
-            cleanUrl !== "" && (
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Instagram" // Add aria-label for accessibility
-              >
-                <Instagram className="h-6 w-6" />
-              </a>
-            )
-          );
-        })()}
-        {(() => {
-          const youtubeUrl = getSetting("social_youtube", "");
-          const cleanUrl =
-            typeof youtubeUrl === "string"
-              ? youtubeUrl.replace(/^"(.*)"$/, "$1")
-              : "";
-          return (
-            cleanUrl &&
-            cleanUrl !== "" && (
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Youtube" // Add aria-label for accessibility
-              >
-                <Youtube className="h-6 w-6" />
-              </a>
-            )
-          );
-        })()}
+      <div className="flex justify-center gap-6 py-6">
+        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
+          {(() => {
+            const facebookUrl = getSetting("social_facebook", "");
+            const cleanUrl =
+              typeof facebookUrl === "string"
+                ? facebookUrl.replace(/^"(.*)"$/, "$1")
+                : "";
+            return (
+              cleanUrl &&
+              cleanUrl !== "" && (
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  aria-label="Facebook" // Add aria-label for accessibility
+                >
+                  <Facebook className="h-6 w-6" />
+                </a>
+              )
+            );
+          })()}
+        </a>
+
+        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
+          {(() => {
+            const twitterUrl = getSetting("social_twitter", "");
+            const cleanUrl =
+              typeof twitterUrl === "string"
+                ? twitterUrl.replace(/^"(.*)"$/, "$1")
+                : "";
+            return (
+              cleanUrl &&
+              cleanUrl !== "" && (
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  aria-label="Twitter" // Add aria-label for accessibility
+                >
+                  <Twitter className="h-6 w-6" />
+                </a>
+              )
+            );
+          })()}
+        </a>
+
+        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
+          {(() => {
+            const instagramUrl = getSetting("social_instagram", "");
+            const cleanUrl =
+              typeof instagramUrl === "string"
+                ? instagramUrl.replace(/^"(.*)"$/, "$1")
+                : "";
+            return (
+              cleanUrl &&
+              cleanUrl !== "" && (
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  aria-label="Instagram" // Add aria-label for accessibility
+                >
+                  <Instagram className="h-6 w-6" />
+                </a>
+              )
+            );
+          })()}
+        </a>
+
+        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
+          {(() => {
+            const youtubeUrl = getSetting("social_youtube", "");
+            const cleanUrl =
+              typeof youtubeUrl === "string"
+                ? youtubeUrl.replace(/^"(.*)"$/, "$1")
+                : "";
+            return (
+              cleanUrl &&
+              cleanUrl !== "" && (
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  aria-label="Youtube" // Add aria-label for accessibility
+                >
+                  <Youtube className="h-6 w-6" />
+                </a>
+              )
+            );
+          })()}
+        </a>
       </div>
 
       {/* Quick Topic Button */}
@@ -305,21 +317,24 @@ export default function Forum() {
       {/* Hot Topics / New Posts / Top Posts Tabs */}
       <div className="space-y-4">
         <Tabs value={currentSort} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-5">
-            <TabsTrigger value="hot">
-              <TrendingUp className="h-4 w-4 mr-2" /> Hot
-            </TabsTrigger>
-            <TabsTrigger value="new">
+          <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl p-1 shadow-inner">
+            <TabsTrigger
+              value="new"
+              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
               <Clock className="h-4 w-4 mr-2" /> New
             </TabsTrigger>
-            <TabsTrigger value="top">
+            <TabsTrigger
+              value="hot"
+              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" /> Hot
+            </TabsTrigger>
+            <TabsTrigger
+              value="top"
+              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
               <Star className="h-4 w-4 mr-2" /> Top
-            </TabsTrigger>
-            <TabsTrigger value="comments">
-              <MessageSquare className="h-4 w-4 mr-2" /> Comments
-            </TabsTrigger>
-            <TabsTrigger value="views">
-              <Eye className="h-4 w-4 mr-2" /> Views
             </TabsTrigger>
           </TabsList>
 
@@ -527,149 +542,6 @@ export default function Forum() {
               </Card>
             )}
           </TabsContent>
-
-          {/* Most Commented Topics Tab */}
-          <TabsContent value="comments" className="space-y-4">
-            {mostCommentedLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-muted rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : mostCommentedTopicsData &&
-              mostCommentedTopicsData.data.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {mostCommentedTopicsData.data.map(
-                    (topic: UseMostCommentedTopic) => (
-                      <PostCard
-                        key={topic.id}
-                        topic={{
-                          id: topic.id,
-                          created_at: topic.created_at ?? null,
-                          title: topic.title,
-                          content: topic.content ?? null,
-                          view_count: topic.view_count ?? null,
-                          reply_count: topic.reply_count ?? null,
-                          last_reply_at: topic.last_reply_at ?? null, // Corrected property name
-                          author_id: topic.author_id ?? null,
-                          category_id: topic.category_id,
-                          is_locked: topic.is_locked ?? null,
-                          is_pinned: topic.is_pinned ?? null,
-                          is_hidden: null, // Explicitly set to null as it's not present in MostCommentedTopic
-                          slug: topic.slug ?? null,
-                          hot_score: null, // Explicitly set to null as it's not present in MostCommentedTopic
-                          last_post_id: topic.last_post_id ?? null,
-                          parent_category_id: topic.parent_category_id ?? null,
-                          parent_category_slug:
-                            topic.parent_category_slug ?? null,
-                          username: topic.username ?? null,
-                          avatar_url: topic.avatar_url ?? null,
-                          category_name: topic.category_name ?? null,
-                          category_color: topic.category_color ?? null,
-                          category_slug: topic.category_slug ?? null,
-                          updated_at: topic.updated_at ?? null,
-                        }}
-                        onReport={handleReport}
-                      />
-                    )
-                  )}
-                </div>
-                <PaginationControls
-                  currentPage={mostCommentedPage}
-                  totalPages={mostCommentedTopicsData.totalPages}
-                  totalItems={mostCommentedTopicsData.totalCount}
-                  itemsPerPage={10}
-                  onPageChange={setMostCommentedPage}
-                  loading={mostCommentedLoading}
-                />
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No most commented topics
-                </h3>
-                <p className="text-muted-foreground">
-                  Start a lively discussion!
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Most Viewed Topics Tab */}
-          <TabsContent value="views" className="space-y-4">
-            {mostViewedLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-muted rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : mostViewedTopicsData && mostViewedTopicsData.data.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {mostViewedTopicsData.data.map(
-                    (topic: UseMostViewedTopic) => (
-                      <PostCard
-                        key={topic.id}
-                        topic={{
-                          id: topic.id,
-                          created_at: topic.created_at ?? null,
-                          title: topic.title,
-                          content: topic.content ?? null,
-                          view_count: topic.view_count ?? null,
-                          reply_count: topic.reply_count ?? null,
-                          last_reply_at: topic.last_reply_at ?? null, // Corrected property name
-                          author_id: topic.author_id ?? null,
-                          category_id: topic.category_id,
-                          is_locked: topic.is_locked ?? null,
-                          is_pinned: topic.is_pinned ?? null,
-                          is_hidden: null, // Explicitly set to null as it's not present in MostViewedTopic
-                          slug: topic.slug ?? null,
-                          hot_score: null, // Explicitly set to null as it's not present in MostViewedTopic
-                          last_post_id: topic.last_post_id ?? null,
-                          parent_category_id: topic.parent_category_id ?? null,
-                          parent_category_slug:
-                            topic.parent_category_slug ?? null,
-                          username: topic.username ?? null,
-                          avatar_url: topic.avatar_url ?? null,
-                          category_name: topic.category_name ?? null,
-                          category_color: topic.category_color ?? null,
-                          category_slug: topic.category_slug ?? null,
-                          updated_at: topic.updated_at ?? null,
-                        }}
-                        onReport={handleReport}
-                      />
-                    )
-                  )}
-                </div>
-                <PaginationControls
-                  currentPage={mostViewedPage}
-                  totalPages={mostViewedTopicsData.totalPages}
-                  totalItems={mostViewedTopicsData.totalCount}
-                  itemsPerPage={10}
-                  onPageChange={setMostViewedPage}
-                  loading={mostViewedLoading}
-                />
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No most viewed topics
-                </h3>
-                <p className="text-muted-foreground">
-                  Be the first to get views!
-                </p>
-              </Card>
-            )}
-          </TabsContent>
         </Tabs>
       </div>
 
@@ -720,7 +592,7 @@ export default function Forum() {
             )}
           </div>
         ) : (
-          <Card className="p-8 text-center">
+          <Card className="p-4 flex items-center gap-3 hover:bg-primary/10 border hover:shadow-md transition-all rounded-xl">
             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No forums available</h3>
             <p className="text-muted-foreground">
@@ -741,7 +613,10 @@ export default function Forum() {
         {level2ForumsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="p-4 h-24 animate-pulse bg-muted" />
+              <Card
+                key={i}
+                className="p-4 hover:bg-accent/20 border transition-all rounded-xl"
+              />
             ))}
           </div>
         ) : level2Forums && level2Forums.length > 0 ? (
@@ -781,28 +656,31 @@ export default function Forum() {
                   <h3 className="text-lg font-semibold text-foreground border-b pb-2">
                     {country.name}
                   </h3>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="grid gap-3 h-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {country.forums.map((forum) => (
                       <Link
                         key={forum.id}
                         href={`/category/${forum.slug}`} // Use Next.js Link
                         className="block"
                       >
-                        <Card className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                          <div className="flex items-center space-x-2 mb-2">
+                        <Card className="p-3 h-full flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer">
+                          <div className="flex items-start space-x-2">
                             <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: forum.color ?? "" }} // Added nullish coalescing
+                              className="w-3 h-3 rounded-full mt-3 mr-6"
+                              style={{ backgroundColor: forum.color ?? "" }}
                             />
-                            <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
-                              {forum.region}
-                            </h4>
+                            <div>
+                              <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
+                                {forum.region}
+                              </h4>
+
+                              {forum.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                  {forum.description}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          {forum.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {forum.description}
-                            </p>
-                          )}
                         </Card>
                       </Link>
                     ))}

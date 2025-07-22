@@ -93,8 +93,7 @@ const ContactFormModal = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {/* Using a regular button for the trigger, as asChild expects a single child */}
-        <button className="text-sm hover:text-primary transition-colors text-left">
+        <button className="text-sm text-primary-foreground font-medium hover:text-primary transition-colors text-left">
           Contact Us
         </button>
       </DialogTrigger>
@@ -153,11 +152,16 @@ const ContactFormModal = () => {
             <Button
               type="button"
               variant="outline"
+              className="bg-destructive border-primary text-white hover:bg-destructive/90"
               onClick={() => setOpen(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="bg-primary text-white hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Sending..." : "Send Message"}
             </Button>
           </div>
@@ -177,21 +181,23 @@ export default function Footer() {
   useAutoPeakUpdate();
 
   return (
-    <footer className="bg-card border-t mt-auto">
+    <footer className="bg-foreground border-t mt-auto text-foreground">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Minor Hockey Talks</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-lg text-primary-foreground">
+              Minor Hockey Talks
+            </h3>
+            <p className="text-sm text-primary-foreground">
               The premier community for minor hockey discussions and insights.
             </p>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-medium">Quick Links</h4>
-            <div className="flex flex-col space-y-2 text-sm">
+            <h4 className="font-medium text-primary-foreground">Quick Links</h4>
+            <div className="flex flex-col space-y-2 text-primary-foreground text-sm">
               <Link
                 href="/rules"
                 className="hover:text-primary transition-colors"
@@ -222,20 +228,19 @@ export default function Footer() {
 
           {/* Social Media */}
           <div className="space-y-4">
-            <h4 className="font-medium">Follow Us</h4>
+            <h4 className="font-medium text-primary-foreground">Follow Us</h4>
             <div className="flex space-x-3">
               {(() => {
-                const facebookUrl = getSetting("social_facebook", "") as string; // Cast to string
+                const facebookUrl = getSetting("social_facebook", "") as string;
                 const cleanUrl = facebookUrl.replace(/^"(.*)"$/, "$1");
                 return (
-                  cleanUrl &&
-                  cleanUrl !== "" && (
+                  cleanUrl && (
                     <a
                       href={cleanUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                      title="Follow us on Facebook" // Added title for accessibility
+                      className="text-primary-foreground hover:text-primary transition-colors"
+                      title="Follow us on Facebook"
                     >
                       <Facebook className="h-5 w-5" />
                     </a>
@@ -243,17 +248,16 @@ export default function Footer() {
                 );
               })()}
               {(() => {
-                const twitterUrl = getSetting("social_twitter", "") as string; // Cast to string
+                const twitterUrl = getSetting("social_twitter", "") as string;
                 const cleanUrl = twitterUrl.replace(/^"(.*)"$/, "$1");
                 return (
-                  cleanUrl &&
-                  cleanUrl !== "" && (
+                  cleanUrl && (
                     <a
                       href={cleanUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                      title="Follow us on X (formerly Twitter)" // Added title for accessibility
+                      className="text-primary-foreground hover:text-primary transition-colors"
+                      title="Follow us on X (formerly Twitter)"
                     >
                       <Twitter className="h-5 w-5" />
                     </a>
@@ -264,17 +268,16 @@ export default function Footer() {
                 const instagramUrl = getSetting(
                   "social_instagram",
                   ""
-                ) as string; // Cast to string
+                ) as string;
                 const cleanUrl = instagramUrl.replace(/^"(.*)"$/, "$1");
                 return (
-                  cleanUrl &&
-                  cleanUrl !== "" && (
+                  cleanUrl && (
                     <a
                       href={cleanUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                      title="Follow us on Instagram" // Added title for accessibility
+                      className="text-primary-foreground hover:text-primary transition-colors"
+                      title="Follow us on Instagram"
                     >
                       <Instagram className="h-5 w-5" />
                     </a>
@@ -282,17 +285,16 @@ export default function Footer() {
                 );
               })()}
               {(() => {
-                const youtubeUrl = getSetting("social_youtube", "") as string; // Cast to string
+                const youtubeUrl = getSetting("social_youtube", "") as string;
                 const cleanUrl = youtubeUrl.replace(/^"(.*)"$/, "$1");
                 return (
-                  cleanUrl &&
-                  cleanUrl !== "" && (
+                  cleanUrl && (
                     <a
                       href={cleanUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                      title="Subscribe to our YouTube channel" // Added title for accessibility
+                      className="text-primary-foreground hover:text-primary transition-colors"
+                      title="Subscribe to our YouTube channel"
                     >
                       <Youtube className="h-5 w-5" />
                     </a>
@@ -304,23 +306,23 @@ export default function Footer() {
 
           {/* Community Stats */}
           <div className="space-y-4">
-            <h4 className="font-medium">Community</h4>
+            <h4 className="font-medium text-primary-foreground">Community</h4>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">
+                <Users className="h-4 w-4 text-primary-foreground" />
+                <span className="text-primary-foreground">
                   {stats?.total_members || 0} Total Members
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-muted-foreground">
+                <span className="text-primary-foreground">
                   {visitors24h || 0} Visitors (24h)
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">
+                <Calendar className="h-4 w-4 text-primary-foreground" />
+                <span className="text-primary-foreground">
                   All-time Peak: {peakData?.peak_count || 0}
                 </span>
               </div>
@@ -329,7 +331,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-muted-foreground">
+        <div className="border-t mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-primary-foreground">
           <p>
             &copy; {new Date().getFullYear()} Minor Hockey Talks. All rights
             reserved.
