@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,6 @@ import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink, // This might need to be Link from next/link if it's not purely presentational
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -24,11 +23,23 @@ import { MessageSquare, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateTopic } from "@/hooks/useCreateTopic";
 import { useTempUser } from "@/hooks/useTempUser";
-import { useCategoryById } from "@/hooks/useCategories";
+import { useCategoryById, useCategories } from "@/hooks/useCategories";
 import { HierarchicalCategorySelector } from "./HierarchicalCategorySelector";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+// Define the Category interface based on the actual data structure from your hooks
+// The 'description' field is explicitly 'string | null' as per the TypeScript error.
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+  description: string | null; // Corrected: can be string or null
+  level: number;
+  parent_category_id?: string;
+  slug?: string;
+}
 
 interface QuickTopicModalProps {
   preselectedCategoryId?: string;
@@ -41,7 +52,7 @@ export const QuickTopicModal = ({
   trigger,
   size = "default",
 }: QuickTopicModalProps) => {
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -50,30 +61,89 @@ export const QuickTopicModal = ({
     category_id: preselectedCategoryId || "",
   });
   const [contentErrors, setContentErrors] = useState<string[]>([]);
-  const [navigationPath, setNavigationPath] = useState({
-    level1Id: "",
-    level2Id: "",
-    level3Id: "",
-  });
 
   const createTopicMutation = useCreateTopic();
-  const tempUser = useTempUser(); // Assuming useTempUser is a client-side hook
+  const tempUser = useTempUser();
+
+  // Fetch data for the currently selected category (formData.category_id)
   const { data: currentSelectedCategory } = useCategoryById(
-    formData.category_id || preselectedCategoryId || ""
+    formData.category_id || ""
   );
 
-  // Get category data for breadcrumb path
-  const { data: level1Category } = useCategoryById(navigationPath.level1Id);
-  const { data: level2Category } = useCategoryById(navigationPath.level2Id);
-  const { data: level3Category } = useCategoryById(navigationPath.level3Id);
+  // Fetch all categories to derive the breadcrumb path
+  const { data: allLevel1Categories } = useCategories(null, 1);
+  const { data: allLevel2Categories } = useCategories(undefined, 2);
 
-  const handlePathChange = (path: {
-    level1Id: string;
-    level2Id: string;
-    level3Id: string;
-  }) => {
-    setNavigationPath(path);
-  };
+  // Derived state for breadcrumbs based on formData.category_id
+  const [level1Category, setLevel1Category] = useState<Category | null>(null);
+  const [level2Category, setLevel2Category] = useState<Category | null>(null);
+  const [level3Category, setLevel3Category] = useState<Category | null>(null);
+
+  useEffect(() => {
+    if (currentSelectedCategory && allLevel1Categories && allLevel2Categories) {
+      let l1Cat: Category | null = null;
+      let l2Cat: Category | null = null;
+      let l3Cat: Category | null = null;
+
+      // Type assertions are used here to ensure the data from hooks conforms to our Category interface
+      // This is safe because we are correcting the interface to match the hook's return type.
+      const currentCat: Category = currentSelectedCategory as Category;
+      const l1Cats: Category[] = allLevel1Categories as Category[];
+      const l2Cats: Category[] = allLevel2Categories as Category[];
+
+      if (currentCat.level === 3) {
+        l3Cat = currentCat;
+        const parent2 = l2Cats.find(
+          (cat: Category) => cat.id === currentCat.parent_category_id
+        );
+        if (parent2) {
+          l2Cat = parent2;
+          const parent1 = l1Cats.find(
+            (cat: Category) => cat.id === parent2.parent_category_id
+          );
+          if (parent1) {
+            l1Cat = parent1;
+          }
+        }
+      } else if (currentCat.level === 2) {
+        l2Cat = currentCat;
+        const parent1 = l1Cats.find(
+          (cat: Category) => cat.id === currentCat.parent_category_id
+        );
+        if (parent1) {
+          l1Cat = parent1;
+        }
+      } else if (currentCat.level === 1) {
+        l1Cat = currentCat;
+      }
+
+      // Only update state if there's a change to prevent unnecessary re-renders
+      if (
+        l1Cat?.id !== level1Category?.id ||
+        l2Cat?.id !== level2Category?.id ||
+        l3Cat?.id !== level3Category?.id
+      ) {
+        setLevel1Category(l1Cat);
+        setLevel2Category(l2Cat);
+        setLevel3Category(l3Cat);
+      }
+    } else if (!formData.category_id) {
+      // Clear breadcrumbs if no category is selected
+      if (level1Category || level2Category || level3Category) {
+        setLevel1Category(null);
+        setLevel2Category(null);
+        setLevel3Category(null);
+      }
+    }
+  }, [
+    formData.category_id,
+    currentSelectedCategory,
+    allLevel1Categories,
+    allLevel2Categories,
+    level1Category, // Include current state in dependencies for comparison
+    level2Category,
+    level3Category,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,9 +204,9 @@ export const QuickTopicModal = ({
 
       // Navigate using slug-based URL if available, fallback to UUID
       if (topic.slug && topic.categories?.slug) {
-        router.push(`/category/${topic.categories.slug}/${topic.slug}`); // Use router.push
+        router.push(`/category/${topic.categories.slug}/${topic.slug}`);
       } else {
-        router.push(`/topic/${topic.id}`); // Use router.push
+        router.push(`/topic/${topic.id}`);
       }
     } catch (error) {
       console.error("Error creating topic:", error);
@@ -157,7 +227,9 @@ export const QuickTopicModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
+      <DialogTrigger asChild>
+        {React.isValidElement(trigger) ? trigger : defaultTrigger}
+      </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-x-hidden overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -178,8 +250,6 @@ export const QuickTopicModal = ({
               </div>
               <div className="text-xs mt-2 text-blue-600">
                 <Link href="/register" className="underline hover:no-underline">
-                  {" "}
-                  {/* Changed 'a' to 'Link' */}
                   Create account for unlimited posting + images/links
                 </Link>
               </div>
@@ -188,10 +258,7 @@ export const QuickTopicModal = ({
         )}
 
         {/* Show current forum selection when any category is selected */}
-        {(level1Category ||
-          level2Category ||
-          level3Category ||
-          (formData.category_id && currentSelectedCategory)) && (
+        {(level1Category || level2Category || level3Category) && (
           <div className="bg-muted/50 p-3 rounded-md border w-full overflow-hidden">
             <div className="text-sm text-muted-foreground mb-2">
               Posting in:
@@ -240,26 +307,6 @@ export const QuickTopicModal = ({
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 )}
-                {/* Fallback for when final category is selected but no navigation path */}
-                {!level1Category &&
-                  !level2Category &&
-                  !level3Category &&
-                  formData.category_id &&
-                  currentSelectedCategory && (
-                    <BreadcrumbItem>
-                      <BreadcrumbPage className="flex items-center gap-2 font-semibold truncate">
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{
-                            backgroundColor: currentSelectedCategory.color,
-                          }}
-                        />
-                        <span className="truncate">
-                          {currentSelectedCategory.name}
-                        </span>
-                      </BreadcrumbPage>
-                    </BreadcrumbItem>
-                  )}
               </BreadcrumbList>
             </Breadcrumb>
             <div className="text-xs text-muted-foreground mt-2">
@@ -315,8 +362,6 @@ export const QuickTopicModal = ({
             onChange={(value) =>
               setFormData({ ...formData, category_id: value })
             }
-            preselectedCategoryId={preselectedCategoryId}
-            onPathChange={handlePathChange}
             required
           />
 
