@@ -130,9 +130,9 @@ export default function ForumHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="transition-colors hover:bg-muted"
+                    className="transition-colors hover:bg-muted group"
                   >
-                    <Bell className="h-5 w-5 text-white hover:text-Black" />
+                    <Bell className="h-5 w-5 text-white group-hover:text-Black" />
                   </Button>
 
                   <DropdownMenu>
@@ -140,9 +140,9 @@ export default function ForumHeader() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="transition-colors hover:bg-muted"
+                        className="transition-colors hover:bg-muted group"
                       >
-                        <User className="h-5 w-5 text-White hover:text-Black" />
+                        <User className="h-5 w-5 text-White group-hover:text-Black" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
