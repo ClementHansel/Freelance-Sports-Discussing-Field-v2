@@ -52,21 +52,22 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
   // --- END DEBUGGING ---
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden pb-16">
-      {/* Dynamically loaded client components */}
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
+      {/* Top Components */}
       <DynamicRedirectHandler />
       <DynamicForumHeader />
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden">
+
+      {/* Main Content Wrapper: grows to fill space if needed */}
+      {/* Added pb-16 for mobile to account for fixed bottom nav, removed on md screens and up */}
+      <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden pb-16 md:pb-0">
         <div className="flex gap-6 w-full">
-          {/* Sidebar - Left side on desktop, hidden on mobile */}
           {!isMobile && (
             <aside className="w-80 flex-shrink-0 space-y-6 overflow-x-hidden">
               <DynamicForumSidebarNav />
-              <DynamicForumStats /> {/* Use the dynamically imported version */}
+              <DynamicForumStats />
             </aside>
           )}
 
-          {/* Main Content */}
           <main className="flex-1 min-w-0 w-full overflow-x-hidden">
             <Suspense
               fallback={
@@ -80,10 +81,17 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
           </main>
         </div>
       </div>
-      {/* Footer */}
-      <DynamicFooter />
-      {/* Mobile Bottom Navigation - Only render on mobile */}
-      <DynamicMobileBottomNav />
+
+      {/* Dynamic Footer - always rendered, its position is determined by the flex layout */}
+      {/* On mobile, it will appear above the fixed mobile nav due to main's padding-bottom */}
+      <div className="pb-16 md:pb-0">
+        <DynamicFooter />
+      </div>
+
+      {/* Dynamic Mobile Bottom Navigation - fixed at the bottom, only visible on small screens */}
+      <div className="fixed bottom-0 left-0 right-0 w-full md:hidden z-50">
+        <DynamicMobileBottomNav />
+      </div>
     </div>
   );
 }
