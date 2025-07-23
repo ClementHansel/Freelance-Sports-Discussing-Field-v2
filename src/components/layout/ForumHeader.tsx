@@ -132,7 +132,7 @@ export default function ForumHeader() {
                     size="icon"
                     className="transition-colors hover:bg-muted"
                   >
-                    <Bell className="h-5 w-5 text-white" />
+                    <Bell className="h-5 w-5 text-white hover:text-Black" />
                   </Button>
 
                   <DropdownMenu>
@@ -142,7 +142,7 @@ export default function ForumHeader() {
                         size="icon"
                         className="transition-colors hover:bg-muted"
                       >
-                        <User className="h-5 w-5 text-White" />
+                        <User className="h-5 w-5 text-White hover:text-Black" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
