@@ -52,20 +52,21 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
   // --- END DEBUGGING ---
 
   return (
-    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
-      {/* Top Components */}
+    <div className="min-h-screen bg-background overflow-x-hidden pb-16">
+      {/* Dynamically loaded client components */}
       <DynamicRedirectHandler />
       <DynamicForumHeader />
-      {/* Main Content Wrapper: grows to fill space if needed */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden">
         <div className="flex gap-6 w-full">
+          {/* Sidebar - Left side on desktop, hidden on mobile */}
           {!isMobile && (
             <aside className="w-80 flex-shrink-0 space-y-6 overflow-x-hidden">
               <DynamicForumSidebarNav />
-              <DynamicForumStats />
+              <DynamicForumStats /> {/* Use the dynamically imported version */}
             </aside>
           )}
 
+          {/* Main Content */}
           <main className="flex-1 min-w-0 w-full overflow-x-hidden">
             <Suspense
               fallback={
@@ -79,9 +80,10 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
           </main>
         </div>
       </div>
-      {/* Footer (always shown) */}
+      {/* Footer */}
       <DynamicFooter />
-      <DynamicMobileBottomNav />{" "}
+      {/* Mobile Bottom Navigation - Only render on mobile */}
+      <DynamicMobileBottomNav />
     </div>
   );
 }

@@ -12,11 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useRateLimit } from "@/hooks/useRateLimit";
 import { HCaptchaComponent, HCaptchaRef } from "@/components/ui/hcaptcha";
 import { useHCaptchaSiteKey } from "@/hooks/useHCaptchaSiteKey";
-import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator"; // Assuming PasswordStrengthIndicator is a client-side component
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordValidationResult } from "@/lib/utils/passwordValidation";
 
 export const RegisterForm = () => {
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const { signUp, loading } = useAuth();
   const { toast } = useToast();
   const captchaRef = useRef<HCaptchaRef>(null);
@@ -26,6 +26,7 @@ export const RegisterForm = () => {
     confirmPassword: "",
     username: "",
   });
+
   const [captchaToken, setCaptchaToken] = useState<string>("");
   const [passwordValidation, setPasswordValidation] =
     useState<PasswordValidationResult>({
@@ -34,17 +35,18 @@ export const RegisterForm = () => {
       errors: [],
       suggestions: [],
     });
+
   const { checkRateLimit, recordAttempt } = useRateLimit("register", {
     maxAttempts: 3,
     windowMs: 60 * 60 * 1000, // 1 hour
     blockDurationMs: 30 * 60 * 1000, // Block for 30 minutes
   });
+
   const { siteKey } = useHCaptchaSiteKey();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check rate limit
     const rateLimitCheck = checkRateLimit();
     if (!rateLimitCheck.allowed) {
       const blockedUntil = rateLimitCheck.blockedUntil;
@@ -62,7 +64,6 @@ export const RegisterForm = () => {
       return;
     }
 
-    // Validate CAPTCHA token
     if (!captchaToken) {
       toast({
         title: "CAPTCHA required",
@@ -81,7 +82,6 @@ export const RegisterForm = () => {
       return;
     }
 
-    // Use comprehensive password validation
     if (!passwordValidation.isValid) {
       toast({
         title: "Password requirements not met",
@@ -94,22 +94,25 @@ export const RegisterForm = () => {
 
     try {
       await signUp(formData.email, formData.password, formData.username);
+
       toast({
         title: "Account created!",
         description: "Welcome to Minor Hockey Talks!",
       });
-      router.push("/"); // Use router.push for navigation
-    } catch (error) {
-      // Record failed attempt
-      recordAttempt();
 
-      // Reset CAPTCHA on failed attempt
+      // Delay redirect so Supabase has time to handle triggers
+      setTimeout(() => {
+        router.push("/"); // You may use "/" if preferred
+      }, 1000);
+    } catch (err) {
+      recordAttempt();
       captchaRef.current?.resetCaptcha();
       setCaptchaToken("");
 
       toast({
         title: "Registration failed",
-        description: "Please try again with different details.",
+        description:
+          "Please try again with different details or check your connection.",
         variant: "destructive",
       });
     }
@@ -138,7 +141,7 @@ export const RegisterForm = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{" "}
             <Link
-              href="/login" // Changed 'to' to 'href'
+              href="/login"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               sign in to your existing account
@@ -193,8 +196,6 @@ export const RegisterForm = () => {
                 className="mt-1"
                 placeholder="Choose a strong password"
               />
-
-              {/* Password Strength Indicator */}
               <div className="mt-2">
                 <PasswordStrengthIndicator
                   password={formData.password}
@@ -212,18 +213,20 @@ export const RegisterForm = () => {
                 required
                 value={formData.confirmPassword}
                 onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
+                  setFormData({
+                    ...formData,
+                    confirmPassword: e.target.value,
+                  })
                 }
                 className="mt-1"
                 placeholder="Confirm your password"
               />
             </div>
 
-            {/* CAPTCHA */}
             <div>
               <HCaptchaComponent
                 ref={captchaRef}
-                siteKey={siteKey as string | undefined} // Explicitly cast siteKey
+                siteKey={siteKey as string | undefined}
                 onVerify={handleCaptchaVerify}
                 onError={handleCaptchaError}
               />
@@ -244,7 +247,7 @@ export const RegisterForm = () => {
         </Card>
         <div className="text-center">
           <Link
-            href="/" // Changed 'to' to 'href'
+            href="/"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
             ← Back to Forum
