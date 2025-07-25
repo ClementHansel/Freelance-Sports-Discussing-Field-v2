@@ -2,17 +2,28 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import * as Sentry from "@sentry/react";
 
 export const ScrollToTop = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Scroll to the top of the page whenever the pathname changes
-    // Guard window access for SSR safety
-    if (typeof window !== "undefined") {
-      window.scrollTo(0, 0);
+    try {
+      Sentry.setTag("page", "scroll_to_top");
+      Sentry.addBreadcrumb({
+        category: "navigation",
+        message: `ScrollToTop triggered on pathname change: ${pathname}`,
+        level: "info",
+      });
+
+      if (typeof window !== "undefined") {
+        window.scrollTo(0, 0);
+      }
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("ScrollToTop error:", error);
     }
-  }, [pathname]); // Depend on pathname to trigger the effect on route changes
+  }, [pathname]);
 
   return null; // This component doesn't render any UI
 };

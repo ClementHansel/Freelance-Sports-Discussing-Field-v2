@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/react";
 import {
   useParams,
   useRouter,
@@ -17,72 +18,85 @@ export default function RedirectHandler() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // useParams returns an object where keys are the dynamic segments
-    // For a route like /category/[categorySlug]/[topicSlug], params would be { categorySlug: '...', topicSlug: '...' }
-    // We need to be careful with how params are structured, as they are strings or string arrays.
-    const categorySlug = Array.isArray(params.categorySlug)
-      ? params.categorySlug[0]
-      : params.categorySlug;
-    const subcategorySlug = Array.isArray(params.subcategorySlug)
-      ? params.subcategorySlug[0]
-      : params.subcategorySlug;
-    const topicSlug = Array.isArray(params.topicSlug)
-      ? params.topicSlug[0]
-      : params.topicSlug;
+    try {
+      Sentry.setTag("page", "redirect_handler");
+      Sentry.setContext("redirectParams", {
+        params,
+        pathname,
+        search: searchParams.toString(),
+      });
 
-    // Construct the full current URL path including search params
-    const currentPathWithQuery = `${pathname}${
-      searchParams.toString() ? `?${searchParams.toString()}` : ""
-    }`;
+      const categorySlug = Array.isArray(params.categorySlug)
+        ? params.categorySlug[0]
+        : params.categorySlug;
+      const subcategorySlug = Array.isArray(params.subcategorySlug)
+        ? params.subcategorySlug[0]
+        : params.subcategorySlug;
+      const topicSlug = Array.isArray(params.topicSlug)
+        ? params.topicSlug[0]
+        : params.topicSlug;
 
-    // Check for URL migration first
-    const migratedUrl = migrateUrl(currentPathWithQuery);
-    if (migratedUrl) {
-      router.replace(migratedUrl); // Use router.replace for 301-like redirect
-      return;
-    }
+      const currentPathWithQuery = `${pathname}${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`;
 
-    // Check if we need to redirect the category slug
-    if (categorySlug) {
-      const newCategorySlug = getRedirectUrl(categorySlug);
-      if (newCategorySlug && newCategorySlug !== categorySlug) {
-        // Ensure actual change to avoid infinite loop
-        // Build the new URL maintaining the same structure
-        let newPath = `/${newCategorySlug}`;
+      const migratedUrl = migrateUrl(currentPathWithQuery);
+      if (migratedUrl) {
+        Sentry.addBreadcrumb({
+          category: "navigation",
+          message: `Migrating URL to ${migratedUrl}`,
+          level: "info",
+        });
+        router.replace(migratedUrl);
+        return;
+      }
 
-        if (subcategorySlug) {
-          const newSubcategorySlug = getRedirectUrl(subcategorySlug);
-          newPath += `/${newSubcategorySlug || subcategorySlug}`;
+      if (categorySlug) {
+        const newCategorySlug = getRedirectUrl(categorySlug);
+        if (newCategorySlug && newCategorySlug !== categorySlug) {
+          let newPath = `/${newCategorySlug}`;
 
+          if (subcategorySlug) {
+            const newSubcategorySlug = getRedirectUrl(subcategorySlug);
+            newPath += `/${newSubcategorySlug || subcategorySlug}`;
+
+            if (topicSlug) {
+              newPath += `/${topicSlug}`;
+            }
+          } else if (topicSlug) {
+            newPath += `/${topicSlug}`;
+          }
+
+          Sentry.addBreadcrumb({
+            category: "redirect",
+            message: `Redirecting category from ${categorySlug} to ${newPath}`,
+            level: "info",
+          });
+          router.replace(newPath);
+          return;
+        }
+      }
+
+      if (subcategorySlug && !categorySlug) {
+        const newSubcategorySlug = getRedirectUrl(subcategorySlug);
+        if (newSubcategorySlug && newSubcategorySlug !== subcategorySlug) {
+          let newPath = `/${newSubcategorySlug}`;
           if (topicSlug) {
             newPath += `/${topicSlug}`;
           }
-        } else if (topicSlug) {
-          // This case is less likely with nested dynamic routes but kept for safety
-          newPath += `/${topicSlug}`;
-        }
 
-        router.replace(newPath); // Perform 301 redirect by replacing the current history entry
-        return;
-      }
-    }
-
-    // Check subcategory redirects (this logic might need refinement based on your Next.js route structure)
-    // In Next.js App Router, deeply nested dynamic segments are often handled by a single page.tsx
-    // e.g., src/app/[categorySlug]/[topicSlug]/page.tsx
-    // If subcategorySlug is a separate dynamic segment and not part of a combined slug, this logic applies.
-    if (subcategorySlug && !categorySlug) {
-      // Only check if subcategory is present and no category (e.g., /old-sub/topic)
-      const newSubcategorySlug = getRedirectUrl(subcategorySlug);
-      if (newSubcategorySlug && newSubcategorySlug !== subcategorySlug) {
-        // Ensure actual change
-        let newPath = `/${newSubcategorySlug}`;
-        if (topicSlug) {
-          newPath += `/${topicSlug}`;
+          Sentry.addBreadcrumb({
+            category: "redirect",
+            message: `Redirecting subcategory from ${subcategorySlug} to ${newPath}`,
+            level: "info",
+          });
+          router.replace(newPath);
+          return;
         }
-        router.replace(newPath);
-        return;
       }
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("Redirect handler failed:", error);
     }
   }, [params, router, pathname, searchParams]);
 

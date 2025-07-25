@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useVPNDetection } from "@/hooks/useVPNDetection"; // SUSPECT
+import { useVPNDetection } from "@/hooks/useVPNDetection";
 import { Loader } from "lucide-react";
 
 interface VPNGuardProps {
@@ -10,27 +11,28 @@ interface VPNGuardProps {
 }
 
 export const VPNGuard = ({ children }: VPNGuardProps) => {
-  console.log("🛡️ VPNGuard component mounted");
   const { isBlocked, isLoading } = useVPNDetection();
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log("🛡️ VPNGuard state:", {
-    isBlocked,
-    isLoading,
-    pathname: pathname,
-  });
-
+  // Set Sentry tag/context once mounted
   useEffect(() => {
-    // Only redirect if VPN is detected and user is not already on the VPN blocked page
-    // useRouter().replace is safe for SSR as it's a Next.js hook, but the condition depends on isBlocked.
-    // The useVPNDetection hook is the primary suspect here.
-    if (isBlocked && pathname !== "/vpn-blocked") {
-      router.replace("/vpn-blocked"); // Use router.replace for 301-like redirect
-    }
-  }, [isBlocked, pathname, router]); // Updated dependencies for useEffect
+    Sentry.setTag("page", "vpn_guard");
+    Sentry.setContext("vpn", {
+      path: pathname,
+      vpnBlocked: isBlocked,
+      loading: isLoading,
+    });
 
-  // Show loading spinner while checking VPN status
+    if (isBlocked && pathname !== "/vpn-blocked") {
+      Sentry.captureMessage(
+        "VPN access blocked - redirecting to /vpn-blocked",
+        "info"
+      );
+      router.replace("/vpn-blocked");
+    }
+  }, [isBlocked, isLoading, pathname, router]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -44,8 +46,6 @@ export const VPNGuard = ({ children }: VPNGuardProps) => {
     );
   }
 
-  // If VPN is detected and user is trying to access any page other than VPN blocked page,
-  // don't render the children (the redirect will happen via useEffect)
   if (isBlocked && pathname !== "/vpn-blocked") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,6 +57,5 @@ export const VPNGuard = ({ children }: VPNGuardProps) => {
     );
   }
 
-  // Render children normally if no VPN detected or if on VPN blocked page
   return <>{children}</>;
 };

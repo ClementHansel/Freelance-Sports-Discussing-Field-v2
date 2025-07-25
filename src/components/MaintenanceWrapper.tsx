@@ -1,9 +1,10 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
+import * as Sentry from "@sentry/react";
 import { useAuth } from "@/hooks/useAuth";
 import { useForumSettings } from "@/hooks/useForumSettings";
-import { MaintenanceMode } from "./MaintenanceMode"; // Assuming this path is correct
+import { MaintenanceMode } from "./MaintenanceMode";
 
 interface MaintenanceWrapperProps {
   children: ReactNode;
@@ -12,8 +13,6 @@ interface MaintenanceWrapperProps {
 export const MaintenanceWrapper: React.FC<MaintenanceWrapperProps> = ({
   children,
 }) => {
-  // Changed 'isLoading' to 'loading' based on common useAuth patterns.
-  // If your useAuth hook truly uses 'isLoading', please provide its definition.
   const { user, loading: isAuthLoading } = useAuth();
   const {
     settings,
@@ -26,12 +25,27 @@ export const MaintenanceWrapper: React.FC<MaintenanceWrapperProps> = ({
     false
   ) as boolean;
   const maintenanceMessage = getSetting("maintenance_message", "") as string;
-
   const isAdmin = user?.role === "admin";
   const showMaintenancePage = isMaintenanceModeEnabled && !isAdmin;
 
+  // ✅ Track Sentry context and flag if maintenance is active
+  useEffect(() => {
+    Sentry.setTag("page", "maintenance_wrapper");
+    Sentry.setContext("auth", {
+      userId: user?.id || "guest",
+      role: user?.role || "unknown",
+    });
+    Sentry.setContext("maintenance", {
+      enabled: isMaintenanceModeEnabled,
+      message: maintenanceMessage,
+    });
+
+    if (showMaintenancePage) {
+      Sentry.captureMessage("Maintenance mode triggered for user", "info");
+    }
+  }, [user, isMaintenanceModeEnabled, maintenanceMessage, showMaintenancePage]);
+
   if (isAuthLoading || isSettingsLoading) {
-    // Optionally render a loading spinner or skeleton here
     return (
       <div className="flex items-center justify-center min-h-screen">
         Loading forum settings...

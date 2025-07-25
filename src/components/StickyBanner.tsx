@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import * as Sentry from "@sentry/react";
 import { useForumSettings } from "@/hooks/useForumSettings";
 import { Button } from "@/components/ui/button";
 
@@ -9,70 +10,67 @@ export const StickyBanner: React.FC = () => {
   const { getSetting, isLoading } = useForumSettings();
   const [isDismissed, setIsDismissed] = useState(false);
 
-  const isEnabled = getSetting("banner_enabled", false) as boolean; // Explicitly cast boolean settings
-  const message = getSetting("banner_message", "") as string; // Explicitly cast message to string
-  const style = getSetting("banner_style", "info") as string; // Explicitly cast style to string
-  const isDismissible = getSetting("banner_dismissible", true) as boolean; // Explicitly cast boolean settings
+  const isEnabled = getSetting("banner_enabled", false) as boolean;
+  const message = getSetting("banner_message", "") as string;
+  const style = getSetting("banner_style", "info") as string;
+  const isDismissible = getSetting("banner_dismissible", true) as boolean;
 
-  console.log("StickyBanner values:", {
-    isEnabled,
-    message,
-    style,
-    isDismissible,
-    messageLength: message.length, // Now safe
-    messageType: typeof message,
-  });
+  // Add Sentry context + initial state capture
+  useEffect(() => {
+    Sentry.setTag("component", "sticky_banner");
+    Sentry.setContext("bannerSettings", {
+      isEnabled,
+      message,
+      style,
+      isDismissible,
+    });
+  }, [isEnabled, message, style, isDismissible]);
 
   // Check localStorage for dismissal status
   useEffect(() => {
-    // Guard localStorage access for SSR safety
-    if (typeof window !== "undefined" && message) {
-      // If banner is not dismissible, clear any existing dismissal
-      if (!isDismissible) {
-        localStorage.removeItem(`banner-dismissed-${message}`);
-        setIsDismissed(false);
-        console.log("Banner is not dismissible, cleared localStorage");
-      } else {
-        const dismissed = localStorage.getItem(`banner-dismissed-${message}`);
-        setIsDismissed(dismissed === "true");
-        console.log("Banner dismissal check:", {
-          message,
-          dismissed,
-          isDismissed: dismissed === "true",
+    try {
+      if (typeof window !== "undefined" && message) {
+        if (!isDismissible) {
+          localStorage.removeItem(`banner-dismissed-${message}`);
+          setIsDismissed(false);
+        } else {
+          const dismissed = localStorage.getItem(`banner-dismissed-${message}`);
+          setIsDismissed(dismissed === "true");
+        }
+
+        Sentry.addBreadcrumb({
+          category: "ui.interaction",
+          message: `Banner display check - dismissed=${isDismissed}`,
+          level: "info",
         });
       }
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("StickyBanner localStorage error:", error);
     }
   }, [message, isDismissible]);
 
   const handleDismiss = () => {
-    setIsDismissed(true);
-    // Guard localStorage access for SSR safety
-    if (typeof window !== "undefined" && isDismissible) {
-      localStorage.setItem(`banner-dismissed-${message}`, "true");
+    try {
+      setIsDismissed(true);
+      if (typeof window !== "undefined" && isDismissible) {
+        localStorage.setItem(`banner-dismissed-${message}`, "true");
+      }
+
+      Sentry.addBreadcrumb({
+        category: "ui.action",
+        message: `Banner dismissed: ${message}`,
+        level: "info",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("StickyBanner dismiss error:", error);
     }
   };
 
-  // Don't render if loading, not enabled, or dismissed
-  console.log("Banner render check:", {
-    isLoading,
-    isEnabled,
-    hasMessage: !!message,
-    message: message.substring(0, 50) + "...", // Now safe
-    isDismissed,
-    style,
-  });
-
   if (isLoading || !isEnabled || !message || isDismissed) {
-    console.log("Banner not showing because:", {
-      isLoading,
-      isEnabled,
-      hasMessage: !!message,
-      isDismissed,
-    });
     return null;
   }
-
-  console.log("Banner should be rendering now!");
 
   const getStyleClasses = () => {
     switch (style) {

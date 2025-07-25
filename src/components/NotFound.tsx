@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -57,9 +58,15 @@ export default function NotFound() {
   const { data: categories } = useCategories();
 
   useEffect(() => {
+    // Capture 404 access in Sentry
+    Sentry.setTag("page", "404");
+    Sentry.captureMessage(
+      `404 Not Found: Attempted route - ${pathname}`,
+      "info"
+    );
     console.error(
       "404 Error: User attempted to access non-existent route:",
-      pathname // Use pathname
+      pathname
     );
   }, [pathname]);
 
