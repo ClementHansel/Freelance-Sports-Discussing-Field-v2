@@ -1,11 +1,15 @@
+// sports-disscussing-field/src/app/layout.tsx
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Suspense } from "react";
 import { Card } from "@/components/ui/card";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Define metadata directly in layout.tsx as Next.js expects it here
+// Optionally preload Sentry client init (if not already)
+import "@/lib/sentry"; // Only needed if using client-side Sentry explicitly
+
 export const metadata: Metadata = {
   title:
     "Minor Hockey Talks - The Premier Community for Minor Hockey Discussion",
@@ -49,9 +53,9 @@ export const metadata: Metadata = {
         type: "image/png",
       },
     ],
-    apple: "/lovable-uploads/d27f0c5d-529f-45bd-9e66-45b3a46ab1a6.png?v=2", // Default Apple Touch Icon
+    apple: "/lovable-uploads/d27f0c5d-529f-45bd-9e66-45b3a46ab1a6.png?v=2",
   },
-  manifest: "/manifest.json", // Web App Manifest
+  manifest: "/manifest.json",
   openGraph: {
     title:
       "Minor Hockey Talks - The Premier Community for Minor Hockey Discussion",
@@ -98,23 +102,25 @@ export default function RootLayout({
 
         {/* Google AdSense Script */}
         <Script
-          strategy="lazyOnload" // Use lazyOnload for AdSense to prevent blocking page render
+          strategy="lazyOnload"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5447109336224364"
           crossOrigin="anonymous"
         />
 
-        {/* Wrap children with the new Providers component */}
-        <Providers>
-          <Suspense
-            fallback={
-              <Card className="p-6">
-                <div className="text-center">Loading content...</div>
-              </Card>
-            }
-          >
-            {children}
-          </Suspense>
-        </Providers>
+        {/* Error Boundary wraps all providers and content */}
+        <ErrorBoundary>
+          <Providers>
+            <Suspense
+              fallback={
+                <Card className="p-6">
+                  <div className="text-center">Loading content...</div>
+                </Card>
+              }
+            >
+              {children}
+            </Suspense>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

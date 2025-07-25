@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/sentry";
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic"; // Import dynamic
 

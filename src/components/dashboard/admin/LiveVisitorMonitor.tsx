@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,30 +26,56 @@ export const LiveVisitorMonitor: React.FC = () => {
   const {
     data: activeVisitors,
     isLoading: visitorsLoading,
+    error: visitorsError,
     refetch,
   } = useActiveVisitors();
-  const { data: geoSummary, isLoading: geoLoading } = useGeographicSummary(24);
-  const { data: vpnStats, isLoading: vpnLoading } = useVPNTrafficStats();
+  const {
+    data: geoSummary,
+    isLoading: geoLoading,
+    error: geoError,
+  } = useGeographicSummary(24);
+  const {
+    data: vpnStats,
+    isLoading: vpnLoading,
+    error: vpnError,
+  } = useVPNTrafficStats();
 
+  // Error Reporting
+  useEffect(() => {
+    if (visitorsError) Sentry.captureException(visitorsError);
+    if (geoError) Sentry.captureException(geoError);
+    if (vpnError) Sentry.captureException(vpnError);
+  }, [visitorsError, geoError, vpnError]);
+
+  // Auto-refresh every 5 seconds
   // Auto-refresh every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch();
+      try {
+        refetch();
+      } catch (err) {
+        Sentry.captureException(err);
+      }
     }, 5000);
-
     return () => clearInterval(interval);
   }, [refetch]);
 
   const getFlagEmoji = (countryCode: string) => {
-    if (!countryCode || countryCode === "Unknown") return "🌍";
-    return countryCode
-      .toUpperCase()
-      .replace(/./g, (char) =>
-        String.fromCodePoint(127397 + char.charCodeAt(0))
-      );
+    try {
+      if (!countryCode || countryCode === "Unknown") return "🌍";
+      return countryCode
+        .toUpperCase()
+        .replace(/./g, (char) =>
+          String.fromCodePoint(127397 + char.charCodeAt(0))
+        );
+    } catch (e) {
+      Sentry.captureException(e);
+      return "🌍";
+    }
   };
 
   const getPageDisplayName = (path: string) => {
+    if (!path) return "Unknown";
     if (path === "/") return "Home";
     if (path.startsWith("/c/")) return "Category";
     if (path.startsWith("/t/")) return "Topic";

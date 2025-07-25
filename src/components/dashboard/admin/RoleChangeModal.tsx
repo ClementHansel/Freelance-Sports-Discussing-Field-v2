@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { AdminUser } from "@/hooks/useAdminUsers"; // Assuming AdminUser is correctly typed here
+import { AdminUser } from "@/hooks/useAdminUsers";
+import * as Sentry from "@sentry/react"; // Optional
 
 interface RoleChangeModalProps {
   user: AdminUser | null;
@@ -26,22 +27,32 @@ interface RoleChangeModalProps {
   onSuccess: () => void;
 }
 
+const validRoles = ["user", "moderator", "admin"] as const;
+type ValidRole = (typeof validRoles)[number];
+
 export const RoleChangeModal = ({
   user,
   isOpen,
   onClose,
   onSuccess,
 }: RoleChangeModalProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<ValidRole | "">("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Reset role state when modal opens with new user
+  useEffect(() => {
+    if (isOpen && user?.role) {
+      setSelectedRole(user.role as ValidRole); // assume backend role is valid
+    }
+  }, [isOpen, user]);
+
   const handleRoleChange = async () => {
-    if (!user || !selectedRole) return;
+    if (!user || !selectedRole || user.role === selectedRole) return;
 
     setIsLoading(true);
     try {
-      // First, delete existing role
+      // Delete old role
       const { error: deleteError } = await supabase
         .from("user_roles")
         .delete()
@@ -49,13 +60,10 @@ export const RoleChangeModal = ({
 
       if (deleteError) throw deleteError;
 
-      // Then insert new role
-      // The 'role' column in 'user_roles' table is likely an enum or a specific set of strings.
-      // We can assert `selectedRole` to that specific union type.
-      // Assuming 'admin', 'moderator', 'user' are the valid roles.
+      // Insert new role
       const { error: insertError } = await supabase.from("user_roles").insert({
         user_id: user.id,
-        role: selectedRole as "admin" | "moderator" | "user", // Explicit assertion
+        role: selectedRole,
       });
 
       if (insertError) throw insertError;
@@ -65,10 +73,16 @@ export const RoleChangeModal = ({
         description: `${user.username}'s role has been changed to ${selectedRole}`,
       });
 
+      // Optional Sentry breadcrumb
+      Sentry.addBreadcrumb({
+        category: "admin",
+        message: `Changed role of ${user.username} to ${selectedRole}`,
+        level: "info",
+      });
+
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      // Changed 'any' to 'unknown'
       let errorMessage = "Failed to update user role";
 
       if (error instanceof Error) {
@@ -83,6 +97,8 @@ export const RoleChangeModal = ({
       ) {
         errorMessage = (error as { message: string }).message;
       }
+
+      Sentry.captureException(error); // Optional
 
       toast({
         title: "Error",
@@ -113,14 +129,19 @@ export const RoleChangeModal = ({
           </div>
           <div>
             <label className="text-sm font-medium">New Role</label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select
+              value={selectedRole}
+              onValueChange={(val) => setSelectedRole(val as ValidRole)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                {validRoles.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -130,7 +151,9 @@ export const RoleChangeModal = ({
             </Button>
             <Button
               onClick={handleRoleChange}
-              disabled={!selectedRole || isLoading}
+              disabled={
+                !selectedRole || selectedRole === user?.role || isLoading
+              }
             >
               {isLoading ? "Updating..." : "Update Role"}
             </Button>

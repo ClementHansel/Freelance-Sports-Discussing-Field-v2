@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,49 +83,50 @@ export default function SpamManagement() {
   const [selectedIP, setSelectedIP] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch spam reports
   const { data: spamReports, isLoading: reportsLoading } = useQuery<
     SpamReport[]
   >({
-    // Explicitly type data
     queryKey: ["spam-reports"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("spam_reports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data as SpamReport[];
+      try {
+        const { data, error } = await supabase
+          .from("spam_reports")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        return data as SpamReport[];
+      } catch (err) {
+        Sentry.captureException(err);
+        throw err;
+      }
     },
   });
 
-  // Fetch content analysis
   const { data: contentAnalysis, isLoading: analysisLoading } = useQuery<
     ContentAnalysis[]
   >({
-    // Explicitly type data
     queryKey: ["content-analysis"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_analysis")
-        .select("*")
-        .eq("is_spam", true)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data as ContentAnalysis[];
+      try {
+        const { data, error } = await supabase
+          .from("content_analysis")
+          .select("*")
+          .eq("is_spam", true)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        return data as ContentAnalysis[];
+      } catch (err) {
+        Sentry.captureException(err);
+        throw err;
+      }
     },
   });
 
-  // Fetch all suspicious IPs with enhanced data
-  // Assuming useAllSuspiciousIPs returns SuspiciousIP[]
   const { data: suspiciousIPs, isLoading: activityLoading } =
     useAllSuspiciousIPs();
 
-  // Update spam report status
   const updateReportMutation = useMutation({
     mutationFn: async ({
       id,
@@ -132,49 +134,38 @@ export default function SpamManagement() {
       notes,
     }: {
       id: string;
-      status: string; // Consider making this a union type if known (e.g., "pending" | "reviewed" | "resolved")
-      notes?: string | null; // Allow null for notes
+      status: string;
+      notes?: string | null;
     }) => {
-      const { error } = await supabase
-        .from("spam_reports")
-        .update({
-          status,
-          admin_notes: notes,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-      if (error) throw error;
+      try {
+        const { error } = await supabase
+          .from("spam_reports")
+          .update({
+            status,
+            admin_notes: notes,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq("id", id);
+        if (error) throw error;
+      } catch (err) {
+        Sentry.captureException(err);
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["spam-reports"] });
       toast({ title: "Report updated successfully" });
     },
-    onError: (error: unknown) => {
-      // Changed 'any' to 'unknown'
-      let errorMessage = "Failed to update report";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof (error as { message: unknown }).message === "string"
-      ) {
-        errorMessage = (error as { message: string }).message;
-      }
-      console.error("Error updating report:", error);
+    onError: (err) => {
+      Sentry.captureException(err);
       toast({
         title: "Failed to update report",
-        description: errorMessage,
+        description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
     },
   });
 
-  // Block/unblock user
   const blockUserMutation = useMutation({
     mutationFn: async ({
       id,
@@ -183,45 +174,35 @@ export default function SpamManagement() {
     }: {
       id: string;
       block: boolean;
-      reason?: string | null; // Allow null for reason
+      reason?: string | null;
     }) => {
-      const { error } = await supabase
-        .from("anonymous_post_tracking") // This table name seems to be for tracking, not direct banning
-        .update({
-          is_blocked: block,
-          block_reason: reason,
-          block_expires_at: block
-            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            : null,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
+      try {
+        const { error } = await supabase
+          .from("anonymous_post_tracking")
+          .update({
+            is_blocked: block,
+            block_reason: reason,
+            block_expires_at: block
+              ? new Date(Date.now() + 86400000).toISOString()
+              : null,
+          })
+          .eq("id", id);
+        if (error) throw error;
+      } catch (err) {
+        Sentry.captureException(err);
+        throw err;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suspicious-activity"] }); // Invalidate relevant query
-      queryClient.invalidateQueries({ queryKey: ["all-suspicious-ips"] }); // Invalidate the hook's query key
+      queryClient.invalidateQueries({ queryKey: ["suspicious-activity"] });
+      queryClient.invalidateQueries({ queryKey: ["all-suspicious-ips"] });
       toast({ title: "User status updated successfully" });
     },
-    onError: (error: unknown) => {
-      // Changed 'any' to 'unknown'
-      let errorMessage = "Failed to update user status";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof (error as { message: unknown }).message === "string"
-      ) {
-        errorMessage = (error as { message: string }).message;
-      }
-      console.error("Error updating user status:", error);
+    onError: (err) => {
+      Sentry.captureException(err);
       toast({
         title: "Failed to update user status",
-        description: errorMessage,
+        description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
     },

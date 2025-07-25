@@ -3,36 +3,63 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useGoogleAnalytics } from "./useGoogleAnalytics";
+import { useAuth } from "./useAuth";
+import * as Sentry from "@sentry/react";
 
 export const useRouteTracking = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { trackPageView, trackNavigation } = useGoogleAnalytics();
+  const { user } = useAuth();
 
-  // Combine pathname and searchParams for the full path
   const currentFullUrl = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
-  const previousFullUrl = useRef(currentFullUrl); // Initialize with the current full URL
+
+  const previousFullUrl = useRef(currentFullUrl);
 
   useEffect(() => {
-    const currentPath = currentFullUrl; // Use the combined full URL
+    const currentPath = currentFullUrl;
     const previousPath = previousFullUrl.current;
 
-    // Track navigation if path changed
-    if (currentPath !== previousPath) {
+    if (typeof window !== "undefined" && currentPath !== previousPath) {
+      // Google Analytics tracking
       trackNavigation(previousPath, currentPath, "click");
+      trackPageView(document.title);
+
+      // Sentry breadcrumb
+      Sentry.addBreadcrumb({
+        category: "navigation",
+        type: "navigation",
+        data: {
+          from: previousPath,
+          to: currentPath,
+        },
+        message: `Route change: ${previousPath} → ${currentPath}`,
+        level: "info",
+      });
+
+      // Sentry context
+      Sentry.setContext("route", {
+        from: previousPath,
+        to: currentPath,
+      });
+
+      // Sentry user
+      if (user?.id) {
+        Sentry.setUser({
+          id: user.id,
+          email: user.email ?? undefined,
+        });
+      }
+
+      // Update ref
+      previousFullUrl.current = currentPath;
     }
-
-    // Track page view with current document title (set by MetadataProvider)
-    trackPageView(document.title);
-
-    // Update previous location
-    previousFullUrl.current = currentPath;
-  }, [currentFullUrl, trackPageView, trackNavigation]); // Depend on currentFullUrl to trigger the effect
+  }, [currentFullUrl, trackPageView, trackNavigation, user]);
 
   return {
-    currentPath: currentFullUrl, // Return the full URL
+    currentPath: currentFullUrl,
     previousPath: previousFullUrl.current,
   };
 };

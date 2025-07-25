@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import * as Sentry from "@sentry/nextjs";
 import {
   Card,
   CardContent,
@@ -32,6 +33,8 @@ const IPTrackingMonitor = () => {
   }
 
   if (error) {
+    Sentry.captureException(error);
+
     return (
       <Card>
         <CardHeader>
@@ -39,8 +42,19 @@ const IPTrackingMonitor = () => {
             <AlertTriangle className="w-5 h-5" />
             IP Tracking Monitor - Error
           </CardTitle>
-          <CardDescription>Failed to load IP tracking data</CardDescription>
+          <CardDescription>Failed to load IP tracking data.</CardDescription>
         </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error
+                ? error.message
+                : "Unknown error occurred while loading alerts."}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
       </Card>
     );
   }
@@ -59,7 +73,7 @@ const IPTrackingMonitor = () => {
           IP Tracking Monitor
         </CardTitle>
         <CardDescription>
-          Monitoring content created without IP addresses since July 14, 2025
+          Monitoring content created without IP addresses since July 14, 2025.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -68,8 +82,7 @@ const IPTrackingMonitor = () => {
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>All Good!</AlertTitle>
             <AlertDescription>
-              All recent content has been created with proper IP address
-              tracking.
+              All recent content has proper IP address tracking.
             </AlertDescription>
           </Alert>
         ) : (
@@ -79,47 +92,51 @@ const IPTrackingMonitor = () => {
               <AlertTitle>IP Tracking Issues Detected</AlertTitle>
               <AlertDescription>
                 {alertCount} piece{alertCount > 1 ? "s" : ""} of content created
-                without IP addresses
+                without IP addresses.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Recent Issues:</h4>
-              {alerts?.slice(0, 10).map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          alert.content_type === "topic"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {alert.content_type}
-                      </Badge>
-                      <span className="font-medium text-sm">
-                        {alert.content_title}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      By: {alert.author_username || "Anonymous"} • Category:{" "}
-                      {alert.category_name} •
-                      {/* Fixed: Provide a fallback for new Date() if alert.created_at is null */}
-                      {formatDistanceToNow(new Date(alert.created_at || 0), {
-                        addSuffix: true,
-                      })}
+              {alerts?.slice(0, 10).map((alert) => {
+                const createdAt = alert.created_at
+                  ? new Date(alert.created_at)
+                  : new Date();
+
+                return (
+                  <div
+                    key={alert.id}
+                    className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            alert.content_type === "topic"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {alert.content_type}
+                        </Badge>
+                        <span className="font-medium text-sm">
+                          {alert.content_title || "Untitled"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        By: {alert.author_username || "Anonymous"} • Category:{" "}
+                        {alert.category_name || "Unknown"} •{" "}
+                        {formatDistanceToNow(createdAt, { addSuffix: true })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {alertCount > 10 && (
                 <div className="text-xs text-muted-foreground text-center pt-2">
-                  And {alertCount - 10} more issues...
+                  And {alertCount - 10} more issue
+                  {alertCount - 10 > 1 ? "s" : ""}...
                 </div>
               )}
             </div>

@@ -1,7 +1,8 @@
 import path from "path";
-import { fileURLToPath } from "url"; // Import fileURLToPath from 'url'
+import { fileURLToPath } from "url";
+import { withSentryConfig } from "@sentry/nextjs"; // Corrected: Using import for ES module compatibility
 
-// Get __dirname equivalent in ES modules
+// Get __dirname equivalent in ES modules for path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -56,4 +57,56 @@ const nextConfig = {
   reactStrictMode: true,
 };
 
-export default nextConfig; // Changed export syntax to ES module style
+// Combine your nextConfig with Sentry's configuration.
+// Ensure withSentryConfig is called ONLY ONCE and wraps your entire nextConfig.
+// The export statement has also been updated to use default export with withSentryConfig.
+export default withSentryConfig(
+  nextConfig, // Your base Next.js configuration
+  {
+    // Sentry webpack plugin options (first object in withSentryConfig)
+    // For all available options, see: https://www.npmjs.com/package/@sentry/webpack-plugin#options
+    org: "minorhockeytalkscom",
+    project: "javascript-nextjs",
+
+    // Only print logs for uploading source maps in CI
+    silent: !process.env.CI,
+
+    // For all available options, see: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+    // Upload a larger set of source maps for prettier stack traces (increases build time)
+    widenClientFileUpload: true,
+
+    // Transpiles SDK to be compatible with older browsers. Recommended for client-side builds.
+    transpileClientSDK: true,
+
+    // Hides source maps from browser devtools. Recommended for production builds.
+    hideSourceMaps: true,
+
+    // Automatically tree-shake Sentry logger statements to reduce bundle size
+    disableLogger: true,
+
+    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+    // See the following for more information:
+    // https://docs.sentry.io/product/crons/
+    // https://vercel.com/docs/cron-jobs
+    automaticVercelMonitors: true,
+
+    // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+    // This can increase your server load as well as your hosting bill.
+    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+    // side errors will fail.
+    // tunnelRoute: "/monitoring", // Keeping this commented as in your original
+  },
+  {
+    // Sentry Next.js plugin options (second object in withSentryConfig)
+    // For all available options, see: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+    // Don't auto-instrument the SDK (useful if you want to manually initialize Sentry)
+    // autoInstrumentServerFunctions: false,
+    // autoInstrumentMiddleware: false,
+    // autoInstrumentApiRoutes: false,
+    // autoInstrumentAppDirectory: false,
+    // autoInstrumentPagesDirectory: false,
+    // Disable Sentry for specific environments
+    // disableServerWebpackPlugin: process.env.NODE_ENV === 'development',
+    // disableClientWebpackPlugin: process.env.NODE_ENV === 'development',
+  }
+);

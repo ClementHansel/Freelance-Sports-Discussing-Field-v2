@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react"; // Import useCallback
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AdminUser } from "@/hooks/useAdminUsers";
+import * as Sentry from "@sentry/react"; // Optional
 
 interface EditProfileModalProps {
   user: AdminUser | null;
@@ -32,8 +33,6 @@ export const EditProfileModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Wrap loadProfileData in useCallback to make it stable across renders
-  // This prevents infinite loops when adding it to useEffect's dependency array.
   const loadProfileData = useCallback(async () => {
     if (!user) return;
 
@@ -45,27 +44,28 @@ export const EditProfileModal = ({
         .single();
 
       if (error) throw error;
+
       setBio(data?.bio || "");
     } catch (error) {
+      Sentry.captureException(error); // Optional
       console.error("Error loading profile:", error);
-      // Optionally show a toast for loading error
       toast({
         title: "Error loading profile data",
         description: "Could not fetch user's bio.",
         variant: "destructive",
       });
     }
-  }, [user, toast]); // user and toast are stable enough dependencies
+  }, [user, toast]);
 
   useEffect(() => {
     if (user) {
       setUsername(user.username);
-      loadProfileData(); // Now safe to include in dependencies
+      loadProfileData();
     }
-  }, [user, loadProfileData]); // Added loadProfileData to dependency array
+  }, [user, loadProfileData]);
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !username.trim()) return;
 
     setIsLoading(true);
     try {
@@ -73,7 +73,7 @@ export const EditProfileModal = ({
         .from("profiles")
         .update({
           username: username.trim(),
-          bio: bio.trim() || null, // Ensure empty string becomes null for DB
+          bio: bio.trim() || null,
         })
         .eq("id", user.id);
 
@@ -84,12 +84,16 @@ export const EditProfileModal = ({
         description: `${user.username}'s profile has been updated successfully`,
       });
 
+      Sentry.addBreadcrumb({
+        category: "admin",
+        message: `Updated profile for user ${user.username}`,
+        level: "info",
+      });
+
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      // Changed 'any' to 'unknown'
       let errorMessage = "Failed to update profile";
-
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (typeof error === "string") {
@@ -102,6 +106,8 @@ export const EditProfileModal = ({
       ) {
         errorMessage = (error as { message: string }).message;
       }
+
+      Sentry.captureException(error); // Optional
 
       toast({
         title: "Error",

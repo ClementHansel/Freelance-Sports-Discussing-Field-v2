@@ -1,0 +1,395 @@
+Folder PATH listing for volume OS
+Volume serial number is 58C7-C0E5
+C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\NEXTJS\SPORTS-DISSCUSSING-FIELD\SRC
++---app
+ª   ª   globals.css
+ª   ª   layout.tsx
+ª   ª   metadata.ts
+ª   ª   providers.tsx
+ª   ª   
+ª   +---(main)
+ª   ª   ª   layout.tsx
+ª   ª   ª   not-found.tsx
+ª   ª   ª   page.tsx
+ª   ª   ª   
+ª   ª   +---blog
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---categories
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---category
+ª   ª   ª   +---[categorySlug]
+ª   ª   ª       ª   page.tsx
+ª   ª   ª       ª   
+ª   ª   ª       +---[topicSlug]
+ª   ª   ª               page.tsx
+ª   ª   ª               
+ª   ª   +---privacy
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---profile
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---rules
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---search
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---settings
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---terms
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---topics
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---vpn-blocked
+ª   ª           page.tsx
+ª   ª           
+ª   +---admin
+ª   ª   ª   page.tsx
+ª   ª   ª   
+ª   ª   +---advertising
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---content
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---moderation
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---seo
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---settings
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---spam
+ª   ª   ª       page.tsx
+ª   ª   ª       
+ª   ª   +---users
+ª   ª           page.tsx
+ª   ª           
+ª   +---ads.txt
+ª   ª       route.ts
+ª   ª       
+ª   +---login
+ª   ª       page.tsx
+ª   ª       
+ª   +---register
+ª           page.tsx
+ª           
++---components
+ª   ª   ErrorBoundary.tsx
+ª   ª   IPTrackingWrapper.tsx
+ª   ª   MaintenanceMode.tsx
+ª   ª   MaintenanceWrapper.tsx
+ª   ª   NotFound.tsx
+ª   ª   RedirectHandler.tsx
+ª   ª   ScrollToTop.tsx
+ª   ª   StickyBanner.tsx
+ª   ª   VPNGuard.tsx
+ª   ª   
+ª   +---admin
+ª   ª   +---advertising
+ª   ª   ª       Advertising.tsx
+ª   ª   ª       
+ª   ª   +---content
+ª   ª   ª       Content.tsx
+ª   ª   ª       
+ª   ª   +---moderation
+ª   ª   ª       Moderation.tsx
+ª   ª   ª       
+ª   ª   +---seo
+ª   ª   ª       Seo.tsx
+ª   ª   ª       
+ª   ª   +---settings
+ª   ª           AdminSettings.tsx
+ª   ª           
+ª   +---ads
+ª   ª       AdBanner.tsx
+ª   ª       BetweenPostsAd.tsx
+ª   ª       DynamicAdSpace.tsx
+ª   ª       SidebarAdBanner.tsx
+ª   ª       
+ª   +---auth
+ª   ª   ª   AuthProvider.tsx
+ª   ª   ª   
+ª   ª   +---login-form
+ª   ª   ª       Login.tsx
+ª   ª   ª       LoginForm.tsx
+ª   ª   ª       
+ª   ª   +---register-form
+ª   ª           Register.tsx
+ª   ª           RegisterForm.tsx
+ª   ª           
+ª   +---blog
+ª   ª       Blog.tsx
+ª   ª       
+ª   +---cookies
+ª   ª       CookieConsent.tsx
+ª   ª       CookieConsentBanner.tsx
+ª   ª       CookieConsentBannerImproved.tsx
+ª   ª       CookieDebugPanel.dev.tsx
+ª   ª       CookieDebugPanel.prod.tsx
+ª   ª       CookieDebugPanel.tsx
+ª   ª       CookiePreferencesModal.tsx
+ª   ª       CookieSettingsButton.tsx
+ª   ª       
+ª   +---dashboard
+ª   ª   +---admin
+ª   ª   ª   ª   AdminAdvertising.tsx
+ª   ª   ª   ª   AdminDashboard.tsx
+ª   ª   ª   ª   AdminTempUserInfo.tsx
+ª   ª   ª   ª   AnalyticsSettings.tsx
+ª   ª   ª   ª   BannedIPsManager.tsx
+ª   ª   ª   ª   BannedWordsManager.tsx
+ª   ª   ª   ª   BanUserModal.tsx
+ª   ª   ª   ª   CategoryRequestsManager.tsx
+ª   ª   ª   ª   CategorySeoManager.tsx
+ª   ª   ª   ª   EditProfileModal.tsx
+ª   ª   ª   ª   HomePageSeoManager.tsx
+ª   ª   ª   ª   InlineContentEditor.tsx
+ª   ª   ª   ª   IPActivityDetails.tsx
+ª   ª   ª   ª   IPTrackingMonitor.tsx
+ª   ª   ª   ª   LiveVisitorMonitor.tsx
+ª   ª   ª   ª   ModerationItemDetailsModal.tsx
+ª   ª   ª   ª   MoveTopicModal.tsx
+ª   ª   ª   ª   ReportDetailsModal.tsx
+ª   ª   ª   ª   RoleChangeModal.tsx
+ª   ª   ª   ª   SeoMetadataForm.tsx
+ª   ª   ª   ª   SpamManagement.tsx
+ª   ª   ª   ª   TopicSeoManager.tsx
+ª   ª   ª   ª   UserManagement.tsx
+ª   ª   ª   ª   
+ª   ª   ª   +---advertising
+ª   ª   ª           AdAnalytics.tsx
+ª   ª   ª           AdSpaceManager.tsx
+ª   ª   ª           AdvertisingSettings.tsx
+ª   ª   ª           HeaderScriptsManager.tsx
+ª   ª   ª           
+ª   ª   +---analytics
+ª   ª           AnalyticsProvider.tsx
+ª   ª           EnhancedHeaderCodeInjector.tsx
+ª   ª           GoogleAnalytics.tsx
+ª   ª           GoogleAnalyticsFixed.tsx
+ª   ª           HeaderCodeInjector.tsx
+ª   ª           
+ª   +---forum
+ª   ª   ª   AnonymousPostingNotice.tsx
+ª   ª   ª   CreateTopic.tsx
+ª   ª   ª   Forum.tsx
+ª   ª   ª   ForumStats.tsx
+ª   ª   ª   HierarchicalCategorySelector.tsx
+ª   ª   ª   InlineReplyForm.tsx
+ª   ª   ª   MobileBottomNav.tsx
+ª   ª   ª   NewPostsTab.tsx
+ª   ª   ª   PollCreator.tsx
+ª   ª   ª   PollDisplay.tsx
+ª   ª   ª   PostCard.tsx
+ª   ª   ª   PostComponent.tsx
+ª   ª   ª   QuickTopicModal.tsx
+ª   ª   ª   ReportModal.tsx
+ª   ª   ª   SharedMenuContent.tsx
+ª   ª   ª   TopicView.tsx
+ª   ª   ª   
+ª   ª   +---admin-ui
+ª   ª   ª       AdminControls.tsx
+ª   ª   ª       AdminPostInfo.tsx
+ª   ª   ª       AdminTopicInfo.tsx
+ª   ª   ª       
+ª   ª   +---categories
+ª   ª   ª       Categories.tsx
+ª   ª   ª       
+ª   ª   +---category
+ª   ª   ª   ª   Category.tsx
+ª   ª   ª   ª   CategoryRequestModal.tsx
+ª   ª   ª   ª   CategoryRow.tsx
+ª   ª   ª   ª   CategoryView.tsx
+ª   ª   ª   ª   SmartCategorySelector.tsx
+ª   ª   ª   ª   
+ª   ª   ª   +---topic
+ª   ª   ª           Topic.tsx
+ª   ª   ª           
+ª   ª   +---profile
+ª   ª   ª       Profile.tsx
+ª   ª   ª       
+ª   ª   +---search
+ª   ª   ª       Search.tsx
+ª   ª   ª       
+ª   ª   +---settings
+ª   ª   ª       Settings.tsx
+ª   ª   ª       
+ª   ª   +---topics
+ª   ª   ª       Topics.tsx
+ª   ª   ª       
+ª   ª   +---vpn-blocked
+ª   ª           Vpn-Blocked.tsx
+ª   ª           
+ª   +---layout
+ª   ª       Footer.tsx
+ª   ª       ForumHeader.tsx
+ª   ª       ForumSidebar.tsx
+ª   ª       ForumSidebarNav.tsx
+ª   ª       
+ª   +---privacy
+ª   ª       Privacy.tsx
+ª   ª       
+ª   +---profile
+ª   ª       EditProfileModal.tsx
+ª   ª       
+ª   +---rules
+ª   ª       Rules.tsx
+ª   ª       
+ª   +---seo
+ª   ª       MetadataProvider.tsx
+ª   ª       
+ª   +---terms
+ª   ª       Terms.tsx
+ª   ª       
+ª   +---ui
+ª           accordion.tsx
+ª           alert-dialog.tsx
+ª           alert.tsx
+ª           aspect-ratio.tsx
+ª           avatar.tsx
+ª           badge.tsx
+ª           breadcrumb.tsx
+ª           button.tsx
+ª           calendar.tsx
+ª           card.tsx
+ª           carousel.tsx
+ª           chart.tsx
+ª           checkbox.tsx
+ª           collapsible.tsx
+ª           command.tsx
+ª           context-menu.tsx
+ª           dialog.tsx
+ª           drawer.tsx
+ª           dropdown-menu.tsx
+ª           form.tsx
+ª           hcaptcha.tsx
+ª           hover-card.tsx
+ª           html-renderer.tsx
+ª           input-otp.tsx
+ª           input.tsx
+ª           label.tsx
+ª           menubar.tsx
+ª           navigation-menu.tsx
+ª           pagination-controls.tsx
+ª           pagination.tsx
+ª           password-strength-indicator.tsx
+ª           popover.tsx
+ª           progress.tsx
+ª           radio-group.tsx
+ª           resizable.tsx
+ª           scroll-area.tsx
+ª           select.tsx
+ª           separator.tsx
+ª           sheet.tsx
+ª           sidebar.tsx
+ª           skeleton.tsx
+ª           slider.tsx
+ª           sonner.tsx
+ª           switch.tsx
+ª           table.tsx
+ª           tabs.tsx
+ª           textarea.tsx
+ª           toast.tsx
+ª           toaster.tsx
+ª           toggle-group.tsx
+ª           toggle.tsx
+ª           tooltip.tsx
+ª           use-toast.ts
+ª           wysiwyg-editor.tsx
+ª           
++---contexts
+ª       OnlineUsersContext.tsx
+ª       
++---hooks
+ª       use-mobile.ts
+ª       use-toast.ts
+ª       useActiveVisitors.ts
+ª       useAdAnalytics.ts
+ª       useAdminActivity.ts
+ª       useAdminStats.ts
+ª       useAdminTempUserInfo.ts
+ª       useAdminUsers.ts
+ª       useAdSpaces.ts
+ª       useAuth.ts
+ª       useAutoPeakUpdate.ts
+ª       useCategories.ts
+ª       useCategoriesByActivity.ts
+ª       useCategoryBySlug.ts
+ª       useCategoryRequests.ts
+ª       useCategoryStats.ts
+ª       useComprehensiveIPActivity.ts
+ª       useCookieConsent.ts
+ª       useCreatePoll.ts
+ª       useCreatePost.ts
+ª       useCreateTopic.ts
+ª       useDeletePost.ts
+ª       useDeleteTopic.ts
+ª       useEditPost.ts
+ª       useEditTopic.ts
+ª       useEnhancedForumStats.ts
+ª       useEnhancedSpamDetection.ts
+ª       useForumSettings.ts
+ª       useForumStats.ts
+ª       useGoogleAnalytics.ts
+ª       useHCaptchaSiteKey.ts
+ª       useHotTopics.ts
+ª       useHotTopicsLegacy.ts
+ª       useIPTracker.ts
+ª       useIPTrackingAlerts.ts
+ª       useMostCommentedTopics.ts
+ª       useMostViewedTopics.ts
+ª       useMoveTopic.ts
+ª       usePeakDailyVisitors.ts
+ª       usePeakUsers.ts
+ª       usePeakVisitors24h.ts
+ª       usePermissions.ts
+ª       usePinTopic.ts
+ª       usePollResults.ts
+ª       usePollVote.ts
+ª       usePostPage.ts
+ª       usePosts.ts
+ª       useRateLimit.ts
+ª       useRouteTracking.ts
+ª       useSearch.ts
+ª       useTempUser.ts
+ª       useTopic.ts
+ª       useTopicByPath.ts
+ª       useTopics.ts
+ª       useTopicsLegacy.ts
+ª       useVisitors24h.ts
+ª       useVPNDetection.ts
+ª       useVPNTrafficStats.ts
+ª       
++---integrations
+ª   +---supabase
+ª           client.ts
+ª           types.ts
+ª           
++---lib
+ª   ª   utils.ts
+ª   ª   
+ª   +---utils
+ª           anonymousSession.ts
+ª           anonymousUtils.ts
+ª           cookieConsent.ts
+ª           htmlToText.ts
+ª           ipUtils.ts
+ª           passwordValidation.ts
+ª           sessionManager.ts
+ª           urlHelpers.ts
+ª           urlMigration.ts
+ª           urlRedirects.ts
+ª           
++---types
+        admin-moderation.ts
+        auth.ts
+        

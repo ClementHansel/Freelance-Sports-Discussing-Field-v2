@@ -1,7 +1,7 @@
-// src/app/(admin)/settings/page.tsx
 "use client";
 
 import React, { useState } from "react";
+import * as Sentry from "@sentry/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,122 +52,169 @@ export default function AdminSettings() {
   const [bannerMessage, setBannerMessage] = useState("");
   const [forumDescription, setForumDescription] = useState("");
 
+  // Set Sentry tags & context once on mount
+  React.useEffect(() => {
+    Sentry.setTag("page", "admin_settings");
+    Sentry.setContext("userRole", { role: "admin" });
+  }, []);
+
   // Update local state when settings load
   React.useEffect(() => {
     if (settings) {
-      // Explicitly cast the return values to the expected string type
-      const headerCodeValue = getSetting("header_code", "") as string;
-      const gaIdValue = getSetting("google_analytics_id", "") as string;
-      const customCssValue = getSetting("custom_css", "") as string;
-      const termsValue = getSetting("terms_content", "") as string;
-      const privacyValue = getSetting("privacy_content", "") as string;
-      const bannerMessageValue = getSetting("banner_message", "") as string;
-      const forumDescriptionValue = getSetting(
-        "forum_description",
-        "A community forum for minor hockey discussions"
-      ) as string;
+      try {
+        // Explicitly cast the return values to the expected string type
+        const headerCodeValue = getSetting("header_code", "") as string;
+        const gaIdValue = getSetting("google_analytics_id", "") as string;
+        const customCssValue = getSetting("custom_css", "") as string;
+        const termsValue = getSetting("terms_content", "") as string;
+        const privacyValue = getSetting("privacy_content", "") as string;
+        const bannerMessageValue = getSetting("banner_message", "") as string;
+        const forumDescriptionValue = getSetting(
+          "forum_description",
+          "A community forum for minor hockey discussions"
+        ) as string;
 
-      console.log("Loading settings:", {
-        headerCodeValue,
-        gaIdValue,
-        customCssValue,
-      });
+        console.log("Loading settings:", {
+          headerCodeValue,
+          gaIdValue,
+          customCssValue,
+        });
 
-      setHeaderCode(headerCodeValue);
-      setGoogleAnalyticsId(gaIdValue);
-      setCustomCss(customCssValue);
-      setTermsContent(termsValue);
-      setPrivacyContent(privacyValue);
-      setBannerMessage(bannerMessageValue);
-      setForumDescription(forumDescriptionValue);
+        setHeaderCode(headerCodeValue);
+        setGoogleAnalyticsId(gaIdValue);
+        setCustomCss(customCssValue);
+        setTermsContent(termsValue);
+        setPrivacyContent(privacyValue);
+        setBannerMessage(bannerMessageValue);
+        setForumDescription(forumDescriptionValue);
+      } catch (error) {
+        console.error("Failed to load settings:", error);
+        Sentry.captureException(error);
+      }
     }
   }, [settings, getSetting]); // Added getSetting to dependencies for completeness, though it's stable
 
   const handleSaveGeneral = async () => {
-    // Assuming updateSetting handles the actual save operation
-    updateSetting({
-      key: "forum_name",
-      value: getSetting("forum_name", "Minor Hockey Talks") as string, // Use current value from getSetting and cast
-      type: "string",
-      category: "general",
-    });
-    updateSetting({
-      key: "forum_description",
-      value: forumDescription,
-      type: "string",
-      category: "general",
-    });
-    updateSetting({
-      key: "allow_registration",
-      value: getSetting("allow_registration", true) as boolean, // Cast to boolean
-      type: "boolean",
-      category: "general",
-    });
-    updateSetting({
-      key: "allow_anonymous_posts",
-      value: getSetting("allow_anonymous_posts", true) as boolean, // Cast to boolean
-      type: "boolean",
-      category: "general",
-    });
-    // Social media links are updated directly via onChange/updateSetting in their respective inputs
-    toast({
-      title: "General Settings Saved",
-      description: "Your general forum settings have been updated.",
-    });
+    try {
+      await Promise.all([
+        // Assuming updateSetting handles the actual save operation
+        updateSetting({
+          key: "forum_name",
+          value: getSetting("forum_name", "Minor Hockey Talks") as string, // Use current value from getSetting and cast
+          type: "string",
+          category: "general",
+        }),
+        updateSetting({
+          key: "forum_description",
+          value: forumDescription,
+          type: "string",
+          category: "general",
+        }),
+        updateSetting({
+          key: "allow_registration",
+          value: getSetting("allow_registration", true) as boolean, // Cast to boolean
+          type: "boolean",
+          category: "general",
+        }),
+        updateSetting({
+          key: "allow_anonymous_posts",
+          value: getSetting("allow_anonymous_posts", true) as boolean, // Cast to boolean
+          type: "boolean",
+          category: "general",
+        }),
+      ]);
+      // Social media links are updated directly via onChange/updateSetting in their respective inputs
+      toast({
+        title: "General Settings Saved",
+        description: "Your general forum settings have been updated.",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      toast({
+        title: "Error",
+        description: "Failed to save general settings.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveTechnical = async () => {
-    await Promise.all([
-      updateSetting({
-        key: "header_code",
-        value: headerCode,
-        type: "code",
-        category: "technical",
-        description: "Custom HTML code to inject in header",
-      }),
-      updateSetting({
-        key: "google_analytics_id",
-        value: googleAnalyticsId,
-        type: "string",
-        category: "technical",
-        description: "Google Analytics tracking ID",
-      }),
-    ]);
-    toast({
-      title: "Technical Settings Saved",
-      description: "Your technical settings have been updated.",
-    });
+    try {
+      await Promise.all([
+        updateSetting({
+          key: "header_code",
+          value: headerCode,
+          type: "code",
+          category: "technical",
+          description: "Custom HTML code to inject in header",
+        }),
+        updateSetting({
+          key: "google_analytics_id",
+          value: googleAnalyticsId,
+          type: "string",
+          category: "technical",
+          description: "Google Analytics tracking ID",
+        }),
+      ]);
+      toast({
+        title: "Technical Settings Saved",
+        description: "Your technical settings have been updated.",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      toast({
+        title: "Error",
+        description: "Failed to save technical settings.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveAppearance = async () => {
-    updateSetting({
-      key: "custom_css",
-      value: customCss,
-      type: "code",
-      category: "appearance",
-      description: "Custom CSS styles",
-    });
-    toast({
-      title: "Appearance Settings Saved",
-      description: "Your appearance settings have been updated.",
-    });
+    try {
+      await updateSetting({
+        key: "custom_css",
+        value: customCss,
+        type: "code",
+        category: "appearance",
+        description: "Custom CSS styles",
+      });
+      toast({
+        title: "Appearance Settings Saved",
+        description: "Your appearance settings have been updated.",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      toast({
+        title: "Error",
+        description: "Failed to save appearance settings.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBackupDatabase = async () => {
     // FIX: Replace confirm() with a custom modal in a real app
-    if (
-      !window.confirm(
+    try {
+      const confirm = window.confirm(
         "Are you sure you want to create a database backup? This operation might take a while."
-      )
-    ) {
-      return;
+      );
+      if (!confirm) return;
+
+      toast({
+        title: "Backup Started",
+        description:
+          "Database backup has been initiated (functionality to be implemented)",
+      });
+      // Future: send API trigger to backup
+    } catch (error) {
+      Sentry.captureException(error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate backup.",
+        variant: "destructive",
+      });
     }
-    toast({
-      title: "Backup Started",
-      description:
-        "Database backup has been initiated (functionality to be implemented)",
-    });
-    // In a real app, you'd trigger a server-side backup process here
   };
 
   const StatCard = ({

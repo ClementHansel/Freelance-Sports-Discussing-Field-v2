@@ -1,14 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Hash, Monitor, Calendar } from "lucide-react";
+import {
+  Clock,
+  Hash,
+  Monitor,
+  Calendar,
+  HeartPulse,
+  Settings2,
+} from "lucide-react";
 import {
   useAdminTempUserInfo,
   useAdminDisplayName,
 } from "@/hooks/useAdminTempUserInfo";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
+import * as Sentry from "@sentry/react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface AdminTempUserInfoProps {
   userId: string;
@@ -23,15 +34,58 @@ export const AdminTempUserInfo: React.FC<AdminTempUserInfoProps> = ({
   const { data: tempUserInfo } = useAdminTempUserInfo(userId);
   const { data: adminDisplayName } = useAdminDisplayName(userId);
 
-  // Only show to admins
-  if (!user || user.role !== "admin") {
-    return null;
-  }
+  const [heartbeatEnabled, setHeartbeatEnabled] = useState(true);
+  const [intervalMs, setIntervalMs] = useState(15000); // 15s default
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Only show for temporary users
-  if (!tempUserInfo) {
-    return null;
-  }
+  useEffect(() => {
+    if (!heartbeatEnabled || !tempUserInfo) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    intervalRef.current = setInterval(() => {
+      const displayName =
+        adminDisplayName || `Guest #${tempUserInfo.guest_number}`;
+      const message = `Heartbeat from session ${tempUserInfo.session_id} (${displayName})`;
+
+      // Optional local debug
+      console.log(`[HEARTBEAT] ${message}`);
+
+      Sentry.captureMessage(message, {
+        level: "info",
+        tags: {
+          feature: "heartbeat",
+          type: "tempUser",
+          sessionId: tempUserInfo.session_id,
+        },
+        extra: {
+          userId,
+          intervalMs,
+          guestNumber: tempUserInfo.guest_number,
+          isAdmin: user?.role === "admin",
+        },
+      });
+
+      // (Optional) if you later enable tracing:
+      // const transaction = Sentry.getActiveTransaction();
+      // transaction?.setName(`Heartbeat-${tempUserInfo.session_id}`);
+    }, intervalMs);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [
+    heartbeatEnabled,
+    intervalMs,
+    userId,
+    tempUserInfo,
+    adminDisplayName,
+    user,
+  ]);
+
+  if (!user || user.role !== "admin") return null;
+  if (!tempUserInfo) return null;
 
   return (
     <div
@@ -71,8 +125,39 @@ export const AdminTempUserInfo: React.FC<AdminTempUserInfoProps> = ({
             </span>
           </div>
         </div>
+
         <div className="text-xs text-orange-600">
           <strong>Session ID:</strong> {tempUserInfo.session_id}
+        </div>
+
+        {/* Heartbeat Controls */}
+        <div className="mt-3 border-t pt-3">
+          <div className="flex items-center gap-2 text-sm text-orange-700 mb-2">
+            <HeartPulse className="w-4 h-4 text-red-600" />
+            <span>Heartbeat Monitor</span>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="heartbeat-switch">Enabled</Label>
+              <Switch
+                id="heartbeat-switch"
+                checked={heartbeatEnabled}
+                onCheckedChange={setHeartbeatEnabled}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="interval-input">Interval (ms)</Label>
+              <Input
+                id="interval-input"
+                type="number"
+                value={intervalMs}
+                onChange={(e) => setIntervalMs(Number(e.target.value))}
+                className="w-24"
+                min={5000}
+              />
+            </div>
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+          </div>
         </div>
       </div>
     </div>

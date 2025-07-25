@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import { RoleChangeModal } from "./RoleChangeModal";
 import { BanUserModal } from "./BanUserModal";
 import { EditProfileModal } from "./EditProfileModal";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,20 +37,11 @@ export default function UserManagement() {
   const { data: users, isLoading, error } = useAdminUsers();
   const queryClient = useQueryClient();
 
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Error Loading Users
-          </h2>
-          <p className="text-gray-600">
-            {error.message || "Unable to load user data"}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error) {
+      Sentry.captureException(error);
+    }
+  }, [error]);
 
   const filteredUsers =
     users?.filter((user) =>
@@ -74,23 +66,69 @@ export default function UserManagement() {
   const handleEditProfile = (user: AdminUser) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
+    Sentry.addBreadcrumb({
+      category: "admin",
+      message: `Opened edit profile for user ${user.username}`,
+      level: "info",
+    });
   };
 
   const handleChangeRole = (user: AdminUser) => {
     setSelectedUser(user);
     setIsRoleModalOpen(true);
+    Sentry.addBreadcrumb({
+      category: "admin",
+      message: `Opened role change for user ${user.username}`,
+      level: "info",
+    });
   };
 
   const handleBanUser = (user: AdminUser) => {
     setSelectedUser(user);
     setIsBanModalOpen(true);
+    Sentry.addBreadcrumb({
+      category: "admin",
+      message: `Opened ban modal for user ${user.username}`,
+      level: "warning",
+    });
   };
+
+  useEffect(() => {
+    if (searchTerm) {
+      Sentry.setContext("user-management-search", { searchTerm });
+    }
+  }, [searchTerm]);
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Error Loading Users
+          </h2>
+          <p className="text-gray-600">
+            {error.message || "Unable to load user data"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-        <Button>Add New User</Button>
+        <Button
+          onClick={() =>
+            Sentry.addBreadcrumb({
+              category: "admin",
+              message: "Clicked Add New User (unimplemented)",
+              level: "info",
+            })
+          }
+        >
+          Add New User
+        </Button>
       </div>
 
       {/* Search */}
@@ -109,14 +147,10 @@ export default function UserManagement() {
       {/* Users Table */}
       <Card>
         {isLoading ? (
-          <div className="p-6">
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-12 bg-gray-200 rounded"></div>
-                </div>
-              ))}
-            </div>
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
+            ))}
           </div>
         ) : (
           <Table>
@@ -235,14 +269,12 @@ export default function UserManagement() {
         onClose={() => setIsRoleModalOpen(false)}
         onSuccess={handleRefresh}
       />
-
       <BanUserModal
         user={selectedUser}
         isOpen={isBanModalOpen}
         onClose={() => setIsBanModalOpen(false)}
         onSuccess={handleRefresh}
       />
-
       <EditProfileModal
         user={selectedUser}
         isOpen={isEditModalOpen}

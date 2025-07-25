@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import {
   Card,
   CardContent,
@@ -11,48 +12,80 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { BarChart3 } from "lucide-react";
 
 import { useForumSettings } from "@/hooks/useForumSettings";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
-import { Badge } from "@/components/ui/badge";
-import { BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Json } from "@/integrations/supabase/types"; // Import Json type
+import { Json } from "@/integrations/supabase/types";
 
 export const AnalyticsSettings: React.FC = () => {
   const { getSetting, updateSetting, isUpdating } = useForumSettings();
   const { hasConsent } = useCookieConsent();
   const { toast } = useToast();
 
-  // Explicitly cast the return value of getSetting to string
   const [gaTrackingId, setGaTrackingId] = useState(
     getSetting("google_analytics_id", "") as string
   );
 
   const handleSaveGA = async () => {
-    updateSetting({
-      key: "google_analytics_id",
-      value: gaTrackingId as Json, // Explicitly cast to Json
-      type: "string",
-      category: "analytics",
-      description: "Google Analytics tracking ID",
-    });
+    try {
+      await updateSetting({
+        key: "google_analytics_id",
+        value: gaTrackingId.trim() as Json,
+        type: "string",
+        category: "analytics",
+        description: "Google Analytics tracking ID",
+      });
+
+      toast({
+        title: "Saved",
+        description: "Google Analytics ID updated successfully",
+      });
+    } catch (error: unknown) {
+      Sentry.captureException(error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+          ? error
+          : "Failed to update Google Analytics ID";
+
+      toast({
+        title: "Error Saving",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   const testGA = () => {
-    if (window.gtag && hasConsent("analytics")) {
-      window.gtag("event", "test_event", {
-        event_category: "admin",
-        event_label: "settings_test",
-      });
+    try {
+      if (window.gtag && hasConsent("analytics")) {
+        window.gtag("event", "test_event", {
+          event_category: "admin",
+          event_label: "settings_test",
+        });
+
+        toast({
+          title: "Test Event Sent",
+          description: "Check your Google Analytics real-time reports",
+        });
+      } else {
+        toast({
+          title: "Cannot Test",
+          description: "Google Analytics not loaded or consent not given",
+          variant: "destructive",
+        });
+      }
+    } catch (error: unknown) {
+      Sentry.captureException(error);
+
       toast({
-        title: "Test Event Sent",
-        description: "Check your Google Analytics real-time reports",
-      });
-    } else {
-      toast({
-        title: "Cannot Test",
-        description: "Google Analytics not loaded or consent not given",
+        title: "Error",
+        description: "Something went wrong during test event",
         variant: "destructive",
       });
     }
@@ -60,7 +93,6 @@ export const AnalyticsSettings: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Google Analytics */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -71,19 +103,18 @@ export const AnalyticsSettings: React.FC = () => {
             Configure Google Analytics tracking for your forum
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="ga-tracking-id">
-              Tracking ID (GA4 Measurement ID)
-            </Label>
+            <Label htmlFor="ga-tracking-id">Tracking ID (GA4)</Label>
             <Input
               id="ga-tracking-id"
               placeholder="G-XXXXXXXXXX"
-              value={gaTrackingId} // gaTrackingId is already typed as string
+              value={gaTrackingId}
               onChange={(e) => setGaTrackingId(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Find this in your Google Analytics property settings
+              You can find this ID in your Google Analytics admin panel.
             </p>
           </div>
 
@@ -105,11 +136,17 @@ export const AnalyticsSettings: React.FC = () => {
               </div>
               <p className="text-xs text-muted-foreground">
                 {!hasConsent("analytics") &&
-                  "User consent required for analytics"}
+                  "User consent is required for analytics tracking."}
               </p>
             </div>
+
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={testGA}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={testGA}
+                disabled={!gaTrackingId}
+              >
                 Test Tracking
               </Button>
               <Button onClick={handleSaveGA} disabled={isUpdating}>

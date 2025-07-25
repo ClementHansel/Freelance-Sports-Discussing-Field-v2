@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -13,8 +13,24 @@ import { AdSpaceManager } from "./advertising/AdSpaceManager";
 import { HeaderScriptsManager } from "./advertising/HeaderScriptsManager";
 import { AdvertisingSettings } from "./advertising/AdvertisingSettings";
 import { AdAnalytics } from "./advertising/AdAnalytics";
+import * as Sentry from "@sentry/react";
 
 export default function AdminAdvertising() {
+  const [activeTab, setActiveTab] = useState("spaces");
+
+  // Track tab switch in Sentry
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: "admin",
+      message: `Advertising tab changed to: ${activeTab}`,
+      level: "info",
+    });
+
+    Sentry.setContext("admin-advertising", {
+      currentTab: activeTab,
+    });
+  }, [activeTab]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,7 +41,12 @@ export default function AdminAdvertising() {
         </p>
       </div>
 
-      <Tabs defaultValue="spaces" className="space-y-4">
+      <Tabs
+        defaultValue="spaces"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="spaces">Ad Spaces</TabsTrigger>
           <TabsTrigger value="scripts">Header Scripts</TabsTrigger>

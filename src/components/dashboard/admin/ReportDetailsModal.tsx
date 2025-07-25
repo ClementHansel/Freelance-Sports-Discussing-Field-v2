@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -61,6 +62,12 @@ export const ReportDetailsModal = ({
     useState<PreviousReports | null>(null);
   const { toast } = useToast();
 
+  // ✅ Sentry Tag & Context
+  useEffect(() => {
+    Sentry.setTag("page", "admin_spam_management");
+    Sentry.setContext("userRole", { role: "admin" });
+  }, []);
+
   const loadReporterData = useCallback(async () => {
     if (!report) return;
 
@@ -74,11 +81,9 @@ export const ReportDetailsModal = ({
       );
       if (error) throw error;
       setReporterBehavior(behavior as unknown as ReporterBehavior);
-    } catch (error: unknown) {
-      console.error(
-        "Error loading reporter behavior:",
-        error instanceof Error ? error.message : error
-      );
+    } catch (error) {
+      console.error("Failed to load reporter behavior", error);
+      Sentry.captureException(error);
     }
   }, [report]);
 
@@ -95,11 +100,9 @@ export const ReportDetailsModal = ({
       );
       if (error) throw error;
       setPreviousReports(previousStatus as unknown as PreviousReports);
-    } catch (error: unknown) {
-      console.error(
-        "Error loading previous reports:",
-        error instanceof Error ? error.message : error
-      );
+    } catch (error) {
+      console.error("Error loading previous reports:", error);
+      Sentry.captureException(error);
     }
   }, [report]);
 
@@ -127,7 +130,8 @@ export const ReportDetailsModal = ({
         description: "Admin notes have been updated successfully",
       });
       onUpdate();
-    } catch (error: unknown) {
+    } catch (error) {
+      Sentry.captureException(error);
       toast({
         title: "Error",
         description:
@@ -147,9 +151,8 @@ export const ReportDetailsModal = ({
     try {
       let finalNotes = adminNotes.trim() || "";
       if (previousReports?.was_previously_approved && status === "dismissed") {
-        finalNotes = finalNotes
-          ? `${finalNotes}\n\n[Auto] Dismissed repeat report on previously approved content.`
-          : "[Auto] Dismissed repeat report on previously approved content.";
+        finalNotes +=
+          "\n\n[Auto] Dismissed repeat report on previously approved content.";
       }
 
       const { error } = await supabase
@@ -163,18 +166,14 @@ export const ReportDetailsModal = ({
 
       if (error) throw error;
 
-      toast({
-        title: "Report updated",
-        description: `Report has been ${status}`,
-      });
+      toast({ title: "Report updated", description: `Marked as ${status}` });
       onUpdate();
       onClose();
-    } catch (error: unknown) {
+    } catch (error) {
+      Sentry.captureException(error);
       toast({
         title: "Error",
-        description:
-          (error instanceof Error ? error.message : String(error)) ||
-          "Failed to update report",
+        description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });
     } finally {
@@ -220,6 +219,7 @@ export const ReportDetailsModal = ({
       onUpdate();
       onClose();
     } catch (error: unknown) {
+      Sentry.captureException(error);
       toast({
         title: "Error",
         description:
@@ -277,6 +277,7 @@ export const ReportDetailsModal = ({
       onUpdate();
       onClose();
     } catch (error: unknown) {
+      Sentry.captureException(error);
       toast({
         title: "Error",
         description:

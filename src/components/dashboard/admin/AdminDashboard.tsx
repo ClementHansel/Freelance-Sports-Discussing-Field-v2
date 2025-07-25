@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { useActiveVisitors } from "@/hooks/useActiveVisitors";
 import { LiveVisitorMonitor } from "./LiveVisitorMonitor";
 import IPTrackingMonitor from "./IPTrackingMonitor";
 import { formatDistanceToNow } from "date-fns";
+import * as Sentry from "@sentry/react";
 
 export default function AdminDashboard() {
   const {
@@ -34,6 +35,27 @@ export default function AdminDashboard() {
   } = useAdminActivity();
   const { data: activeVisitors, isLoading: visitorsLoading } =
     useActiveVisitors();
+
+  // 🔍 Log errors to Sentry
+  useEffect(() => {
+    if (statsError) {
+      Sentry.captureException(statsError, {
+        tags: { section: "AdminDashboard", hook: "useAdminStats" },
+      });
+    }
+
+    if (activitiesError) {
+      Sentry.captureException(activitiesError, {
+        tags: { section: "AdminDashboard", hook: "useAdminActivity" },
+      });
+    }
+
+    Sentry.addBreadcrumb({
+      category: "admin",
+      message: "AdminDashboard loaded",
+      level: "info",
+    });
+  }, [statsError, activitiesError]);
 
   if (statsError || activitiesError) {
     return (
@@ -191,8 +213,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <span className="text-sm text-gray-500 ml-4">
-                  {/* Fixed: Use nullish coalescing to provide an empty string if activity.time is null */}
-                  {formatDistanceToNow(new Date(activity.time ?? ""))} ago
+                  {activity.time
+                    ? `${formatDistanceToNow(new Date(activity.time))} ago`
+                    : "Time unavailable"}
                 </span>
               </div>
             ))
@@ -202,10 +225,7 @@ export default function AdminDashboard() {
         </div>
       </Card>
 
-      {/* Live Visitor Monitor */}
       <LiveVisitorMonitor />
-
-      {/* IP Tracking Monitor */}
       <IPTrackingMonitor />
 
       {/* Quick Actions */}
@@ -237,8 +257,7 @@ export default function AdminDashboard() {
             className="p-0 h-auto text-blue-600 hover:text-blue-800"
             asChild
           >
-            <Link href="/admin/users">Manage Users →</Link>{" "}
-            {/* Changed 'to' to 'href' */}
+            <Link href="/admin/users">Manage Users →</Link>
           </Button>
         </Card>
 

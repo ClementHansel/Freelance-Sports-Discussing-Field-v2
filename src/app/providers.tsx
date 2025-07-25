@@ -1,5 +1,6 @@
 "use client"; // This directive marks the component as a Client Component
 
+import "@/lib/sentry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip"; // Assuming this path is correct for shadcn/ui
 import { Toaster } from "@/components/ui/toaster";
