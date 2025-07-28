@@ -1,7 +1,11 @@
 Folder PATH listing for volume OS
 Volume serial number is 58C7-C0E5
 C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\NEXTJS\SPORTS-DISSCUSSING-FIELD\SRC
+ª   instrumentation-client.ts
+ª   instrumentation.ts
+ª   
 +---app
+ª   ª   global-error.tsx
 ª   ª   globals.css
 ª   ª   layout.tsx
 ª   ª   metadata.ts
@@ -76,10 +80,17 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   +---ads.txt
 ª   ª       route.ts
 ª   ª       
+ª   +---api
+ª   ª   +---sentry-example-api
+ª   ª           route.ts
+ª   ª           
 ª   +---login
 ª   ª       page.tsx
 ª   ª       
 ª   +---register
+ª   ª       page.tsx
+ª   ª       
+ª   +---sentry-example-page
 ª           page.tsx
 ª           
 +---components
@@ -375,6 +386,7 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª           types.ts
 ª           
 +---lib
+ª   ª   sentry.ts
 ª   ª   utils.ts
 ª   ª   
 ª   +---utils
