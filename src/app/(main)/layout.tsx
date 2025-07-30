@@ -59,7 +59,7 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
 
       {/* Main Content Wrapper: grows to fill space if needed */}
       {/* Added pb-16 for mobile to account for fixed bottom nav, removed on md screens and up */}
-      <div className="flex-1 w-full max-w-7xl   px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden pb-16 md:pb-0">
+      <div className="flex-1 w-full px-2 sm:px-4 py-3 sm:py-6 overflow-x-hidden pb-16 md:pb-0">
         <div className="flex gap-6 w-full">
           {!isMobile && (
             <aside className="w-80 flex-shrink-0 space-y-6 overflow-x-hidden">

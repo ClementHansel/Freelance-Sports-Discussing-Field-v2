@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils"; // Import cn for conditional class names
 
 export default function ForumHeader() {
   const { user, signOut, isAdmin } = useAuth();
@@ -54,7 +55,7 @@ export default function ForumHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="transition-colors hover:bg-muted"
+            className="transition-colors bg-white hover:bg-muted"
           >
             <Menu className="h-5 w-5 text-foreground" />
           </Button>
@@ -91,7 +92,7 @@ export default function ForumHeader() {
 
   return (
     <header className="bg-foreground border-b border-border shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl px-3 sm:px-4">
+      <div className=" px-3 sm:px-4">
         <div className="w-full flex items-center justify-between h-12 sm:h-14">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-background rounded-md flex items-center justify-center">
@@ -147,38 +148,56 @@ export default function ForumHeader() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="bg-popover text-popover-foreground border border-border"
+                      className={cn(
+                        "bg-popover text-popover-foreground border border-border",
+                        "min-w-max" // This class makes the dropdown content as wide as its widest child
+                      )}
                     >
                       <DropdownMenuLabel className="text-foreground">
                         {user.username}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/dashboard/user/profile">
+                        <Link href="/user/profile">
                           <span>Profile</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/dashboard/user/settings">
+                        <Link href="/user/settings">
                           <span>Settings</span>
                         </Link>
                       </DropdownMenuItem>
-                      {isAdmin && (
+
+                      {/* --- START DASHBOARD LINKS (FOR DEV: BOTH VISIBLE IF LOGGED IN) --- */}
+                      {user && ( // Show these if any user is logged in
                         <>
-                          <DropdownMenuSeparator />
+                          {/* Admin Dashboard Link */}
+                          {/* UNCOMMENT THE LINE BELOW FOR FINAL LOGIC: {isAdmin && ( */}
                           <DropdownMenuItem asChild>
-                            <Link
-                              href="/dashboard/admin"
-                              className="text-destructive"
-                            >
-                              <span>
+                            <Link href="/admin" className="text-destructive">
+                              <span className="flex items-center whitespace-nowrap">
                                 <Shield className="mr-2 h-4 w-4" />
-                                Admin Panel
+                                Admin Dashboard
                               </span>
                             </Link>
                           </DropdownMenuItem>
+                          {/* UNCOMMENT THE LINE ABOVE FOR FINAL LOGIC: )} */}
+
+                          {/* User Dashboard Link */}
+                          {/* UNCOMMENT THE LINE BELOW FOR FINAL LOGIC: {!isAdmin && ( */}
+                          <DropdownMenuItem asChild>
+                            <Link href="/user" className="text-foreground">
+                              <span className="flex items-center whitespace-nowrap">
+                                <User className="mr-2 h-4 w-4" />
+                                User Dashboard
+                              </span>
+                            </Link>
+                          </DropdownMenuItem>
+                          {/* UNCOMMENT THE LINE ABOVE FOR FINAL LOGIC: )} */}
                         </>
                       )}
+                      {/* --- END DASHBOARD LINKS --- */}
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut}>
                         Sign Out
@@ -200,7 +219,7 @@ export default function ForumHeader() {
                   </Button>
                   <Button size="sm" asChild className="transition-colors">
                     <Link href="/register">
-                      <span>Register</span>
+                      <span>Register</span>L
                     </Link>
                   </Button>
                 </div>

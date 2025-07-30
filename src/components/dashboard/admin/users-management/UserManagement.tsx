@@ -116,7 +116,8 @@ export default function UsersManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header: Stack title and button on mobile, row on sm+ */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
         <Button
           onClick={() =>
@@ -126,6 +127,7 @@ export default function UsersManagement() {
               level: "info",
             })
           }
+          className="w-full sm:w-auto" // Full width on mobile, auto on sm+
         >
           Add New User
         </Button>
@@ -137,7 +139,7 @@ export default function UsersManagement() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search users by username..."
-            className="pl-10"
+            className="pl-10 w-full" // Ensure input is full width
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -153,88 +155,134 @@ export default function UsersManagement() {
             ))}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Join Date</TableHead>
-                <TableHead>Posts</TableHead>
-                <TableHead>Reputation</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{user.username}</div>
-                        <div className="text-sm text-gray-500">{user.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRoleColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {user.created_at
-                        ? formatDistanceToNow(new Date(user.created_at)) +
-                          " ago"
-                        : "Unknown"}
-                    </TableCell>
-                    <TableCell>{user.post_count}</TableCell>
-                    <TableCell>{user.reputation}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white">
-                          <DropdownMenuItem
-                            onClick={() => handleEditProfile(user)}
-                          >
-                            <User className="mr-2 h-4 w-4" />
-                            Edit Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleChangeRole(user)}
-                          >
-                            <Shield className="mr-2 h-4 w-4" />
-                            Change Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => handleBanUser(user)}
-                          >
-                            <Ban className="mr-2 h-4 w-4" />
-                            Ban User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          <div className="overflow-x-auto">
+            {" "}
+            {/* Added overflow-x-auto for horizontal scrolling */}
+            <Table className="min-w-full divide-y divide-gray-200">
+              {" "}
+              {/* Added min-w-full */}
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">User</TableHead>
+                  <TableHead className="whitespace-nowrap hidden sm:table-cell">
+                    Role
+                  </TableHead>{" "}
+                  {/* Hidden on mobile, visible on sm+ */}
+                  <TableHead className="whitespace-nowrap hidden md:table-cell">
+                    Join Date
+                  </TableHead>{" "}
+                  {/* Hidden on mobile/sm, visible on md+ */}
+                  <TableHead className="whitespace-nowrap hidden lg:table-cell">
+                    Posts
+                  </TableHead>{" "}
+                  {/* Hidden on mobile/sm/md, visible on lg+ */}
+                  <TableHead className="whitespace-nowrap hidden lg:table-cell">
+                    Reputation
+                  </TableHead>{" "}
+                  {/* Hidden on mobile/sm/md, visible on lg+ */}
+                  <TableHead className="whitespace-nowrap">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="whitespace-nowrap">
+                        <div>
+                          <div className="font-medium">{user.username}</div>
+                          <div className="text-sm text-gray-500">{user.id}</div>
+                          {/* Mobile-specific details for hidden columns */}
+                          <div className="sm:hidden text-xs text-muted-foreground mt-1 space-y-0.5">
+                            {user.role && (
+                              <p>
+                                Role:{" "}
+                                <Badge className={getRoleColor(user.role)}>
+                                  {user.role}
+                                </Badge>
+                              </p>
+                            )}
+                            {user.created_at && (
+                              <p>
+                                Joined:{" "}
+                                {formatDistanceToNow(new Date(user.created_at))}{" "}
+                                ago
+                              </p>
+                            )}
+                            {user.post_count !== undefined && (
+                              <p>Posts: {user.post_count}</p>
+                            )}
+                            {user.reputation !== undefined && (
+                              <p>Reputation: {user.reputation}</p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap hidden sm:table-cell">
+                        <Badge className={getRoleColor(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap hidden md:table-cell">
+                        {user.created_at
+                          ? formatDistanceToNow(new Date(user.created_at)) +
+                            " ago"
+                          : "Unknown"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap hidden lg:table-cell">
+                        {user.post_count}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap hidden lg:table-cell">
+                        {user.reputation}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white">
+                            <DropdownMenuItem
+                              onClick={() => handleEditProfile(user)}
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Edit Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleChangeRole(user)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" />
+                              Change Role
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleBanUser(user)}
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Ban User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      {searchTerm
+                        ? "No users found matching your search."
+                        : "No users found."}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    {searchTerm
-                      ? "No users found matching your search."
-                      : "No users found."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </Card>
 
-      {/* User Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* User Statistics: Stack on mobile, grid on md+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <Card className="p-6">
           <h3 className="font-semibold text-gray-900 mb-2">Total Users</h3>
           <p className="text-2xl font-bold text-blue-600">
@@ -262,7 +310,7 @@ export default function UsersManagement() {
         </Card>
       </div>
 
-      {/* Modals */}
+      {/* Modals (no changes needed here for mobile responsiveness of the modals themselves) */}
       <RoleChangeModal
         user={selectedUser}
         isOpen={isRoleModalOpen}

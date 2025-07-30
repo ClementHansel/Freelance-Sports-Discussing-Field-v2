@@ -1,4 +1,4 @@
-import Profile from "@/components/forum/profile/Profile";
+import Profile from "@/components/dashboard/user/profile/Profile";
 import { Card } from "@/components/ui/card";
 import { Suspense } from "react";
 

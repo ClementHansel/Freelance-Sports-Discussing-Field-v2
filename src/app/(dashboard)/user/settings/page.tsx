@@ -1,4 +1,4 @@
-import SettingsForum from "@/components/forum/settings/Settings";
+import SettingsForum from "@/components/dashboard/user/settings/Settings";
 import { Card } from "@/components/ui/card";
 import { Suspense } from "react";
 

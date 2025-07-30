@@ -109,15 +109,18 @@ export default function Topics({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">All Topics</h1>
           <p className="text-gray-600">Browse all forum discussions</p>
         </div>
         {canCreateTopic && (
-          <Button onClick={() => setQuickTopicModalOpen(true)}>
+          <Button
+            onClick={() => setQuickTopicModalOpen(true)}
+            className="w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create New Topic
           </Button>
@@ -130,12 +133,12 @@ export default function Topics({
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input placeholder="Search topics..." className="pl-10" />
+              <Input placeholder="Search topics..." className="pl-10 w-full" />
             </div>
           </div>
           {/* Category Filter (Placeholder - requires fetching categories) */}
           <Select>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
@@ -149,7 +152,7 @@ export default function Topics({
           </Select>
           {/* Sort By Filter */}
           <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -170,10 +173,10 @@ export default function Topics({
               </SelectItem>
               {/* If your RPC for enriched topics returns hot_score, uncomment this */}
               {/* <SelectItem value="hot_score">
-                <div className="flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-2" /> Hot Topics
-                </div>
-              </SelectItem> */}
+              <div className="flex items-center">
+                <TrendingUp className="h-4 w-4 mr-2" /> Hot Topics
+              </div>
+            </SelectItem> */}
             </SelectContent>
           </Select>
         </div>
@@ -195,23 +198,25 @@ export default function Topics({
             {topicsData.data.map((topic: UseTopicsTopic) => (
               <div
                 key={topic.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                // Main topic item: flex-col on mobile, flex-row on sm+
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors space-y-3 sm:space-y-0"
               >
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className="flex items-center space-x-2">
+                {/* Left section: Topic Icon, Title, Author, Category */}
+                <div className="flex items-start space-x-4 flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     {topic.is_pinned && (
                       <Pin className="h-4 w-4 text-red-500" />
                     )}
                     <MessageSquare className="h-5 w-5 text-gray-400" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Link
                       href={
                         topic.slug && topic.categories?.slug
                           ? `/category/${topic.categories.slug}/${topic.slug}`
                           : `/topic/${topic.id}`
                       }
-                      className="font-medium text-gray-900 hover:text-blue-600"
+                      className="font-medium text-gray-900 hover:text-blue-600 block"
                     >
                       {topic.title}
                     </Link>
@@ -224,33 +229,26 @@ export default function Topics({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-6 text-sm text-gray-500">
-                  <div className="text-center">
-                    <div className="flex items-center space-x-1">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>{topic.reply_count || 0}</span>
-                    </div>
-                    <span className="text-xs">replies</span>
+                {/* Right section: Stats (Replies, Views, Time Ago) */}
+                {/* On mobile (default): flex-row, flex-wrap, gap-x-4, mt-3, justify-start */}
+                {/* On sm+ (desktop): sm:flex-row (redundant but explicit), sm:items-center, sm:space-x-6, sm:mt-0, sm:justify-end */}
+                <div className="flex flex-row flex-wrap items-center gap-x-4 text-sm text-gray-500 mt-3 sm:mt-0 sm:ml-4 sm:space-x-6 sm:justify-end flex-shrink-0">
+                  <div className="flex items-center space-x-1 whitespace-nowrap">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>{topic.reply_count || 0} replies</span>
                   </div>
-                  <div className="text-center">
-                    <div className="flex items-center space-x-1">
-                      <User className="h-4 w-4" />
-                      <span>{topic.view_count || 0}</span>
-                    </div>
-                    <span className="text-xs">views</span>
+                  <div className="flex items-center space-x-1 whitespace-nowrap">
+                    <User className="h-4 w-4" />
+                    <span>{topic.view_count || 0} views</span>
                   </div>
-                  <div className="text-center">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4" />
-                      <span className="whitespace-nowrap">
-                        {formatDistanceToNow(
-                          new Date(
-                            topic.last_reply_at || topic.created_at || ""
-                          )
-                        )}{" "}
-                        ago
-                      </span>
-                    </div>
+                  <div className="flex items-center space-x-1 whitespace-nowrap">
+                    <Clock className="h-4 w-4" />
+                    <span className="whitespace-nowrap">
+                      {formatDistanceToNow(
+                        new Date(topic.last_reply_at || topic.created_at || "")
+                      )}{" "}
+                      ago
+                    </span>
                   </div>
                 </div>
               </div>

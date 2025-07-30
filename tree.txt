@@ -9,8 +9,48 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   globals.css
 ª   ª   layout.tsx
 ª   ª   metadata.ts
+ª   ª   not-found.tsx
 ª   ª   providers.tsx
 ª   ª   
+ª   +---(dashboard)
+ª   ª   +---admin
+ª   ª   ª   ª   layout.tsx
+ª   ª   ª   ª   page.tsx
+ª   ª   ª   ª   
+ª   ª   ª   +---advertising
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---content
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---moderation
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---seo
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---settings
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---spam
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---users
+ª   ª   ª           page.tsx
+ª   ª   ª           
+ª   ª   +---user
+ª   ª       ª   layout.tsx
+ª   ª       ª   page.tsx
+ª   ª       ª   
+ª   ª       +---help
+ª   ª       ª       page.tsx
+ª   ª       ª       
+ª   ª       +---profile
+ª   ª       ª       page.tsx
+ª   ª       ª       
+ª   ª       +---settings
+ª   ª               page.tsx
+ª   ª               
 ª   +---(main)
 ª   ª   ª   layout.tsx
 ª   ª   ª   page.tsx
@@ -53,45 +93,7 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   +---sentry-example-api
 ª   ª           route.ts
 ª   ª           
-ª   +---dashboard
-ª   ª   +---admin
-ª   ª   ª   ª   layout.tsx
-ª   ª   ª   ª   page.tsx
-ª   ª   ª   ª   
-ª   ª   ª   +---advertising
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---content
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---moderation
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---seo
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---settings
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---spam
-ª   ª   ª   ª       page.tsx
-ª   ª   ª   ª       
-ª   ª   ª   +---users
-ª   ª   ª           page.tsx
-ª   ª   ª           
-ª   ª   +---user
-ª   ª       ª   layout.tsx
-ª   ª       ª   
-ª   ª       +---profile
-ª   ª       ª       page.tsx
-ª   ª       ª       
-ª   ª       +---settings
-ª   ª               page.tsx
-ª   ª               
 ª   +---login
-ª   ª       page.tsx
-ª   ª       
-ª   +---not-found
 ª   ª       page.tsx
 ª   ª       
 ª   +---register
@@ -191,9 +193,16 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   ª           UserManagement.tsx
 ª   ª   ª           
 ª   ª   +---analytics
-ª   ª           AnalyticsProvider.tsx
-ª   ª           EnhancedHeaderCodeInjector.tsx
-ª   ª           
+ª   ª   ª       AnalyticsProvider.tsx
+ª   ª   ª       EnhancedHeaderCodeInjector.tsx
+ª   ª   ª       
+ª   ª   +---user
+ª   ª       +---profile
+ª   ª       ª       Profile.tsx
+ª   ª       ª       
+ª   ª       +---settings
+ª   ª               Settings.tsx
+ª   ª               
 ª   +---forum
 ª   ª   ª   AnonymousPostingNotice.tsx
 ª   ª   ª   CreateTopic.tsx
@@ -228,14 +237,8 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   ª   +---topic
 ª   ª   ª           Topic.tsx
 ª   ª   ª           
-ª   ª   +---profile
-ª   ª   ª       Profile.tsx
-ª   ª   ª       
 ª   ª   +---search
 ª   ª   ª       Search.tsx
-ª   ª   ª       
-ª   ª   +---settings
-ª   ª   ª       Settings.tsx
 ª   ª   ª       
 ª   ª   +---topics
 ª   ª   ª       Topics.tsx

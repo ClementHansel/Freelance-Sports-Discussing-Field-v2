@@ -50,22 +50,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   const navItems: { path: string; label: string; icon: LucideIcon }[] = [
-    { path: "/dashboard/admin", label: "Dashboard", icon: BarChart3 },
-    { path: "/dashboard/admin/users", label: "Users", icon: Users },
-    { path: "/dashboard/admin/content", label: "Content", icon: MessageSquare },
-    { path: "/dashboard/admin/moderation", label: "Moderation", icon: Flag },
+    { path: "/admin", label: "Dashboard", icon: BarChart3 },
+    { path: "/admin/users", label: "Users", icon: Users },
+    { path: "/admin/content", label: "Content", icon: MessageSquare },
+    { path: "/admin/moderation", label: "Moderation", icon: Flag },
     {
-      path: "/dashboard/admin/spam",
+      path: "/admin/spam",
       label: "Spam Management",
       icon: AlertTriangle,
     },
     {
-      path: "/dashboard/admin/advertising",
+      path: "/admin/advertising",
       label: "Advertising",
       icon: DollarSign,
     },
-    { path: "/dashboard/admin/seo", label: "SEO", icon: Search },
-    { path: "/dashboard/admin/settings", label: "Settings", icon: Settings },
+    { path: "/admin/seo", label: "SEO", icon: Search },
+    { path: "/admin/settings", label: "Settings", icon: Settings },
   ];
 
   const renderNavLinks = () =>

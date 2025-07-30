@@ -33,7 +33,7 @@ const CategoryCard = ({ category }: { category: Category }) => {
 
   return (
     <Link href={`/category/${category.slug}`}>
-      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <div
@@ -151,7 +151,8 @@ export default function Categories({
         }
       >
         {overallLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          // Adjusted skeleton grid for mobile
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="p-4 h-32 animate-pulse bg-muted" />
             ))}
@@ -164,7 +165,8 @@ export default function Categories({
                 <h2 className="text-xl font-semibold text-foreground">
                   Main Forums
                 </h2>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Adjusted grid for mobile: 1 column on small, 2 on sm, 3 on lg */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {level1Categories.map((category) => (
                     <CategoryCard key={category.id} category={category} />
                   ))}
@@ -180,7 +182,6 @@ export default function Categories({
                 </h2>
                 <div className="space-y-6">
                   {(() => {
-                    // Explicitly type the `countries` array
                     const countries: ForumGroup[] = [];
 
                     // IMPORTANT: Replace these placeholder UUIDs with the actual IDs from your Supabase 'categories' table
@@ -280,7 +281,8 @@ export default function Categories({
                         <h3 className="text-lg font-semibold text-foreground border-b pb-2">
                           {country.name}
                         </h3>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {/* Adjusted grid for mobile: 1 column on small, 2 on sm, 3 on lg, 4 on xl */}
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                           {country.forums.map(
                             (
                               category: Category // Applied Category type directly
@@ -305,7 +307,8 @@ export default function Categories({
                 <h2 className="text-xl font-semibold text-foreground">
                   Age Group & Skill Level Categories
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {/* Adjusted grid for mobile: 1 column on small, 2 on sm, 3 on lg, 4 on xl */}
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {level3Categories.map(
                     (
                       category // No need for CategoryItem cast here, it's already Category

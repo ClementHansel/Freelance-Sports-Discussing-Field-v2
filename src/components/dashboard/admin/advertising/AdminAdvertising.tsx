@@ -48,7 +48,10 @@ export default function AdminAdvertising() {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList>
+        {/* ADDED: flex-wrap to allow tabs to wrap on smaller screens */}
+        <TabsList className="flex flex-wrap h-auto">
+          {" "}
+          {/* h-auto ensures height adjusts */}
           <TabsTrigger value="spaces">Ad Spaces</TabsTrigger>
           <TabsTrigger value="scripts">Header Scripts</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>

@@ -300,25 +300,46 @@ export default function AdminContent() {
         }
       >
         <Card>
-          <div className="p-6">
+          {/* ADDED: overflow-x-auto to make the table horizontally scrollable on small screens */}
+          <div className="p-6 overflow-x-auto">
             <h2 className="text-xl font-semibold mb-4">Recent Content</h2>
-            <Table>
+            <Table className="min-w-full divide-y divide-gray-200">
+              {" "}
+              {/* Added min-w-full to ensure table takes full width of scroll container */}
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Stats</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="whitespace-nowrap">Type</TableHead>
+                  <TableHead className="min-w-[150px] max-w-[300px] w-auto">
+                    Title
+                  </TableHead>{" "}
+                  {/* Adjusted width hints */}
+                  <TableHead className="whitespace-nowrap hidden sm:table-cell">
+                    Category
+                  </TableHead>{" "}
+                  {/* Hidden on mobile */}
+                  <TableHead className="whitespace-nowrap hidden md:table-cell">
+                    Author
+                  </TableHead>{" "}
+                  {/* Hidden on mobile, visible on md+ */}
+                  <TableHead className="whitespace-nowrap hidden lg:table-cell">
+                    Created
+                  </TableHead>{" "}
+                  {/* Hidden on mobile, visible on lg+ */}
+                  <TableHead className="whitespace-nowrap hidden sm:table-cell">
+                    Stats
+                  </TableHead>{" "}
+                  {/* Hidden on mobile */}
+                  <TableHead className="whitespace-nowrap hidden md:table-cell">
+                    Status
+                  </TableHead>{" "}
+                  {/* Hidden on mobile, visible on md+ */}
+                  <TableHead className="whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {content?.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <Badge
                         variant={
                           item.type === "topic" ? "default" : "secondary"
@@ -327,28 +348,71 @@ export default function AdminContent() {
                         {item.type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-md">
+                    <TableCell className="max-w-[300px] w-auto truncate">
+                      {" "}
+                      {/* truncate for long titles */}
                       <Link
-                        href={getContentUrl(item)} // Changed to href
-                        className="text-primary hover:text-primary/80 hover:underline font-medium truncate block"
+                        href={getContentUrl(item)}
+                        className="text-primary hover:text-primary/80 hover:underline font-medium block"
                       >
                         {item.title}
                       </Link>
+                      {/* Display Category/Author/Created/Stats on mobile below title if hidden in table head */}
+                      <div className="sm:hidden text-xs text-muted-foreground mt-1 space-y-0.5">
+                        {item.category_name && (
+                          <p>Category: {item.category_name}</p>
+                        )}
+                        {item.author && <p>Author: {item.author}</p>}
+                        {item.created_at && (
+                          <p>
+                            Created:{" "}
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </p>
+                        )}
+                        {item.type === "topic" && (
+                          <div className="flex gap-2 items-center">
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              {item.view_count || 0} views
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="h-3 w-3" />
+                              {item.reply_count || 0} replies
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex gap-1 mt-1">
+                          {item.is_pinned && (
+                            <Badge variant="outline" className="text-xs">
+                              Pinned
+                            </Badge>
+                          )}
+                          {item.is_locked && (
+                            <Badge variant="outline" className="text-xs">
+                              Locked
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap hidden sm:table-cell">
                       <span className="text-sm text-muted-foreground">
                         {item.category_name || "Unknown"}
                       </span>
                     </TableCell>
-                    <TableCell>{item.author}</TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap hidden md:table-cell">
+                      {item.author}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap hidden lg:table-cell">
                       {item.created_at
                         ? new Date(item.created_at).toLocaleDateString()
                         : "N/A"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap hidden sm:table-cell">
                       {item.type === "topic" && (
-                        <div className="flex gap-2 text-sm text-muted-foreground">
+                        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                          {" "}
+                          {/* Changed to flex-col for stats */}
                           <span className="flex items-center gap-1">
                             <Eye className="h-3 w-3" />
                             {item.view_count || 0}
@@ -360,7 +424,7 @@ export default function AdminContent() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap hidden md:table-cell">
                       <div className="flex gap-1">
                         {item.is_pinned && (
                           <Badge variant="outline" className="text-xs">
@@ -374,8 +438,10 @@ export default function AdminContent() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+                    <TableCell className="whitespace-nowrap">
+                      <div className="flex flex-col sm:flex-row gap-1">
+                        {" "}
+                        {/* Changed to flex-col on mobile, flex-row on sm+ */}
                         {item.type === "topic" && (
                           <>
                             <Button
