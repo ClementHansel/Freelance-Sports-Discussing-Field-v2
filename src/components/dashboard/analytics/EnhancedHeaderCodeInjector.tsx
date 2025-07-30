@@ -1,8 +1,10 @@
+// src/components/dashboard/analytics/EnhancedHeaderCodeInjector.tsx
 "use client";
 
-import { useEffect, useMemo } from "react"; // Import useMemo
+import { useEffect, useMemo } from "react";
 import { useForumSettings } from "@/hooks/useForumSettings";
 import DOMPurify from "dompurify";
+import { Json } from "@/integrations/supabase/types"; // Import Json type if available, otherwise use unknown
 
 interface HeaderScript {
   id: string;
@@ -16,26 +18,79 @@ export const EnhancedHeaderCodeInjector = () => {
   const { getSetting } = useForumSettings();
 
   // Get both legacy header code and new header scripts
-  // Explicitly cast the return value of getSetting to string
   const legacyHeaderCode = getSetting("header_code", "") as string;
-  const headerScriptsRaw = getSetting("header_scripts", "[]") as string;
+
+  // Use 'unknown' or 'Json' (if imported) instead of 'any'
+  const headerScriptsRawValue: unknown = getSetting("header_scripts", "[]");
 
   // Use useMemo to memoize the headerScripts array
   const headerScripts: HeaderScript[] = useMemo(() => {
-    try {
-      // Ensure headerScriptsRaw is a non-empty string before parsing
-      if (headerScriptsRaw && headerScriptsRaw !== "") {
-        // Cast the parsed JSON to HeaderScript[]
-        return JSON.parse(headerScriptsRaw) as HeaderScript[];
+    let headerScriptsString: string;
+
+    // Safely convert headerScriptsRawValue to a string representation
+    if (typeof headerScriptsRawValue === "string") {
+      headerScriptsString = headerScriptsRawValue;
+    } else if (
+      headerScriptsRawValue === null ||
+      headerScriptsRawValue === undefined
+    ) {
+      headerScriptsString = "[]"; // Default to empty array string if null/undefined
+    } else {
+      // If it's an array or object, stringify it
+      try {
+        headerScriptsString = JSON.stringify(headerScriptsRawValue);
+      } catch (stringifyError) {
+        console.error(
+          "Error stringifying headerScriptsRawValue:",
+          stringifyError
+        );
+        console.error(
+          "Problematic headerScriptsRawValue:",
+          headerScriptsRawValue
+        );
+        return []; // Return empty array if stringification fails
       }
+    }
+
+    // --- ADDED DEBUGGING LOGS (now using headerScriptsString) ---
+    console.log(
+      "DEBUG: headerScriptsString value (after conversion):",
+      headerScriptsString
+    );
+    console.log(
+      "DEBUG: typeof headerScriptsString:",
+      typeof headerScriptsString
+    );
+    console.log(
+      "DEBUG: headerScriptsString length:",
+      headerScriptsString?.length
+    );
+    // --- END DEBUGGING LOGS ---
+
+    try {
+      const trimmedRaw = headerScriptsString.trim(); // Now .trim() is safe because headerScriptsString is guaranteed to be a string
+
+      if (trimmedRaw === "") {
+        console.warn(
+          "Header scripts setting is empty or whitespace-only after trimming. Returning empty array."
+        );
+        return [];
+      }
+
+      // Attempt to parse the now-guaranteed-string JSON
+      return JSON.parse(trimmedRaw) as HeaderScript[];
     } catch (error) {
       console.error("Error parsing header scripts:", error);
+      // Log the problematic string that caused the error for further investigation
+      console.error(
+        "Malformed headerScriptsString that caused JSON.parse error:",
+        headerScriptsString
+      );
     }
-    return []; // Return an empty array on error or if raw string is empty
-  }, [headerScriptsRaw]); // Only re-run this memoization if headerScriptsRaw changes
+    return []; // Return an empty array on error or if raw string is empty/null/undefined
+  }, [headerScriptsRawValue]); // Depend on the raw value from getSetting
 
   // Check if advertising is enabled
-  // Explicitly cast the return value of getSetting to string
   const advertisingEnabled =
     (getSetting("advertising_enabled", "true") as string) === "true";
 

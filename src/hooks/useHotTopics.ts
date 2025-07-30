@@ -1,8 +1,9 @@
+// src/hooks/useHotTopics.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types"; // Import Json if RPC returns generic JSON
+import { Json } from "@/integrations/supabase/types";
 
 export interface HotTopic {
   id: string;
@@ -12,6 +13,7 @@ export interface HotTopic {
   category_id: string;
   is_pinned: boolean;
   is_locked: boolean;
+  is_hidden: boolean | null;
   view_count: number;
   reply_count: number;
   last_reply_at: string;
@@ -21,12 +23,13 @@ export interface HotTopic {
   avatar_url: string | null;
   category_name: string;
   category_color: string;
-  category_slug: string | null; // Changed to allow null based on usage below
-  slug: string | null; // Changed to allow null based on usage below
+  category_slug: string | null;
+  slug: string | null;
   hot_score: number;
   last_post_id: string | null;
   parent_category_id: string | null;
   parent_category_slug: string | null;
+  moderation_status: "approved" | "pending" | "rejected" | null; // Added based on serverDataFetcher type
 }
 
 export interface PaginatedHotTopicsResult {
@@ -36,15 +39,24 @@ export interface PaginatedHotTopicsResult {
   currentPage: number;
 }
 
-export const useHotTopics = (page = 1, limit = 10) => {
+interface UseHotTopicsOptions {
+  page?: number;
+  limit?: number;
+  // New: Optional initial data for hydration
+  initialData?: PaginatedHotTopicsResult;
+}
+
+export const useHotTopics = ({
+  page = 1,
+  limit = 10,
+  initialData, // Destructure initialData
+}: UseHotTopicsOptions = {}) => {
   const offset = (page - 1) * limit;
 
   return useQuery<PaginatedHotTopicsResult>({
-    // Explicitly type the query result
     queryKey: ["hot-topics", page, limit],
     queryFn: async () => {
-      // Supabase RPC functions often return 'Json' or 'unknown'
-      // We'll cast them to the expected types.
+      console.log("Fetching hot topics via useHotTopics hook (client-side)");
       const [topicsResult, countResult] = await Promise.all([
         supabase.rpc("get_hot_topics", {
           limit_count: limit,
@@ -63,22 +75,20 @@ export const useHotTopics = (page = 1, limit = 10) => {
         throw countResult.error;
       }
 
-      // Directly cast to HotTopic[] or unknown as HotTopic[]
-      // Then map to ensure all properties are present and correctly typed.
       const topics = (topicsResult.data as unknown as HotTopic[]).map(
         (item) => ({
           ...item,
-          // Ensure category_slug and slug are string | null as per interface
           category_slug: item.category_slug || null,
           slug: item.slug || null,
-          hot_score: item.hot_score ?? 0, // Use nullish coalescing for default 0
+          hot_score: item.hot_score ?? 0,
           last_post_id: item.last_post_id || null,
           parent_category_id: item.parent_category_id || null,
           parent_category_slug: item.parent_category_slug || null,
-        })
-      ); // No need for final 'as HotTopic[]' if map correctly returns it
+          moderation_status: item.moderation_status || null, // Ensure this is mapped
+        }),
+      );
 
-      const totalCount = countResult.data as number; // Assuming count RPC returns a number
+      const totalCount = countResult.data as number;
       const totalPages = Math.ceil(totalCount / limit);
 
       return {
@@ -88,6 +98,12 @@ export const useHotTopics = (page = 1, limit = 10) => {
         currentPage: page,
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // Use initialData if provided. This is key for hydration.
+    initialData: initialData,
+    // Set staleTime to 0 if initialData is provided to force a re-fetch
+    // or a very short staleTime if you want to re-fetch quickly after hydration.
+    // For hot topics, a short staleTime (e.g., 10 seconds) is often good.
+    staleTime: initialData ? 10 * 1000 : 5 * 60 * 1000, // 10s if initial, 5min otherwise
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
   });
 };

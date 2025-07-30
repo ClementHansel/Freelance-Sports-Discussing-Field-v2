@@ -19,7 +19,7 @@ import { InlineReplyForm } from "./InlineReplyForm";
 import { toast } from "@/hooks/use-toast";
 import { generateCategoryUrl } from "@/lib/utils/urlHelpers";
 import { AdminTempUserInfo } from "../dashboard/admin/AdminTempUserInfo";
-import { AdminControls } from "./admin-ui/AdminControls";
+import { AdminControls } from "./category/AdminControls";
 
 // Define PostCardTopic based on how PostCard.tsx actually uses the 'topic' object
 // and aligning with common Supabase nullability patterns.

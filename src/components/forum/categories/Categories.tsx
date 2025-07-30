@@ -1,11 +1,11 @@
 "use client";
 
-import React, { Suspense } from "react"; // Import Suspense
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Home, ChevronRight } from "lucide-react";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories, Category } from "@/hooks/useCategories"; // Import canonical Category type
 import { useCategoryStats } from "@/hooks/useCategoryStats";
 import {
   Breadcrumb,
@@ -17,27 +17,18 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-// Define a specific interface for Category based on its usage in this file
-interface CategoryItem {
-  id: string;
-  name: string;
-  slug: string;
-  color: string | null; // Allow null as per your usage
-  description?: string | null; // Allow null
-  region?: string | null; // Allow null
-  birth_year?: string | null; // Allow null
-  play_level?: string | null; // Allow null
-  parent_category_id?: string | null; // For grouping logic
-}
+// FIXED: Removed redundant CategoryItem interface.
+// Directly use the imported 'Category' type from '@/hooks/useCategories'.
 
 // Define the interface for the grouped forum structure
 interface ForumGroup {
   name: string;
-  forums: CategoryItem[];
+  forums: Category[]; // FIXED: Use Category directly
 }
 
-const CategoryCard = ({ category }: { category: CategoryItem }) => {
-  // Applied CategoryItem type
+// FIXED: CategoryItem prop type changed to Category
+const CategoryCard = ({ category }: { category: Category }) => {
+  // Assuming useCategoryStats returns an object with a topic_count property
   const { data: stats } = useCategoryStats(category.id);
 
   return (
@@ -76,32 +67,53 @@ const CategoryCard = ({ category }: { category: CategoryItem }) => {
 };
 
 // Changed to default export for Next.js page files
-export default function CategoriesSlug() {
-  // Explicitly type the data returned from useCategories
-  const { data: level1Categories, isLoading: isLoadingLevel1 } = useCategories(
-    null,
-    1
-  ) as {
-    data: CategoryItem[] | undefined;
-    isLoading: boolean; // Add isLoading for better UX
-  };
-  const { data: level2Categories, isLoading: isLoadingLevel2 } = useCategories(
-    undefined,
-    2
-  ) as {
-    data: CategoryItem[] | undefined;
-    isLoading: boolean; // Add isLoading for better UX
-  };
-  const { data: level3Categories, isLoading: isLoadingLevel3 } = useCategories(
-    undefined,
-    3
-  ) as {
-    data: CategoryItem[] | undefined;
-    isLoading: boolean; // Add isLoading for better UX
-  };
+interface CategoriesProps {
+  initialLevel1Categories?: Category[];
+  initialLevel2Categories?: Category[];
+  initialLevel3Categories?: Category[];
+  errorOccurred?: boolean; // Prop to indicate if an error occurred during SSR
+}
+
+export default function Categories({
+  initialLevel1Categories,
+  initialLevel2Categories,
+  initialLevel3Categories,
+  errorOccurred,
+}: CategoriesProps) {
+  // Use useCategories with initialData for hydration
+  const { data: level1Categories, isLoading: isLoadingLevel1 } = useCategories({
+    parentId: null,
+    level: 1,
+    initialData: initialLevel1Categories,
+  });
+  const { data: level2Categories, isLoading: isLoadingLevel2 } = useCategories({
+    level: 2,
+    initialData: initialLevel2Categories,
+  });
+  const { data: level3Categories, isLoading: isLoadingLevel3 } = useCategories({
+    level: 3,
+    initialData: initialLevel3Categories,
+  });
 
   // Determine overall loading state
   const overallLoading = isLoadingLevel1 || isLoadingLevel2 || isLoadingLevel3;
+
+  // If an error occurred during SSR, display an error message
+  if (errorOccurred) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-red-600">
+          <h3 className="text-lg font-semibold mb-2">
+            Error Loading Categories
+          </h3>
+          <p>
+            We encountered an issue loading the categories. Please try again
+            later.
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full overflow-x-hidden">
@@ -130,7 +142,7 @@ export default function CategoriesSlug() {
         </p>
       </div>
 
-      {/* Wrap the main content with Suspense */}
+      {/* Main content wrapped in Suspense (though SSR means it's usually ready) */}
       <Suspense
         fallback={
           <Card className="p-6">
@@ -153,13 +165,9 @@ export default function CategoriesSlug() {
                   Main Forums
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {level1Categories.map(
-                    (
-                      category: CategoryItem // Applied CategoryItem type
-                    ) => (
-                      <CategoryCard key={category.id} category={category} />
-                    )
-                  )}
+                  {level1Categories.map((category) => (
+                    <CategoryCard key={category.id} category={category} />
+                  ))}
                 </div>
               </div>
             )}
@@ -177,10 +185,11 @@ export default function CategoriesSlug() {
 
                     // IMPORTANT: Replace these placeholder UUIDs with the actual IDs from your Supabase 'categories' table
                     // for your "Canada" and "USA" parent categories.
+                    // You MUST update these with your actual database IDs.
                     const CANADA_PARENT_CATEGORY_ID =
-                      "YOUR_CANADA_PARENT_CATEGORY_UUID_HERE";
+                      "11111111-1111-1111-1111-111111111111";
                     const USA_PARENT_CATEGORY_ID =
-                      "YOUR_USA_PARENT_CATEGORY_UUID_HERE";
+                      "22222222-2222-2222-2222-222222222222";
                     const TOURNAMENT_PARENT_CATEGORY_ID =
                       "44444444-4444-4444-4444-444444444444"; // Assuming this is correct
                     const GENERAL_DISCUSSION_PARENT_CATEGORY_ID =
@@ -274,7 +283,7 @@ export default function CategoriesSlug() {
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                           {country.forums.map(
                             (
-                              category: CategoryItem // Applied CategoryItem type
+                              category: Category // Applied Category type directly
                             ) => (
                               <CategoryCard
                                 key={category.id}
@@ -299,7 +308,7 @@ export default function CategoriesSlug() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {level3Categories.map(
                     (
-                      category: CategoryItem // Applied CategoryItem type
+                      category // No need for CategoryItem cast here, it's already Category
                     ) => (
                       <CategoryCard key={category.id} category={category} />
                     )

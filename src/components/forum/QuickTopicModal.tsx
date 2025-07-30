@@ -1,12 +1,15 @@
+// src/components/forum/QuickTopicModal.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; // Added useCallback
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription, // Added DialogDescription for better accessibility/context
+  DialogFooter, // Added DialogFooter for button grouping
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,83 +26,133 @@ import { MessageSquare, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateTopic } from "@/hooks/useCreateTopic";
 import { useTempUser } from "@/hooks/useTempUser";
-import { useCategoryById, useCategories } from "@/hooks/useCategories";
+import {
+  useCategoryById,
+  useCategories,
+  Category, // Canonical Category type
+} from "@/hooks/useCategories";
 import { HierarchicalCategorySelector } from "./HierarchicalCategorySelector";
-import { toast } from "@/hooks/use-toast";
+import { toast, useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { z } from "zod"; // Added Zod for validation
+import { zodResolver } from "@hookform/resolvers/zod"; // Added Zod Resolver
+import { useForm } from "react-hook-form"; // Added React Hook Form
 
-// Define the Category interface based on the actual data structure from your hooks
-// The 'description' field is explicitly 'string | null' as per the TypeScript error.
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  description: string | null; // Corrected: can be string or null
-  level: number;
-  parent_category_id?: string;
-  slug?: string;
-}
+// Define the schema for the form using Zod
+const topicFormSchema = z.object({
+  title: z
+    .string()
+    .min(5, "Title must be at least 5 characters.")
+    .max(100, "Title cannot exceed 100 characters."),
+  content: z
+    .string()
+    .min(10, "Content must be at least 10 characters.")
+    .max(5000, "Content cannot exceed 5000 characters."),
+  category_id: z.string().min(1, "Category is required."),
+});
 
+type TopicFormData = z.infer<typeof topicFormSchema>;
+
+// Re-introduced 'trigger', 'size', 'isOpen', 'onClose' to props
 interface QuickTopicModalProps {
   preselectedCategoryId?: string;
-  trigger?: React.ReactNode;
-  size?: "sm" | "default" | "lg";
+  isOpen: boolean; // Controlled prop for dialog visibility
+  onClose: () => void; // Controlled prop to close the dialog
 }
 
 export const QuickTopicModal = ({
   preselectedCategoryId,
-  trigger,
-  size = "default",
+  isOpen, // Destructure isOpen
+  onClose, // Destructure onClose
 }: QuickTopicModalProps) => {
   const router = useRouter();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    category_id: preselectedCategoryId || "",
-  });
-  const [contentErrors, setContentErrors] = useState<string[]>([]);
-
   const createTopicMutation = useCreateTopic();
   const tempUser = useTempUser();
+  const { toast } = useToast(); // Ensure toast is imported and used
 
-  // Fetch data for the currently selected category (formData.category_id)
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TopicFormData>({
+    resolver: zodResolver(topicFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      category_id: preselectedCategoryId || "",
+    },
+  });
+
+  // Watch form fields
+  const formData = watch(); // This will give you the current form data
+
+  // Sync preselectedCategoryId with form state when it changes
+  useEffect(() => {
+    if (
+      preselectedCategoryId &&
+      preselectedCategoryId !== formData.category_id
+    ) {
+      setValue("category_id", preselectedCategoryId);
+    }
+  }, [preselectedCategoryId, setValue, formData.category_id]);
+
+  // Fetch category details for breadcrumbs
   const { data: currentSelectedCategory } = useCategoryById(
-    formData.category_id || ""
+    formData.category_id || "",
+    { enabled: !!formData.category_id } // Only fetch if category_id exists
   );
 
-  // Fetch all categories to derive the breadcrumb path
-  const { data: allLevel1Categories } = useCategories(null, 1);
-  const { data: allLevel2Categories } = useCategories(undefined, 2);
+  const { data: allLevel1Categories } = useCategories({
+    level: 1,
+    enabled: isOpen,
+  });
+  const { data: allLevel2Categories } = useCategories({
+    level: 2,
+    enabled: isOpen,
+  });
+  const { data: allLevel3Categories } = useCategories({
+    level: 3,
+    enabled: isOpen,
+  }); // Also fetch level 3 for breadcrumb lookup
 
-  // Derived state for breadcrumbs based on formData.category_id
   const [level1Category, setLevel1Category] = useState<Category | null>(null);
   const [level2Category, setLevel2Category] = useState<Category | null>(null);
   const [level3Category, setLevel3Category] = useState<Category | null>(null);
 
+  // Effect to build breadcrumb categories based on selected category
   useEffect(() => {
-    if (currentSelectedCategory && allLevel1Categories && allLevel2Categories) {
+    if (
+      currentSelectedCategory &&
+      allLevel1Categories &&
+      allLevel2Categories &&
+      allLevel3Categories
+    ) {
+      const currentCat: Category = currentSelectedCategory;
+      const allCats: Category[] = [
+        ...allLevel1Categories,
+        ...allLevel2Categories,
+        ...allLevel3Categories,
+      ];
+
       let l1Cat: Category | null = null;
       let l2Cat: Category | null = null;
       let l3Cat: Category | null = null;
 
-      // Type assertions are used here to ensure the data from hooks conforms to our Category interface
-      // This is safe because we are correcting the interface to match the hook's return type.
-      const currentCat: Category = currentSelectedCategory as Category;
-      const l1Cats: Category[] = allLevel1Categories as Category[];
-      const l2Cats: Category[] = allLevel2Categories as Category[];
-
       if (currentCat.level === 3) {
         l3Cat = currentCat;
-        const parent2 = l2Cats.find(
-          (cat: Category) => cat.id === currentCat.parent_category_id
+        const parent2 = allCats.find(
+          (cat) => cat.id === currentCat.parent_category_id
         );
         if (parent2) {
           l2Cat = parent2;
-          const parent1 = l1Cats.find(
-            (cat: Category) => cat.id === parent2.parent_category_id
+          const parent1 = allCats.find(
+            (cat) => cat.id === parent2.parent_category_id
           );
           if (parent1) {
             l1Cat = parent1;
@@ -107,8 +160,8 @@ export const QuickTopicModal = ({
         }
       } else if (currentCat.level === 2) {
         l2Cat = currentCat;
-        const parent1 = l1Cats.find(
-          (cat: Category) => cat.id === currentCat.parent_category_id
+        const parent1 = allCats.find(
+          (cat) => cat.id === currentCat.parent_category_id
         );
         if (parent1) {
           l1Cat = parent1;
@@ -117,47 +170,25 @@ export const QuickTopicModal = ({
         l1Cat = currentCat;
       }
 
-      // Only update state if there's a change to prevent unnecessary re-renders
-      if (
-        l1Cat?.id !== level1Category?.id ||
-        l2Cat?.id !== level2Category?.id ||
-        l3Cat?.id !== level3Category?.id
-      ) {
-        setLevel1Category(l1Cat);
-        setLevel2Category(l2Cat);
-        setLevel3Category(l3Cat);
-      }
+      setLevel1Category(l1Cat);
+      setLevel2Category(l2Cat);
+      setLevel3Category(l3Cat);
     } else if (!formData.category_id) {
       // Clear breadcrumbs if no category is selected
-      if (level1Category || level2Category || level3Category) {
-        setLevel1Category(null);
-        setLevel2Category(null);
-        setLevel3Category(null);
-      }
+      setLevel1Category(null);
+      setLevel2Category(null);
+      setLevel3Category(null);
     }
   }, [
     formData.category_id,
     currentSelectedCategory,
     allLevel1Categories,
     allLevel2Categories,
-    level1Category, // Include current state in dependencies for comparison
-    level2Category,
-    level3Category,
+    allLevel3Categories, // Added dependency
   ]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.title || !formData.content || !formData.category_id) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate content for anonymous users
+  const handleFormSubmit = async (data: TopicFormData) => {
+    // Content validation for anonymous users
     if (!user) {
       if (!tempUser.canPost) {
         toast({
@@ -169,9 +200,9 @@ export const QuickTopicModal = ({
         return;
       }
 
-      const validation = tempUser.validateContent(formData.content);
+      const validation = tempUser.validateContent(data.content);
       if (!validation.isValid) {
-        setContentErrors(validation.errors);
+        // setContentErrors(validation.errors); // No longer needed with RHF error handling
         toast({
           title: "Content not allowed",
           description: validation.errors.join(", "),
@@ -179,13 +210,12 @@ export const QuickTopicModal = ({
         });
         return;
       }
-      setContentErrors([]);
+      // setContentErrors([]); // No longer needed
     }
 
     try {
-      const topic = await createTopicMutation.mutateAsync(formData);
+      const topic = await createTopicMutation.mutateAsync(data);
 
-      // Refresh rate limit for anonymous users
       if (!user) {
         await tempUser.refreshRateLimit();
       }
@@ -195,14 +225,10 @@ export const QuickTopicModal = ({
         description: "Topic created successfully!",
       });
 
-      setOpen(false);
-      setFormData({
-        title: "",
-        content: "",
-        category_id: preselectedCategoryId || "",
-      });
+      onClose(); // Close the dialog on success using the controlled handler
+      reset(); // Reset form fields
 
-      // Navigate using slug-based URL if available, fallback to UUID
+      // Navigate to the new topic
       if (topic.slug && topic.categories?.slug) {
         router.push(`/category/${topic.categories.slug}/${topic.slug}`);
       } else {
@@ -218,27 +244,29 @@ export const QuickTopicModal = ({
     }
   };
 
-  const defaultTrigger = (
-    <Button size={size}>
+  // The default trigger button, used if no 'trigger' prop is provided
+  const defaultTriggerButton = (
+    <Button>
       <Plus className="h-4 w-4 mr-2" />
       New Topic
     </Button>
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {React.isValidElement(trigger) ? trigger : defaultTrigger}
-      </DialogTrigger>
+    // Dialog is now directly controlled by 'open' and 'onOpenChange'
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      {" "}
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-x-hidden overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5" />
             <span>Create New Topic</span>
           </DialogTitle>
+          <DialogDescription>
+            Start a new discussion in the selected category.
+          </DialogDescription>
         </DialogHeader>
 
-        {/* Show temp user notice for non-authenticated users */}
         {!user && tempUser.tempUser && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <div className="text-sm text-blue-800">
@@ -257,7 +285,6 @@ export const QuickTopicModal = ({
           </div>
         )}
 
-        {/* Show current forum selection when any category is selected */}
         {(level1Category || level2Category || level3Category) && (
           <div className="bg-muted/50 p-3 rounded-md border w-full overflow-hidden">
             <div className="text-sm text-muted-foreground mb-2">
@@ -265,14 +292,15 @@ export const QuickTopicModal = ({
             </div>
             <Breadcrumb className="overflow-hidden">
               <BreadcrumbList className="flex-wrap">
-                {/* Show navigation path if it exists */}
                 {level1Category && (
                   <>
                     <BreadcrumbItem>
                       <BreadcrumbPage className="flex items-center gap-2 truncate">
                         <div
                           className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: level1Category.color }}
+                          style={{
+                            backgroundColor: level1Category.color ?? "",
+                          }}
                         />
                         <span className="truncate">{level1Category.name}</span>
                       </BreadcrumbPage>
@@ -288,7 +316,9 @@ export const QuickTopicModal = ({
                       <BreadcrumbPage className="flex items-center gap-2 truncate">
                         <div
                           className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: level2Category.color }}
+                          style={{
+                            backgroundColor: level2Category.color ?? "",
+                          }}
                         />
                         <span className="truncate">{level2Category.name}</span>
                       </BreadcrumbPage>
@@ -301,7 +331,7 @@ export const QuickTopicModal = ({
                     <BreadcrumbPage className="flex items-center gap-2 font-semibold truncate">
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: level3Category.color }}
+                        style={{ backgroundColor: level3Category.color ?? "" }}
                       />
                       <span className="truncate">{level3Category.name}</span>
                     </BreadcrumbPage>
@@ -316,27 +346,32 @@ export const QuickTopicModal = ({
         )}
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(handleFormSubmit)} // Use RHF handleSubmit
           className="space-y-4 w-full max-w-full overflow-hidden"
         >
           <div className="space-y-2">
+            {" "}
+            {/* Changed from space-y-4 */}
             <Label htmlFor="title">Topic Title</Label>
             <Input
               id="title"
               placeholder="Enter a descriptive title for your topic"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              required
+              {...register("title")} // Register with RHF
             />
+            {errors.title && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.title.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="content">Content</Label>
             <WysiwygEditor
-              value={formData.content}
-              onChange={(value) => setFormData({ ...formData, content: value })}
+              value={formData.content} // Use formData.content from watch
+              onChange={(value) =>
+                setValue("content", value, { shouldValidate: true })
+              } // Update RHF state
               placeholder={
                 user
                   ? "Write your topic content here..."
@@ -346,44 +381,47 @@ export const QuickTopicModal = ({
               allowImages={!!user}
               hideToolbar={!user}
             />
-            {contentErrors.length > 0 && (
+            {errors.content && ( // RHF handles content errors
               <div className="text-sm text-red-600">
                 <ul className="list-disc list-inside">
-                  {contentErrors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
+                  <li>{errors.content.message}</li>
                 </ul>
               </div>
             )}
           </div>
 
           <HierarchicalCategorySelector
-            value={formData.category_id}
+            value={formData.category_id} // Use formData.category_id from watch
             onChange={(value) =>
-              setFormData({ ...formData, category_id: value })
-            }
+              setValue("category_id", value, { shouldValidate: true })
+            } // Update RHF state
+            preselectedCategoryId={preselectedCategoryId} // Pass preselectedCategoryId
             required
           />
+          {errors.category_id && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.category_id.message}
+            </p>
+          )}
 
-          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+          <DialogFooter>
+            {" "}
+            {/* Use DialogFooter for buttons */}
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
-              className="w-full sm:w-auto"
+              onClick={() => onClose()} // Use onClose prop
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={
-                createTopicMutation.isPending || (!user && !tempUser.canPost)
-              }
-              className="w-full sm:w-auto"
+              disabled={isSubmitting || (!user && !tempUser.canPost)}
             >
-              {createTopicMutation.isPending ? "Creating..." : "Create Topic"}
+              {isSubmitting ? "Creating..." : "Create Topic"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -1,12 +1,13 @@
+// src\components\forum\category\CategoryRow.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react"; // Import useState
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useCategoryStats } from "@/hooks/useCategoryStats";
-import { QuickTopicModal } from "../QuickTopicModal";
+import { QuickTopicModal } from "../QuickTopicModal"; // Ensure this path is correct
 import { formatDistanceToNow } from "date-fns";
 
 export interface CategoryWithActivity {
@@ -32,10 +33,10 @@ interface CategoryRowProps {
 
 export const CategoryRow = ({ category }: CategoryRowProps) => {
   const { data: stats } = useCategoryStats(category.id);
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false); // Add state for QuickTopicModal
 
   return (
     <div className="group">
-      {/* Changed 'to' to 'href' for next/link */}
       <Link href={`/category/${category.slug}`}>
         <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
@@ -80,18 +81,17 @@ export const CategoryRow = ({ category }: CategoryRowProps) => {
 
                 {/* Quick action button */}
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <QuickTopicModal
-                    preselectedCategoryId={category.id} // Pass category ID for preselection
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => e.preventDefault()} // Prevent navigation when button is clicked
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+                  {/* FIXED: Directly control the modal state with onClick */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent navigation when button is clicked
+                      setQuickTopicModalOpen(true); // Open the modal
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -139,6 +139,13 @@ export const CategoryRow = ({ category }: CategoryRowProps) => {
           </div>
         </div>
       </Link>
+
+      {/* Quick Topic Modal - controlled by state */}
+      <QuickTopicModal
+        isOpen={quickTopicModalOpen}
+        onClose={() => setQuickTopicModalOpen(false)}
+        preselectedCategoryId={category.id} // Pass category ID for preselection
+      />
     </div>
   );
 };

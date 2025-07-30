@@ -87,37 +87,48 @@ export default function NotFound() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-primary/10 rounded-full mb-6">
-              <MessageSquare className="w-12 h-12 text-primary" />
-            </div>
-            <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
-            <h2 className="text-3xl font-semibold mb-4">Page Not Found</h2>
-            <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-              We've recently updated our website to a new forum platform. The
-              page you're looking for may have moved or no longer exists.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
-                <Link href="/">
-                  {" "}
-                  {/* Changed to href */}
-                  <Home className="w-4 h-4 mr-2" />
-                  Go to Home
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  // Guard window access for SSR safety
-                  if (typeof window !== "undefined") {
-                    window.history.back();
-                  }
-                }}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Go Back
-              </Button>
+            <div
+              className="relative text-center mb-12 rounded-xl overflow-hidden shadow-md"
+              style={{
+                backgroundImage: "url('/hockey_404.png')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              <div className="inline-flex items-center justify-center w-24 h-24 bg-primary/10 rounded-full mb-6">
+                <MessageSquare className="w-12 h-12 text-primary" />
+              </div>
+              <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
+              <h2 className="text-3xl font-semibold mb-4">Page Not Found</h2>
+              <p className="px-4 text-lg text-foreground max-w-2xl mx-auto">
+                We've recently updated our website to a new forum platform.
+              </p>
+              <p className="px-4 text-lg text-foreground mb-6 max-w-2xl mx-auto">
+                The page you're looking for may have moved or no longer exists.
+              </p>
+              <div className="flex flex-row mb-4 gap-4 justify-center">
+                <Button asChild size="lg">
+                  <Link href="/">
+                    {" "}
+                    {/* Changed to href */}
+                    <Home className="w-4 h-4 mr-2" />
+                    Go to Home
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    // Guard window access for SSR safety
+                    if (typeof window !== "undefined") {
+                      window.history.back();
+                    }
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Go Back
+                </Button>
+              </div>
             </div>
           </div>
 

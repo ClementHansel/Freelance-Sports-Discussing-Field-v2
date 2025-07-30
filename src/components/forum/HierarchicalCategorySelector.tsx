@@ -1,6 +1,7 @@
+// src\components\forum\HierarchicalCategorySelector.tsx
 "use client";
 
-import React, { useState, useEffect } from "react"; // Removed useRef as it's no longer strictly needed for initial setup logic
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -12,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface Category {
   id: string;
   name: string;
-  color: string;
+  color: string | null; // Corrected: color can be string or null
   description: string | null; // Corrected: can be string or null
   level: number;
   parent_category_id?: string;
@@ -38,20 +39,21 @@ export const HierarchicalCategorySelector = ({
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Fetch category data for the current 'value' prop (controlled by parent)
+  // Assuming useCategoryById takes only the ID
   const { data: currentCategoryFromValue } = useCategoryById(value || "");
 
-  // Fetch categories for each level
-  const { data: level1Categories } = useCategories(null, 1);
-  const { data: level2Categories } = useCategories(
-    selectedLevel1 || undefined,
-    2
-  );
-  const { data: level3Categories } = useCategories(
-    selectedLevel2 || undefined,
-    3
-  );
+  // Fetch categories for each level using the assumed object-based argument
+  const { data: level1Categories } = useCategories({ level: 1 });
+  const { data: level2Categories } = useCategories({
+    parentId: selectedLevel1 || undefined,
+    level: 2,
+  });
+  const { data: level3Categories } = useCategories({
+    parentId: selectedLevel2 || undefined,
+    level: 3,
+  });
   // Fetch all level 2 categories for path resolution when syncing with 'value'
-  const { data: allLevel2Categories } = useCategories(undefined, 2);
+  const { data: allLevel2Categories } = useCategories({ level: 2 });
 
   /**
    * Effect to synchronize internal path state with the 'value' prop from the parent.
@@ -59,6 +61,7 @@ export const HierarchicalCategorySelector = ({
    * It runs when 'value' changes or when the necessary category data becomes available.
    * IMPORTANT: 'selectedLevel1', 'selectedLevel2', 'step' are NOT in dependencies to prevent loop.
    */
+
   useEffect(() => {
     // Only proceed if 'value' is present and its corresponding category data is loaded
     if (
@@ -127,7 +130,8 @@ export const HierarchicalCategorySelector = ({
     currentCategoryFromValue, // Trigger when the category object for 'value' loads/changes
     level1Categories, // Trigger when level 1 categories load/change
     allLevel2Categories, // Trigger when all level 2 categories load/change
-    // Do NOT include selectedLevel1, selectedLevel2, step here to prevent re-render loop
+    // selectedLevel1, selectedLevel2, step are intentionally omitted here as the
+    // effect updates them, and an internal check prevents infinite loops.
   ]);
 
   /**
@@ -259,7 +263,7 @@ export const HierarchicalCategorySelector = ({
                 <div className="flex items-center space-x-3">
                   <div
                     className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: category.color }}
+                    style={{ backgroundColor: category.color ?? "transparent" }} // Added fallback
                   />
                   <div>
                     <div className="font-medium text-sm">{category.name}</div>
@@ -285,7 +289,10 @@ export const HierarchicalCategorySelector = ({
           <div className="flex items-center space-x-2 mt-1">
             <div
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: selectedCategoryToDisplay.color }}
+              style={{
+                backgroundColor:
+                  selectedCategoryToDisplay.color ?? "transparent",
+              }} // Added fallback
             />
             <span className="text-sm text-foreground">
               {selectedCategoryToDisplay.name}

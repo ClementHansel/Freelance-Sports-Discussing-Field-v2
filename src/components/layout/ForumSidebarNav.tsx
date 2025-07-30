@@ -1,8 +1,9 @@
+// src/components/layout/ForumSidebarNav.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation"; // Import useSearchParams
+import { usePathname, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,33 +15,29 @@ import {
   Home,
   Users,
   LucideIcon,
-} from "lucide-react"; // Import LucideIcon type
-import { useCategories } from "@/hooks/useCategories"; // Assuming this hook returns Category[]
-import { useCategoriesByActivity } from "@/hooks/useCategoriesByActivity"; // Assuming this hook returns Category[]
-import { useCategoryStats } from "@/hooks/useCategoryStats"; // Assuming this hook returns { topic_count: number }
-import { useEnhancedForumStats } from "@/hooks/useEnhancedForumStats"; // Assuming this hook returns relevant stats
+  MessageSquare,
+} from "lucide-react";
+import { useCategories, Category } from "@/hooks/useCategories";
+import {
+  useCategoriesByActivity,
+  CategoryWithActivity,
+} from "@/hooks/useCategoriesByActivity";
+import { useCategoryStats } from "@/hooks/useCategoryStats";
+import { useEnhancedForumStats } from "@/hooks/useEnhancedForumStats";
 import { QuickTopicModal } from "../forum/QuickTopicModal";
 import { SidebarAdBanner } from "@/components/ads/SidebarAdBanner";
 import { cn } from "@/lib/utils";
-
-// Define the Category interface based on its usage
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  color: string;
-  // Add other properties if they are part of the category object returned by your hooks
-  // e.g., parent_category_id?: string | null;
-  // e.g., description?: string | null;
-}
+import { useForumSettings, ForumSettingsMap } from "@/hooks/useForumSettings";
 
 // Component to display category stats
-const CategoryItem = ({ category }: { category: Category }) => {
-  // Typed category prop
-  // Assuming useCategoryStats returns an object with a topic_count property
+const CategoryItem = ({
+  category,
+}: {
+  category: Category | CategoryWithActivity;
+}) => {
   const { data: stats, isLoading } = useCategoryStats(category.id);
 
-  const pathname = usePathname(); // Get pathname for category active state
+  const pathname = usePathname();
   const isCategoryActive = pathname === `/category/${category.slug}`;
 
   return (
@@ -56,49 +53,110 @@ const CategoryItem = ({ category }: { category: Category }) => {
       <div className="flex items-center space-x-2">
         <div
           className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: category.color }}
+          style={{ backgroundColor: category.color ?? "" }}
         />
         <span className="text-foreground group-hover:text-primary transition-colors">
           {category.name}
         </span>
       </div>
       <Badge variant="secondary" className="text-xs">
-        {isLoading ? "..." : stats?.topic_count || 0}
+        {isLoading
+          ? "..."
+          : (category as CategoryWithActivity).topic_count ??
+            (stats?.topic_count || 0)}
       </Badge>
     </Link>
   );
 };
 
-export default function ForumSidebarNav() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams(); // Initialize useSearchParams
-  const { data: categories } = useCategoriesByActivity(); // All active categories by activity
-  const { data: forumStats } = useEnhancedForumStats(); // Forum wide stats
+interface ForumSidebarNavProps {
+  initialCategories?: CategoryWithActivity[];
+  initialForumSettings?: ForumSettingsMap;
+  errorOccurred?: boolean; // This prop indicates if an error occurred during SSR data fetching
+}
 
-  // Adjusted isActive to work with Next.js usePathname and useSearchParams
+export default function ForumSidebarNav({
+  initialCategories,
+  initialForumSettings,
+  errorOccurred,
+}: ForumSidebarNavProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // FIXED: Call useCategoriesByActivity with a single options object
+  const {
+    data: categories,
+    isLoading: areCategoriesLoading,
+    error: categoriesError,
+  } = useCategoriesByActivity({ initialData: initialCategories });
+
+  // FIXED: Call useForumSettings with a single options object and destructure 'error'
+  const {
+    settings: forumSettings,
+    isLoading: areForumSettingsLoading,
+    error: forumSettingsError, // Now correctly destructured
+  } = useForumSettings({ initialData: initialForumSettings });
+
+  const {
+    data: enhancedForumStats,
+    isLoading: areEnhancedForumStatsLoading,
+    error: enhancedForumStatsError,
+  } = useEnhancedForumStats();
+
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false);
+
+  // --- DEBUGGING LOGS (can be removed after verification) ---
+  console.group("ForumSidebarNav Debugging");
+  console.log("Initial Categories Prop:", initialCategories);
+  console.log("Categories Data (from hook):", categories);
+  console.log("Categories Loading (from hook):", areCategoriesLoading);
+  console.log("Categories Error (from hook):", categoriesError);
+  if (categories) {
+    console.log("Categories Array Length (from hook):", categories.length);
+    if (categories.length > 0) {
+      console.log("First Category Item (from hook):", categories[0]);
+    }
+  } else {
+    console.log("Categories data is null or undefined (from hook).");
+  }
+
+  console.log("Initial Forum Settings Prop:", initialForumSettings);
+  console.log("Forum Settings Data (from hook):", forumSettings);
+  console.log("Forum Settings Loading (from hook):", areForumSettingsLoading);
+  console.log("Forum Settings Error (from hook):", forumSettingsError);
+
+  console.log("Enhanced Forum Stats Data (from hook):", enhancedForumStats);
+  console.log(
+    "Enhanced Forum Stats Loading (from hook):",
+    areEnhancedForumStatsLoading
+  );
+  console.log(
+    "Enhanced Forum Stats Error (from hook):",
+    enhancedForumStatsError
+  );
+  console.groupEnd();
+  // --- END DEBUGGING LOGS ---
+
   const isActive = (path: string) => {
     const currentPath = pathname;
     const currentSearchParams = searchParams.toString();
 
-    // Handle root path with no query params
     if (path === "/") {
       return currentPath === "/" && currentSearchParams === "";
     }
 
-    // Handle paths with specific query params (e.g., /?sort=hot)
     if (path.includes("?")) {
       const [basePath, queryString] = path.split("?");
       return currentPath === basePath && currentSearchParams === queryString;
     }
 
-    // Handle regular paths (e.g., /categories)
     return currentPath === path || currentPath.startsWith(`${path}/`);
   };
 
   interface NavItem {
     label: string;
     path: string;
-    icon: LucideIcon; // Type for Lucide icons
+    icon: LucideIcon;
   }
 
   const navItems: NavItem[] = [
@@ -140,10 +198,24 @@ export default function ForumSidebarNav() {
           Categories
         </h3>
         <div className="space-y-2">
-          {/* Ensure categories is an array before mapping */}
-          {categories?.slice(0, 8).map((category) => (
-            <CategoryItem key={category.id} category={category} />
-          ))}
+          {/* Check for SSR error (errorOccurred) OR client-side hook error (categoriesError) */}
+          {errorOccurred || categoriesError ? (
+            <p className="text-red-500 text-sm">Error loading categories.</p>
+          ) : areCategoriesLoading ? (
+            <p className="text-muted-foreground text-sm">
+              Loading categories...
+            </p>
+          ) : categories && categories.length > 0 ? (
+            categories
+              .slice(0, 8)
+              .map((category) => (
+                <CategoryItem key={category.id} category={category} />
+              ))
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No categories available.
+            </p>
+          )}
 
           {categories && categories.length > 8 && (
             <Link href="/categories">
@@ -158,6 +230,76 @@ export default function ForumSidebarNav() {
           )}
         </div>
       </Card>
+
+      {/* Forum Statistics
+      {errorOccurred || enhancedForumStatsError ? (
+        <Card className="p-4">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
+            Forum Stats
+          </h3>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-red-500 text-sm">
+              Error loading forum statistics.
+            </p>
+          </div>
+        </Card>
+      ) : areEnhancedForumStatsLoading ? (
+        <Card className="p-4">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
+            Forum Stats
+          </h3>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Loading forum statistics...</p>
+          </div>
+        </Card>
+      ) : enhancedForumStats ? (
+        <Card className="p-4">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
+            Forum Stats
+          </h3>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>Total Topics: {enhancedForumStats.total_topics ?? 0}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4" />
+              <span>
+                Total Members: {enhancedForumStats.total_members ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4" />
+              <span>Topics Today: {enhancedForumStats.topics_today ?? 0}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>Posts Today: {enhancedForumStats.posts_today ?? 0}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4" />
+              <span>
+                New Members Today: {enhancedForumStats.members_today ?? 0}
+              </span>
+            </div>
+            {enhancedForumStats.most_active_category && (
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>
+                  Most Active Category:{" "}
+                  {enhancedForumStats.most_active_category}
+                </span>
+              </div>
+            )}
+            {enhancedForumStats.top_poster && (
+              <div className="flex items-center space-x-2">
+                <Star className="h-4 w-4" />
+                <span>Top Poster: {enhancedForumStats.top_poster}</span>
+              </div>
+            )}
+          </div>
+        </Card>
+      ) : null} */}
 
       {/* Sidebar Advertisement */}
       <SidebarAdBanner />

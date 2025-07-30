@@ -1,3 +1,4 @@
+// src/components/forum/PostComponent.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -38,42 +39,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEditPost } from "@/hooks/useEditPost";
 import { useDeletePost } from "@/hooks/useDeletePost";
-import { AdminPostInfo } from "./admin-ui/AdminPostInfo";
-import { AdminControls } from "./admin-ui/AdminControls";
+import { AdminPostInfo } from "./category/AdminPostInfo";
+
 import { AdminTempUserInfo } from "@/components/dashboard/admin/AdminTempUserInfo";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
-// Define a specific type for moderation status based on its usage
-type ModerationStatus = "pending" | "approved" | "rejected";
+// Import canonical Post and ModerationStatus types
+import { Post } from "@/hooks/usePosts"; // This is the single source of truth for Post type
+import { ModerationStatus } from "@/types/forum"; // Import shared ModerationStatus type
+import { AdminControls } from "./category/AdminControls";
 
-// Define the structure of a Profile using the generated type
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-
-// Define the structure of a Parent Post with corrected types
-interface ParentPostData {
-  id: string;
-  content: string | null;
-  created_at: string | null;
-  moderation_status: ModerationStatus | null; // Corrected Type
-  profiles: Profile | null;
-}
-
-// Define the full Post interface with corrected types
-export interface Post {
-  id: string;
-  content: string;
-  author_id: string | null;
-  is_anonymous: boolean | null;
-  created_at: string | null;
-  updated_at: string | null;
-  moderation_status: ModerationStatus | null; // Corrected Type
-  parent_post_id: string | null;
-  profiles: Profile | null;
-  parent_post: ParentPostData | null;
-  topic_id: string;
-  ip_address: string | null;
-}
+// REMOVED: Local Post and ParentPostData interfaces.
+// The Post interface from "@/hooks/usePosts" is now the canonical one.
+// The parent_post property within the canonical Post type is already defined as Post.
+// The ModerationStatus type is now imported from "@/types/forum".
 
 // Define the user object from useAuth
 interface AuthUser {
@@ -81,8 +61,15 @@ interface AuthUser {
   role: "admin" | "moderator" | "user";
 }
 
+// Ensure this Post interface is EXPORTED if TopicView.tsx is importing it directly from here
+// However, the best practice is for TopicView.tsx to import Post from '@/hooks/usePosts' directly
+// since that's the canonical source. If TopicView.tsx is trying to get it via PostComponent,
+// this export is necessary.
+// For now, let's assume PostComponent is the re-exporter for Post for TopicView's sake.
+export type { Post } from "@/hooks/usePosts"; // Re-export Post from its canonical source
+
 interface PostComponentProps {
-  post: Post;
+  post: Post; // Now using the imported canonical Post type
   topicId: string;
   depth?: number;
   onReport: (
@@ -100,9 +87,10 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
-    const [moderationStatus, setModerationStatus] = useState<
-      ModerationStatus | "approved"
-    >(post.moderation_status || "approved");
+    // Initialize useState directly with post.moderation_status
+    // It is now guaranteed to be ModerationStatus | null due to usePosts.ts changes
+    const [moderationStatus, setModerationStatus] =
+      useState<ModerationStatus | null>(post.moderation_status);
     const [isVisible, setIsVisible] = useState(
       (post.moderation_status || "approved") === "approved"
     );
@@ -120,13 +108,14 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
             filter: `id=eq.${post.id}`,
           },
           (payload) => {
+            // Cast payload.new to the canonical Post type
             const newPostData = payload.new as Post;
             if (newPostData && newPostData.moderation_status) {
-              const newStatus = newPostData.moderation_status;
-              setModerationStatus(newStatus);
-              setIsVisible(newStatus === "approved");
+              // newPostData.moderation_status is already ModerationStatus | null due to usePosts.ts change
+              setModerationStatus(newPostData.moderation_status);
+              setIsVisible(newPostData.moderation_status === "approved");
 
-              if (newStatus === "pending") {
+              if (newPostData.moderation_status === "pending") {
                 toast({
                   title: "Content flagged",
                   description:
@@ -134,6 +123,10 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
                   variant: "default",
                 });
               }
+            } else if (newPostData && newPostData.moderation_status === null) {
+              // Handle case where moderation_status might be explicitly set to null
+              setModerationStatus(null);
+              setIsVisible(true); // If null, assume approved for display
             }
           }
         )
@@ -210,7 +203,16 @@ export const PostComponent: React.FC<PostComponentProps> = React.memo(
 
     const handleClipboardShare = async (url: string) => {
       try {
-        await navigator.clipboard.writeText(url);
+        // Using document.execCommand('copy') for better iframe compatibility
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in MS Edge.
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+
         toast({
           title: "Link copied!",
           description: "Post link has been copied to clipboard",

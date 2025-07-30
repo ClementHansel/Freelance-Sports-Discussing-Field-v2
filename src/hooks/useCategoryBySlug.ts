@@ -1,27 +1,37 @@
+// src/hooks/useCategoryBySlug.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types"; // Import Database for precise types
+import { Category } from "./useCategories"; // Import the base Category interface
 
-// Type for a basic category row from your database
-type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+// Define a common interface for Supabase errors
+interface SupabaseError {
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+}
 
-// Recursive type for category with nested parent hierarchy
-export interface CategoryWithHierarchy extends CategoryRow {
-  // Override parent_category_id to be nullable if it's not already in CategoryRow
-  // This ensures consistency with how it's used (data.parent_category_id)
-  parent_category_id: string | null;
-  // The 'parent_category' property will be the recursively fetched parent
-  parent_category?: CategoryWithHierarchy | null; // Optional, and can be null
+// Define the options interface specifically for useCategoryBySlug
+interface UseCategoryBySlugOptions {
+  categorySlug: string;
+  subcategorySlug?: string; // Optional for hierarchical categories
+  initialData?: Category | null; // Allow initial data for SSR hydration, can be null
+  enabled?: boolean; // Allow disabling the query
 }
 
 export const useCategoryBySlug = (
-  categorySlug: string,
-  subcategorySlug?: string
+  options: UseCategoryBySlugOptions, // Accept a single options object
 ) => {
-  return useQuery<CategoryWithHierarchy | null>({
-    // Explicitly type the query result
+  const {
+    categorySlug,
+    subcategorySlug,
+    initialData,
+    enabled = true,
+  } = options;
+
+  return useQuery<Category | null>({ // Explicitly type the query result
     queryKey: ["category-by-slug", categorySlug, subcategorySlug],
     queryFn: async () => {
       console.log("Fetching category by slug:", {
@@ -29,131 +39,70 @@ export const useCategoryBySlug = (
         subcategorySlug,
       });
 
+      let categoryData: Category | null = null;
+      // Corrected: Use SupabaseError type for categoryError
+      let categoryError: SupabaseError | null = null;
+
       if (subcategorySlug) {
         // Hierarchical: validate parent-child relationship
         const { data: parentCategory, error: parentError } = await supabase
           .from("categories")
-          .select("id, slug, name")
+          .select("id")
           .eq("slug", categorySlug)
           .single();
 
-        if (parentError) {
-          console.error("Error fetching parent category:", parentError);
-          throw parentError;
-        }
-
-        if (!parentCategory) {
-          // If parent category not found, then subcategory cannot exist under it
+        if (parentError || !parentCategory) {
+          console.error(
+            "Error fetching parent category or parent not found:",
+            parentError,
+          );
+          // If parent not found, then the full path is invalid
           return null;
         }
 
-        // Explicitly type the select for childCategory
         const { data: childCategory, error: childError } = await supabase
           .from("categories")
-          .select(
-            `
-            *,
-            parent_category:categories!parent_category_id(
-              id, name, slug,
-              parent_category:categories!parent_category_id(
-                id, name, slug,
-                parent_category:categories!parent_category_id(
-                  id, name, slug
-                )
-              )
-            )
-            `
-          )
+          .select("*, parent_category_id") // Select all columns for the child category
           .eq("slug", subcategorySlug)
           .eq("parent_category_id", parentCategory.id)
           .single();
 
-        if (childError) {
-          console.error("Error fetching subcategory:", childError);
-          throw childError;
+        if (childError || !childCategory) {
+          console.error(
+            "Error fetching child category or child not found:",
+            childError,
+          );
+          return null;
         }
 
-        console.log("Subcategory fetched by slug:", childCategory);
-        // Cast the result to the recursive type
-        return (childCategory as unknown as CategoryWithHierarchy) || null;
+        categoryData = childCategory as Category;
+        categoryError = childError as SupabaseError | null; // Cast error to SupabaseError
       } else {
-        // Single category - build complete hierarchy recursively
-        const buildCategoryHierarchy = async (
-          slug: string
-        ): Promise<CategoryWithHierarchy | null> => {
-          // Explicit return type
-          console.log(`Fetching category with slug: ${slug}`);
-          const { data, error } = await supabase
-            .from("categories")
-            .select("*")
-            .eq("slug", slug)
-            .single();
+        // Non-hierarchical: fetch directly by categorySlug
+        const { data, error } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("slug", categorySlug)
+          .single();
 
-          if (error) {
-            console.error("Error fetching category by slug:", error);
-            throw error;
-          }
-
-          if (!data) {
-            return null; // Category not found
-          }
-
-          console.log(`Category fetched for slug ${slug}:`, data);
-
-          // If this category has a parent, recursively fetch the parent hierarchy
-          if (data.parent_category_id) {
-            console.log(
-              `Found parent category ID ${data.parent_category_id} for ${data.name}`
-            );
-
-            // First get the parent category's slug and ensure it exists
-            const { data: parentData, error: parentError } = await supabase
-              .from("categories")
-              .select("slug")
-              .eq("id", data.parent_category_id)
-              .single();
-
-            if (parentError) {
-              console.error(
-                "Error fetching parent category slug:",
-                parentError
-              );
-              throw parentError;
-            }
-
-            if (!parentData) {
-              // Parent slug not found, treat as root for this branch
-              return data as CategoryWithHierarchy;
-            }
-
-            // Recursively build the parent hierarchy
-            const parentWithHierarchy = await buildCategoryHierarchy(
-              parentData.slug
-            );
-
-            const result: CategoryWithHierarchy = {
-              // Explicitly type result
-              ...(data as CategoryRow), // Cast data to CategoryRow for spread
-              parent_category: parentWithHierarchy,
-            };
-            console.log(`Built hierarchy for ${data.name}:`, result);
-            return result;
-          }
-
-          console.log(`No parent found for ${data.name}, returning as root`);
-          return data as CategoryWithHierarchy; // Cast data to the final type
-        };
-
-        const categoryWithHierarchy = await buildCategoryHierarchy(
-          categorySlug
-        );
-        console.log(
-          "Final category with complete hierarchy:",
-          categoryWithHierarchy
-        );
-        return categoryWithHierarchy;
+        categoryData = data as Category;
+        categoryError = error as SupabaseError | null; // Cast error to SupabaseError
       }
+
+      if (categoryError) {
+        console.error("Error fetching category:", categoryError);
+        // Only throw if it's a real error, not just no data found
+        if (categoryError.code !== "PGRST116") { // PGRST116 is "No rows found"
+          throw categoryError;
+        }
+      }
+
+      console.log("Category fetched by slug:", categoryData);
+      return categoryData;
     },
-    enabled: !!categorySlug,
+    initialData: initialData, // Hydrate with initial data if provided
+    enabled: enabled && !!categorySlug, // Only run query if enabled and categorySlug is provided
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
   });
 };

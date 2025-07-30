@@ -7,9 +7,6 @@ import { Suspense } from "react";
 import { Card } from "@/components/ui/card";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Optionally preload Sentry client init (if not already)
-import "@/lib/sentry"; // Only needed if using client-side Sentry explicitly
-
 export const metadata: Metadata = {
   title:
     "Minor Hockey Talks - The Premier Community for Minor Hockey Discussion",
@@ -82,23 +79,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {/* Google Analytics Script */}
+        {/* Google Analytics Script - ONLY load the gtag.js script here */}
         <Script
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=G-RFQVZPVL0N"
         />
-        <Script
-          id="google-analytics-script"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-RFQVZPVL0N');
-            `,
-          }}
-        />
+        {/* The gtag initialization will now happen in useGoogleAnalytics hook */}
 
         {/* Google AdSense Script */}
         <Script

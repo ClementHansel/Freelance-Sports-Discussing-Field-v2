@@ -1,3 +1,4 @@
+// src/components/forum/MobileBottomNav.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -20,6 +21,7 @@ export default function MobileBottomNav() {
   const pathname = usePathname(); // Initialize usePathname
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false); // New state for QuickTopicModal
 
   const navItems = [
     { icon: Home, label: "Home", href: "/", active: pathname === "/" },
@@ -29,14 +31,15 @@ export default function MobileBottomNav() {
       href: "/search",
       active: pathname === "/search",
     },
-    { icon: Plus, label: "Create", href: "#", active: false, isCreate: true }, // 'href: "#"' is a placeholder for modal trigger
+    // The 'Create' item will now directly open the modal via state
+    { icon: Plus, label: "Create", href: "#", active: false, isCreate: true },
     {
       icon: User,
       label: user ? "Profile" : "Login",
       href: user ? "/profile" : "/login",
       active: pathname === (user ? "/profile" : "/login"),
     },
-    { icon: Menu, label: "Menu", href: "#", active: false, isMenu: true }, // 'href: "#"' is a placeholder for modal trigger
+    { icon: Menu, label: "Menu", href: "#", active: false, isMenu: true },
   ];
 
   return (
@@ -52,18 +55,19 @@ export default function MobileBottomNav() {
                 ? "text-primary bg-primary/10"
                 : "text-muted-foreground hover:text-foreground"
             }`}
-            asChild={!item.isMenu && !item.isCreate} // asChild applies to Link or SheetTrigger
+            // asChild is only needed for Link or SheetTrigger, not for direct onClick
+            asChild={!item.isMenu && !item.isCreate}
+            // If it's the create button, handle click to open modal
+            onClick={
+              item.isCreate ? () => setQuickTopicModalOpen(true) : undefined
+            }
           >
             {item.isCreate ? (
-              <QuickTopicModal
-                trigger={
-                  <div className="flex flex-col items-center">
-                    <item.icon className="h-5 w-5 mb-0.5" />
-                    <span className="text-xs">{item.label}</span>
-                  </div>
-                }
-                size="sm"
-              />
+              // No longer passing a 'trigger' prop, the button itself handles opening
+              <div className="flex flex-col items-center">
+                <item.icon className="h-5 w-5 mb-0.5" />
+                <span className="text-xs">{item.label}</span>
+              </div>
             ) : item.isMenu ? (
               <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
                 <SheetTrigger asChild>
@@ -84,8 +88,6 @@ export default function MobileBottomNav() {
             ) : (
               // For regular navigation items
               <Link href={item.href}>
-                {" "}
-                {/* Changed 'to' to 'href' */}
                 <item.icon className="h-5 w-5 mb-0.5" />
                 <span className="text-xs">{item.label}</span>
               </Link>
@@ -93,6 +95,13 @@ export default function MobileBottomNav() {
           </Button>
         ))}
       </div>
+
+      {/* QuickTopicModal is now rendered here, controlled by state */}
+      <QuickTopicModal
+        isOpen={quickTopicModalOpen}
+        onClose={() => setQuickTopicModalOpen(false)}
+        // preselectedCategoryId can be passed if needed, otherwise omit
+      />
     </nav>
   );
 }

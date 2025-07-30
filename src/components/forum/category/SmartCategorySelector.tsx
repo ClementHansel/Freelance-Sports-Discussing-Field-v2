@@ -1,3 +1,4 @@
+// src\components\forum\category\SmartCategorySelector.tsx
 "use client";
 
 import React from "react";
@@ -25,7 +26,8 @@ export const SmartCategorySelector = ({
   required = false,
 }: SmartCategorySelectorProps) => {
   // Get Level 3 categories (the ones that can have topics)
-  const { data: level3Categories, isLoading } = useCategories(undefined, 3);
+  // FIXED: Pass level as a property within the single argument object
+  const { data: level3Categories, isLoading } = useCategories({ level: 3 });
 
   return (
     <div className="space-y-2">
@@ -45,7 +47,8 @@ export const SmartCategorySelector = ({
                 <div className="flex items-center space-x-2">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
+                    // FIXED: Provide a fallback empty string if category.color is null
+                    style={{ backgroundColor: category.color ?? "" }}
                   />
                   <span>{category.name}</span>
                 </div>

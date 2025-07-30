@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Json, Database } from "@/integrations/supabase/types"; // Import Database and Json
-import { SuspiciousIP } from "@/components/dashboard/admin/SpamManagement"; // Import SuspiciousIP
+import { Database, Json } from "@/integrations/supabase/types"; // Import Database and Json
 
 // --- Interfaces for ComprehensiveIPActivity ---
 // These interfaces reflect the *expected* structure of the JSON blobs
@@ -79,7 +78,7 @@ export const useComprehensiveIPActivity = (ipAddress?: string) => {
         "get_comprehensive_ip_activity",
         {
           target_ip: ipAddress,
-        }
+        },
       );
 
       if (error) throw error;
@@ -92,6 +91,7 @@ export const useComprehensiveIPActivity = (ipAddress?: string) => {
 
 // --- Supabase generated types for tables ---
 import { Database as SupabaseDatabase } from "@/integrations/supabase/types"; // Renamed to avoid conflict with local Database type if any
+import { SuspiciousIP } from "@/components/dashboard/admin/spam/SpamManagement";
 
 type AnonymousPostTrackingRow =
   SupabaseDatabase["public"]["Tables"]["anonymous_post_tracking"]["Row"];
@@ -128,7 +128,7 @@ export const useAllSuspiciousIPs = () => {
         trackingData?.map((tracking: AnonymousPostTrackingRow) => {
           const banInfo = bannedData?.find(
             (ban: BannedIpsSelectedColumns) =>
-              String(ban.ip_address) === String(tracking.ip_address)
+              String(ban.ip_address) === String(tracking.ip_address),
           );
 
           return {
@@ -138,17 +138,16 @@ export const useAllSuspiciousIPs = () => {
             post_count: tracking.post_count || 0,
             topic_count: tracking.topic_count || 0,
             is_blocked: tracking.is_blocked || false,
-            last_post_at:
-              tracking.last_post_at ||
+            last_post_at: tracking.last_post_at ||
               tracking.created_at ||
               new Date().toISOString(),
             created_at: tracking.created_at || null, // This must match SuspiciousIP's definition
             banned_ips: banInfo
               ? {
-                  ban_type: banInfo.ban_type || null,
-                  reason: banInfo.reason || null,
-                  is_active: banInfo.is_active || false,
-                }
+                ban_type: banInfo.ban_type || null,
+                reason: banInfo.reason || null,
+                is_active: banInfo.is_active || false,
+              }
               : null,
           };
         }) || [];

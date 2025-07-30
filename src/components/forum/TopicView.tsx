@@ -1,3 +1,4 @@
+// src/components/forum/TopicView.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -25,8 +26,8 @@ import {
   Edit,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTopic } from "@/hooks/useTopic";
-import { useTopicByPath } from "@/hooks/useTopicByPath";
+import { useTopic } from "@/hooks/useTopic"; // Import useTopic
+import { useTopicByPath } from "@/hooks/useTopicByPath"; // Import useTopicByPath
 import { usePosts } from "@/hooks/usePosts";
 import { useEditTopic } from "@/hooks/useEditTopic";
 import { usePostPage } from "@/hooks/usePostPage";
@@ -40,70 +41,19 @@ import { AdBanner } from "@/components/ads/AdBanner";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Post as PostFromHooks } from "@/hooks/usePosts";
-import { AdminControls } from "./admin-ui/AdminControls";
+import { Post as PostFromHooks, PaginatedPostsResult } from "@/hooks/usePosts"; // Import PaginatedPostsResult
+
 import { Post as PostForComponent } from "./PostComponent"; // Import Post type from PostComponent
-import { Topic as AdminTopicInfoTopic } from "./admin-ui/AdminTopicInfo"; // Import Topic type from AdminTopicInfo for compatibility
+import { Topic as AdminTopicInfoTopic } from "./category/AdminTopicInfo"; // Import Topic type from AdminTopicInfo for compatibility
+import { ForumSettingsMap } from "@/hooks/useForumSettings"; // Import ForumSettingsMap
+import { Topic as UseTopicsTopic } from "@/hooks/useTopics"; // Import the Topic interface from useTopics
+import { AdminControls } from "./category/AdminControls";
 
 // Define ModerationStatus as it's used in this file
 type ModerationStatus = "pending" | "approved" | "rejected";
 
-// Define the type for topic data directly from the useTopic and useTopicByPath hooks
-// This type should accurately reflect ALL properties that *might* be present on the fetched topic data,
-// even if TopicFromHooks (from a generic useTopics hook) doesn't explicitly list them.
-// Assume these properties are indeed returned by the hooks.
-interface FetchedTopicData {
-  id: string;
-  title: string;
-  content: string | null;
-  author_id: string | null;
-  category_id: string;
-  created_at: string;
-  updated_at: string | null;
-  slug: string | null;
-  canonical_url: string | null;
-  ip_address: string | null; // Corrected type: must be string | null for compatibility
-  is_anonymous: boolean | null;
-  is_locked: boolean | null;
-  is_pinned: boolean | null;
-  // Made optional because the error stated they might be "missing" entirely from the source object
-  is_hidden?: boolean | null;
-  is_public?: boolean | null;
-  last_post_id?: string | null;
-  last_reply_at: string | null;
-  hot_score?: number | null;
-  reply_count: number;
-  view_count: number;
-  moderation_status: string | null; // It's string | null from DB, will be cast to ModerationStatus
-  // Expanded profiles to match AdminControls' expected type, and made optional
-  profiles?: {
-    username: string | null;
-    avatar_url: string | null;
-    id: string; // Ensure ID is present if used for profile links
-    bio: string | null; // Added for AdminControls compatibility
-    created_at: string | null; // Added for AdminControls compatibility
-    reputation: number | null; // Added for AdminControls compatibility
-    updated_at: string | null; // Added for AdminControls compatibility
-  } | null; // Made optional and nullable
-  temporary_users?: {
-    id: string;
-    ip_address: string;
-    first_seen: string;
-    last_seen: string;
-  } | null; // Keep optional
-
-  // Added categories property
-  categories?: {
-    // Made optional as it might be missing from initial fetch
-    id: string;
-    name: string;
-    slug: string;
-    color: string | null;
-  } | null; // categories object can be null
-}
-
-// FullTopicDetails now correctly extends FetchedTopicData
-interface FullTopicDetails extends FetchedTopicData {
+// FullTopicDetails now correctly extends UseTopicsTopic
+interface FullTopicDetails extends UseTopicsTopic {
   moderation_status: ModerationStatus | null; // Ensure this is the stricter type here.
 }
 
@@ -113,15 +63,38 @@ interface PostInterface extends PostFromHooks {
   moderation_status: ModerationStatus | null;
 }
 
-export const TopicView = () => {
-  const params = useParams();
-  const categorySlug = params.categorySlug as string | undefined;
-  const subcategorySlug = params.subcategorySlug as string | undefined;
-  const topicSlug = params.topicSlug as string | undefined;
-  const topicId = params.topicId as string | undefined;
+// Define props for TopicView to accept initial data from SSR
+interface TopicViewProps {
+  initialTopic?: FullTopicDetails | null;
+  initialPosts?: PaginatedPostsResult | null; // Allow null
+  initialForumSettings?: ForumSettingsMap | null;
+  categorySlug?: string;
+  topicSlug?: string;
+  topicId?: string;
+  currentPage?: number;
+  errorOccurred?: boolean; // Prop to indicate if an error occurred during SSR fetch
+}
 
+export const TopicView = ({
+  initialTopic,
+  initialPosts,
+  initialForumSettings,
+  categorySlug: propCategorySlug,
+  topicSlug: propTopicSlug,
+  topicId: propTopicId,
+  currentPage: propCurrentPage = 1,
+  errorOccurred = false,
+}: TopicViewProps) => {
+  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Use props if available, otherwise fallback to params
+  const categorySlug =
+    propCategorySlug || (params.categorySlug as string | undefined);
+  const subcategorySlug = params.subcategorySlug as string | undefined; // Subcategory is always from params
+  const topicSlug = propTopicSlug || (params.topicSlug as string | undefined);
+  const topicId = propTopicId || (params.topicId as string | undefined);
 
   const { user } = useAuth();
   const [showTopicReply, setShowTopicReply] = useState(false);
@@ -129,7 +102,10 @@ export const TopicView = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage = parseInt(
+    searchParams.get("page") || propCurrentPage.toString(),
+    10
+  );
   const postsPerPage = 20;
 
   const [reportModal, setReportModal] = useState<{
@@ -143,23 +119,37 @@ export const TopicView = () => {
   });
 
   const isLegacyRoute = !!topicId;
+
+  // FIX: Call useTopic with a single options object
   const {
     data: legacyTopic,
     isLoading: legacyLoading,
     error: legacyError,
-  } = useTopic(topicId || "");
+  } = useTopic({
+    identifier: topicId || "", // Pass identifier within the options object
+    initialData: isLegacyRoute ? initialTopic : undefined,
+    enabled: isLegacyRoute && !initialTopic, // Only fetch if legacy route and no initial data
+  });
+
+  // This call was already correct, but including it for completeness.
   const {
     data: slugTopic,
     isLoading: slugLoading,
     error: slugError,
-  } = useTopicByPath(categorySlug || "", subcategorySlug, topicSlug);
+  } = useTopicByPath({
+    categorySlug: categorySlug || "",
+    subcategorySlug: subcategorySlug,
+    topicSlug: topicSlug,
+    initialData: !isLegacyRoute ? initialTopic : undefined,
+    enabled: !isLegacyRoute && !!categorySlug && !!topicSlug && !initialTopic, // Only fetch if slug route and no initial data
+  });
 
   const topic: FullTopicDetails | null | undefined = useMemo(() => {
-    const fetchedTopic = isLegacyRoute ? legacyTopic : slugTopic;
+    // Prioritize initial data, then client-side fetched data
+    const fetchedTopic =
+      initialTopic || (isLegacyRoute ? legacyTopic : slugTopic);
     if (fetchedTopic) {
-      // Safely cast `fetchedTopic` to `FetchedTopicData` first,
-      // then ensure specific properties have correct null handling and type casting.
-      const topicData = fetchedTopic as FetchedTopicData;
+      const topicData = fetchedTopic as UseTopicsTopic; // Cast to UseTopicsTopic
       return {
         ...topicData,
         last_reply_at: topicData.last_reply_at ?? null,
@@ -168,43 +158,60 @@ export const TopicView = () => {
           (topicData.moderation_status as ModerationStatus) ?? null,
         reply_count: topicData.reply_count ?? 0,
         view_count: topicData.view_count ?? 0,
-        // Ensure optional fields are handled with nullish coalescing
         is_hidden: topicData.is_hidden ?? null,
         is_public: topicData.is_public ?? null,
         hot_score: topicData.hot_score ?? null,
         profiles: topicData.profiles ?? null,
-        categories: topicData.categories ?? null, // Ensure categories is handled
-      } as FullTopicDetails; // Final cast to FullTopicDetails
+        categories: topicData.categories ?? null,
+        ip_address: topicData.ip_address ?? null, // Ensure these are mapped
+        is_anonymous: topicData.is_anonymous ?? null, // Ensure these are mapped
+        canonical_url: topicData.canonical_url ?? null, // Ensure these are mapped
+      } as FullTopicDetails;
     }
     return fetchedTopic as FullTopicDetails | null | undefined;
-  }, [isLegacyRoute, legacyTopic, slugTopic]);
+  }, [initialTopic, isLegacyRoute, legacyTopic, slugTopic]);
 
   const [topicModerationStatus, setTopicModerationStatus] =
     useState<ModerationStatus | null>(topic?.moderation_status || null);
   const [isTopicVisible, setIsTopicVisible] = useState(
     topic?.moderation_status === "approved"
   );
-  const topicLoading = isLegacyRoute ? legacyLoading : slugLoading;
-  const topicError = isLegacyRoute ? legacyError : slugError;
+  const topicLoading = initialTopic
+    ? false
+    : isLegacyRoute
+    ? legacyLoading
+    : slugLoading;
+  const topicError = initialTopic
+    ? undefined
+    : isLegacyRoute
+    ? legacyError
+    : slugError;
 
   const { data: postsData, isLoading: postsLoading } = usePosts(
     topic?.id || "",
     {
       page: currentPage,
       limit: postsPerPage,
+      initialData: initialPosts, // Hydrate with initial posts
+      enabled: !!topic?.id && !initialPosts, // Only fetch if topic exists and no initial posts
     }
   );
 
   const posts: PostInterface[] = useMemo(
     () =>
-      (postsData?.posts || []).map((post) => ({
-        ...post,
-        is_anonymous: post.is_anonymous ?? null,
-        moderation_status: (post.moderation_status as ModerationStatus) ?? null, // Cast to ModerationStatus
-      })) as PostInterface[],
+      // FIX: Add type assertion for postsData
+      ((postsData as PaginatedPostsResult | undefined)?.posts || []).map(
+        (post) => ({
+          ...post,
+          is_anonymous: post.is_anonymous ?? null,
+          moderation_status:
+            (post.moderation_status as ModerationStatus) ?? null,
+        })
+      ) as PostInterface[],
     [postsData]
   );
-  const totalPosts = postsData?.totalCount || 0;
+  const totalPosts =
+    (postsData as PaginatedPostsResult | undefined)?.totalCount || 0; // FIX: Access totalCount directly from postsData with type assertion
   const { mutate: editTopic, isPending: isUpdatingTopic } = useEditTopic();
   const { data: polls = [] } = usePollsByTopic(topic?.id || "");
 
@@ -224,7 +231,7 @@ export const TopicView = () => {
         (payload) => {
           if (payload.new) {
             const newStatus = payload.new.moderation_status;
-            setTopicModerationStatus(newStatus as ModerationStatus); // Cast to ModerationStatus
+            setTopicModerationStatus(newStatus as ModerationStatus);
             setIsTopicVisible(newStatus === "approved");
 
             if (newStatus === "pending") {
@@ -405,9 +412,27 @@ export const TopicView = () => {
   const organizeReplies = (posts: PostInterface[]) => {
     return posts.sort(
       (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        new Date(a.created_at ?? "").getTime() -
+        new Date(b.created_at ?? "").getTime()
     );
   };
+
+  // Handle initial error state from SSR
+  if (errorOccurred && !topic && !topicLoading) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-xl font-semibold text-gray-900">
+          Error Loading Topic
+        </h2>
+        <p className="text-gray-600 mt-2">
+          There was an issue loading this topic. Please try again later.
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/">Back to Home</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (topicLoading) {
     return (
@@ -426,7 +451,7 @@ export const TopicView = () => {
     );
   }
 
-  if (topicError || !topic) {
+  if (!topic) {
     return (
       <div className="text-center py-8">
         <h2 className="text-xl font-semibold text-gray-900">Topic not found</h2>
@@ -534,7 +559,8 @@ export const TopicView = () => {
               </div>
               <span className="hidden sm:inline">•</span>
               <span>
-                Created {formatDistanceToNow(new Date(topic.created_at))} ago
+                Created {formatDistanceToNow(new Date(topic.created_at ?? ""))}{" "}
+                ago
               </span>
               {/* Use nullish coalescing for last_reply_at and reply_count */}
               {topic.last_reply_at &&

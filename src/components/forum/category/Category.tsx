@@ -1,84 +1,94 @@
+// src/components/forum/category/Category.tsx
 "use client";
 
-import React from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from "react"; //
+import { useParams, useRouter, useSearchParams } from "next/navigation"; //
+import Link from "next/link"; //
+import { Card } from "@/components/ui/card"; //
+import { Button } from "@/components/ui/button"; //
+import { Badge } from "@/components/ui/badge"; //
 import {
-  MessageSquare,
-  User,
-  Clock,
-  Pin,
-  Plus,
-  ChevronRight,
-  Home,
-  HelpCircle,
-} from "lucide-react";
+  MessageSquare, //
+  User, //
+  Clock, //
+  Pin, //
+  Plus, //
+  ChevronRight, //
+  Home, //
+  HelpCircle, //
+  TrendingUp, // Added for sorting buttons
+} from "lucide-react"; //
 
-import { useCategoriesByActivity } from "@/hooks/useCategoriesByActivity";
+// Import canonical Category type from useCategories
 import {
-  useCategoryBySlug,
-  // Removed 'Category as BaseCategoryFromHook' as we're no longer extending it
-} from "@/hooks/useCategories";
+  useCategories, // Keep useCategories for allCategoriesForBreadcrumbs
+  Category, // This is the canonical Category type
+} from "@/hooks/useCategories"; //
+// CORRECTED: Import useCategoryBySlug from its specific file for hierarchical logic
+import { useCategoryBySlug } from "@/hooks/useCategoryBySlug"; //
 import {
-  useTopicsLegacy as useTopics,
-  // Removed 'Topic as BaseTopicFromHook' as we're no longer extending it
-} from "@/hooks/useTopicsLegacy";
-import { useAuth } from "@/hooks/useAuth";
-import { useCategoryStats } from "@/hooks/useCategoryStats";
-import { formatDistanceToNow } from "date-fns";
-import { QuickTopicModal } from "@/components/forum/QuickTopicModal";
-import { CategoryRequestModal } from "@/components/forum/category/CategoryRequestModal";
-import { AdminControls } from "@/components/forum/admin-ui/AdminControls";
+  useTopics, //
+  PaginatedTopicsResult, //
+  Topic as HookTopic, // Alias to avoid conflict if 'Topic' is used locally
+} from "@/hooks/useTopics"; //
 import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+  useCategoriesByActivity, //
+  CategoryWithActivity, //
+} from "@/hooks/useCategoriesByActivity"; //
+import { useAuth } from "@/hooks/useAuth"; //
+import { useCategoryStats } from "@/hooks/useCategoryStats"; //
+import { useForumSettings, ForumSettingsMap } from "@/hooks/useForumSettings"; //
+import { formatDistanceToNow } from "date-fns"; //
+import { QuickTopicModal } from "@/components/forum/QuickTopicModal"; //
+import { CategoryRequestModal } from "@/components/forum/category/CategoryRequestModal"; //
 
-// Import the comprehensive Topic interface from AdminTopicInfo.
-// We will use this directly instead of creating a redundant alias.
-import { Topic as AdminTopicInfoTopic } from "@/components/forum/admin-ui/AdminTopicInfo";
-import { Post } from "@/components/forum/admin-ui/AdminPostInfo"; // Import Post for ContentType
+import {
+  Breadcrumb, //
+  BreadcrumbEllipsis, // Keep if you use ellipsis for long breadcrumbs
+  BreadcrumbItem, //
+  BreadcrumbLink, //
+  BreadcrumbList, //
+  BreadcrumbPage, //
+  BreadcrumbSeparator, //
+} from "@/components/ui/breadcrumb"; //
+import { PostCard, PostCardTopic } from "@/components/forum/PostCard"; // Ensure PostCardTopic is exported from PostCard.tsx
+import { PaginationControls } from "@/components/ui/pagination-controls"; // Ensure this component is exported
+import { ReportModal } from "@/components/forum/ReportModal"; // Ensure this component is exported
 
-// Define the Category interface. This is the canonical Category interface for this file
-// and is also exported for use by AdminControls (via CategoryView.tsx).
-// It no longer extends BaseCategoryFromHook to avoid the 'level' type incompatibility.
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  color: string;
-  description: string | null;
-  level: number | null; // Explicitly allow null, as intended by your application logic
-  parent_category_id: string | null;
-  parent_category: Category | null; // Recursive definition, allowing null
-  requires_moderation?: boolean | null; // Specific to this app's category logic
-  last_activity_at?: string | null; // Specific to this app's category logic
-  region?: string | null; // Specific to this app's category logic
-  birth_year?: number | null; // Specific to this app's category logic
-  play_level?: string | null; // Specific to this app's category logic
+// Import specific types for AdminControls content
+// These should be the types that AdminControls expects for its 'content' prop
+import { Topic as AdminTopicInfoTopic } from "@/components/forum/category/AdminTopicInfo"; //
+// CORRECTED: Import Post from AdminPostInfo.tsx
+import { Post as AdminPostInfoPost } from "@/components/forum/category/AdminPostInfo"; //
+// No longer need to import Post from '@/hooks/usePosts' directly for AdminControlsContentType
+// import { Post } from "@/hooks/usePosts";
+import { AdminControls } from "./AdminControls"; //
+
+// Define the ContentType for AdminControls
+// This union type ensures that AdminControls can accept Category, Topic, or AdminPostInfoPost
+type AdminControlsContentType =
+  | AdminPostInfoPost
+  | AdminTopicInfoTopic
+  | Category; //
+
+// Define props interface for Category client component
+interface CategoryClientProps {
+  initialCategory?: Category; //
+  initialTopics?: PaginatedTopicsResult; //
+  initialSubcategories?: CategoryWithActivity[]; //
+  initialForumSettings?: ForumSettingsMap; //
+  categorySlug: string; //
+  currentPage: number; //
 }
 
-// REMOVED: The redundant 'Topic' interface.
-// We will now use 'AdminTopicInfoTopic' directly where 'Topic' was previously used.
-
-// Define a union type for the 'content' prop for AdminControls
-// This should now be compatible with the updated Topic and Category interfaces
-type ContentType = Post | AdminTopicInfoTopic | Category; // CHANGED: Used AdminTopicInfoTopic directly
-
 // Helper function to build breadcrumb hierarchy
-const buildBreadcrumbHierarchy = (category: Category | null) => {
+const buildBreadcrumbHierarchy = (
+  currentCategory: Category | null | undefined,
+  allPossibleCategories: Category[] | undefined
+) => {
   const breadcrumbs: { name: string; slug: string; id: string }[] = [];
-  let current: Category | null = category;
+  let current: Category | null | undefined = currentCategory;
 
-  // Build breadcrumb hierarchy by traversing parent_category chain
   while (current) {
     breadcrumbs.unshift({
       name: current.name,
@@ -86,14 +96,19 @@ const buildBreadcrumbHierarchy = (category: Category | null) => {
       id: current.id,
     });
 
-    // Move to parent category, handling if it's optional or null
-    current = current.parent_category || null;
+    // Find the parent category from the provided list
+    current = allPossibleCategories?.find(
+      (cat) => cat.id === current?.parent_category_id
+    );
   }
   return breadcrumbs;
 };
 
-const SubcategoryCard = ({ subcat }: { subcat: Category }) => {
-  const { data: stats } = useCategoryStats(subcat.id);
+// SubcategoryCard now expects CategoryWithActivity
+const SubcategoryCard = ({ subcat }: { subcat: CategoryWithActivity }) => {
+  // useCategoryStats is still here as a fallback if topic_count/post_count
+  // from useCategoriesByActivity are null/undefined, as per your RPC.
+  const { data: stats } = useCategoryStats(subcat.id); //
 
   return (
     <Link href={`/category/${subcat.slug}`}>
@@ -102,7 +117,7 @@ const SubcategoryCard = ({ subcat }: { subcat: Category }) => {
           <div className="flex items-center space-x-2">
             <div
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: subcat.color }}
+              style={{ backgroundColor: subcat.color ?? "" }}
             />
             <h3 className="font-semibold text-sm text-gray-900">
               {subcat.name}
@@ -118,11 +133,11 @@ const SubcategoryCard = ({ subcat }: { subcat: Category }) => {
         <div className="flex items-center text-xs text-gray-500 space-x-4">
           <div className="flex items-center space-x-1">
             <MessageSquare className="h-3 w-3" />
-            <span>{stats?.topic_count || 0} topics</span>
+            <span>{subcat.topic_count ?? stats?.topic_count ?? 0} topics</span>
           </div>
           <div className="flex items-center space-x-1">
             <User className="h-3 w-3" />
-            <span>{stats?.post_count || 0} posts</span>
+            <span>{subcat.post_count ?? stats?.post_count ?? 0} posts</span>
           </div>
           {subcat.last_activity_at && (
             <div className="flex items-center space-x-1">
@@ -138,48 +153,177 @@ const SubcategoryCard = ({ subcat }: { subcat: Category }) => {
   );
 };
 
-// Main page component
-export default function CategorySlug() {
-  const params = useParams();
-  const router = useRouter();
+export default function CategoryClientComponent({
+  initialCategory,
+  initialTopics,
+  initialSubcategories,
+  initialForumSettings,
+  categorySlug: propCategorySlug,
+  currentPage: propCurrentPage,
+}: CategoryClientProps) {
+  const params = useParams(); //
+  const router = useRouter(); //
+  const searchParams = useSearchParams(); //
 
-  const categorySlugParam = params.categorySlug;
-  let currentCategorySlug: string | undefined;
+  const currentCategorySlug =
+    propCategorySlug || (params.categorySlug as string); //
+  const subcategorySlug = params.subcategorySlug as string | undefined; // Ensure subcategorySlug is correctly typed from params
 
-  if (Array.isArray(categorySlugParam)) {
-    currentCategorySlug = categorySlugParam[categorySlugParam.length - 1];
-  } else {
-    currentCategorySlug = categorySlugParam;
-  }
+  const { user } = useAuth(); //
 
-  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState(searchParams.get("sort") || "new"); //
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || propCurrentPage || 1
+  ); //
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false); //
+  const [categoryRequestModalOpen, setCategoryRequestModalOpen] =
+    useState(false); //
+  const [reportModal, setReportModal] = useState<{
+    isOpen: boolean;
+    topicId?: string;
+  }>({ isOpen: false }); //
 
   const {
-    data: rawCategory,
+    data: categoryData,
     isLoading: categoryLoading,
     error: categoryError,
-  } = useCategoryBySlug(currentCategorySlug || "");
+  } = useCategoryBySlug({
+    categorySlug: currentCategorySlug, // Pass main slug
+    subcategorySlug: subcategorySlug, // Pass subcategory slug if present
+    initialData: initialCategory ?? null, // Now accepts null
+    enabled: !!currentCategorySlug, // Enable if main slug is present
+  }); //
 
-  // Explicitly cast the raw data to our Category type.
-  // This is necessary because we no longer extend BaseCategoryFromHook directly.
-  const category: Category | undefined = rawCategory as Category | undefined;
+  const { data: topicsData, isLoading: topicsLoading } = useTopics({
+    categoryId: categoryData?.id, //
+    page: currentPage, //
+    limit: 10, //
+    orderBy: activeTab === "hot" ? "hot_score" : "created_at", //
+    ascending: activeTab === "new" ? false : false, //
+    initialData: initialTopics ?? undefined, // Use ?? undefined
+    enabled: !!categoryData?.id, //
+  }); //
 
-  const { data: rawSubcategories, isLoading: subcategoriesLoading } =
-    useCategoriesByActivity(
-      category?.id,
-      category?.level ? category.level + 1 : undefined
-    );
-  const subcategories: Category[] | undefined = rawSubcategories as
-    | Category[]
-    | undefined;
+  const { data: subcategoriesData, isLoading: subcategoriesLoading } =
+    useCategoriesByActivity({
+      parentId: categoryData?.id, //
+      initialData: initialSubcategories ?? undefined, // Use ?? undefined
+      enabled: !!categoryData?.id, //
+    }); //
 
-  const { data: rawTopics, isLoading: topicsLoading } = useTopics(category?.id);
-  // CHANGED: Use AdminTopicInfoTopic directly for 'topics'
-  const topics: AdminTopicInfoTopic[] | undefined = rawTopics as
-    | AdminTopicInfoTopic[]
-    | undefined;
+  const { data: allCategoriesForBreadcrumbs, isLoading: allCategoriesLoading } =
+    useCategories({
+      enabled: !!categoryData, //
+    }); //
 
-  if (categoryLoading) {
+  const { settings: forumSettings, isLoading: settingsLoading } =
+    useForumSettings({
+      initialData: initialForumSettings ?? undefined, // Use ?? undefined
+    }); //
+
+  const isLoading =
+    categoryLoading ||
+    topicsLoading ||
+    subcategoriesLoading ||
+    settingsLoading ||
+    allCategoriesLoading; //
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString()); //
+    if (activeTab !== "new") {
+      params.set("sort", activeTab); //
+    } else {
+      params.delete("sort"); //
+    }
+    if (currentPage !== 1) {
+      params.set("page", currentPage.toString()); //
+    } else {
+      params.delete("page"); //
+    }
+    router.replace(`?${params.toString()}`, { scroll: false }); //
+  }, [activeTab, currentPage, router, searchParams]); //
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page); //
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value); //
+    setCurrentPage(1); //
+  };
+
+  const handleReportTopic = (topicId: string) => {
+    setReportModal({ isOpen: true, topicId }); //
+  };
+
+  // CORRECTED: Compare with boolean true
+  const canCreateTopic =
+    user ||
+    (forumSettings?.["anonymous_posting_enabled"]?.value === true && //
+      forumSettings?.["anonymous_topic_creation_enabled"]?.value === true); //
+
+  const [displayBreadcrumbs, setDisplayBreadcrumbs] = useState<
+    {
+      name: string;
+      slug: string;
+      id: string;
+      href: string;
+      isCurrent?: boolean;
+    }[]
+  >([]); //
+
+  useEffect(() => {
+    if (categoryData && allCategoriesForBreadcrumbs) {
+      const built = buildBreadcrumbHierarchy(
+        categoryData,
+        allCategoriesForBreadcrumbs
+      ); //
+      // Map the built hierarchy to include `href` and `isCurrent`
+      const finalBreadcrumbs = built.map((crumb, idx) => ({
+        ...crumb,
+        href: `/category/${crumb.slug}`, // Default href
+        isCurrent: idx === built.length - 1, //
+      })); //
+
+      // Adjust href for hierarchical paths if needed
+      if (categoryData.level === 3 && subcategorySlug) {
+        const parent2 = allCategoriesForBreadcrumbs.find(
+          (cat) => cat.id === categoryData.parent_category_id
+        ); //
+        const parent1 = parent2
+          ? allCategoriesForBreadcrumbs.find(
+              (cat) => cat.id === parent2.parent_category_id
+            )
+          : null; //
+
+        if (parent1 && parent2) {
+          finalBreadcrumbs[0].href = `/category/${parent1.slug}`; //
+          finalBreadcrumbs[1].href = `/category/${parent1.slug}/${parent2.slug}`; //
+        }
+      } else if (categoryData.level === 2 && categoryData.parent_category_id) {
+        const parent1 = allCategoriesForBreadcrumbs.find(
+          (cat) => cat.id === categoryData.parent_category_id
+        ); //
+        if (parent1) {
+          finalBreadcrumbs[0].href = `/category/${parent1.slug}`; //
+        }
+      }
+      setDisplayBreadcrumbs(finalBreadcrumbs); //
+    } else if (categoryData) {
+      // Fallback for single-level category if allCategoriesForBreadcrumbs is not ready
+      setDisplayBreadcrumbs([
+        {
+          name: categoryData.name,
+          slug: categoryData.slug,
+          id: categoryData.id,
+          href: `/category/${categoryData.slug}`,
+          isCurrent: true,
+        },
+      ]); //
+    }
+  }, [categoryData, allCategoriesForBreadcrumbs, subcategorySlug]); //
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
@@ -196,7 +340,7 @@ export default function CategorySlug() {
     );
   }
 
-  if (!category && !categoryLoading) {
+  if (!categoryData && !isLoading) {
     return (
       <div className="text-center py-8">
         <h2 className="text-xl font-semibold text-gray-900">
@@ -212,13 +356,13 @@ export default function CategorySlug() {
     );
   }
 
-  const hasSubcategories = subcategories && subcategories.length > 0;
-  const isLevel3Category = category?.level === 3; // This variable is not used, but kept for context
+  const hasSubcategories = subcategoriesData && subcategoriesData.length > 0; //
+  const isLevel3Category = categoryData?.level === 3; // Use categoryData here
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
       {/* Breadcrumb */}
-      {category && (
+      {categoryData && (
         <Breadcrumb className="overflow-x-auto">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -229,34 +373,30 @@ export default function CategorySlug() {
               </BreadcrumbLink>
             </BreadcrumbItem>
 
-            {/* Render breadcrumbs based on the full path segments */}
-            {buildBreadcrumbHierarchy(category)
-              .map((breadcrumb, index, array) => [
-                <BreadcrumbSeparator key={`sep-${breadcrumb.id}`} />,
-                <BreadcrumbItem key={breadcrumb.id}>
-                  {index === array.length - 1 ? (
+            {displayBreadcrumbs.map((crumb, index) => (
+              <React.Fragment key={crumb.id}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  {crumb.isCurrent ? (
                     <BreadcrumbPage className="max-w-full truncate">
-                      {breadcrumb.name}
+                      {crumb.name}
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink asChild>
-                      <Link
-                        href={`/category/${breadcrumb.slug}`}
-                        className="max-w-full truncate"
-                      >
-                        {breadcrumb.name}
+                      <Link href={crumb.href} className="max-w-full truncate">
+                        {crumb.name}
                       </Link>
                     </BreadcrumbLink>
                   )}
-                </BreadcrumbItem>,
-              ])
-              .flat()}
+                </BreadcrumbItem>
+              </React.Fragment>
+            ))}
           </BreadcrumbList>
         </Breadcrumb>
       )}
 
       {/* Category Header */}
-      {category && (
+      {categoryData && (
         <Card className="p-4 sm:p-6 w-full">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -264,56 +404,67 @@ export default function CategorySlug() {
                 <div className="flex items-center space-x-3">
                   <div
                     className="w-4 h-4 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: category.color }}
+                    style={{ backgroundColor: categoryData.color ?? "" }}
                   />
                   <h1 className="text-xl sm:text-2xl font-bold text-gray-900 min-w-0 truncate">
-                    {category.name}
+                    {categoryData.name}
                   </h1>
                 </div>
-                <AdminControls
-                  content={category} // Pass the category directly
-                  contentType="category"
-                  onDelete={() => router.push("/")} // Redirect to home after delete
-                />
+                {/* AdminControls for Category */}
+                {user &&
+                  (user.role === "admin" || user.role === "moderator") && (
+                    <AdminControls
+                      content={categoryData as AdminControlsContentType}
+                      contentType="category"
+                      onDelete={() => router.push("/")}
+                    />
+                  )}
               </div>
               <p className="text-gray-600 mb-4 text-sm sm:text-base">
-                {category.description}
+                {categoryData.description}
               </p>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                {category.region && <span>Region: {category.region}</span>}
-                {category.birth_year && (
-                  <span>Birth Year: {category.birth_year}</span>
+                {categoryData.region && (
+                  <span>Region: {categoryData.region}</span>
                 )}
-                {category.play_level && (
-                  <span>Level: {category.play_level}</span>
+                {categoryData.birth_year && (
+                  <span>Birth Year: {categoryData.birth_year}</span>
+                )}
+                {categoryData.play_level && (
+                  <span>Level: {categoryData.play_level}</span>
                 )}
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              {/* Show different content based on category level and moderation requirements */}
-              {category.level === 3 ||
-              (category.level === 2 && !category.requires_moderation) ? (
-                // Level 3 categories and level 2 categories without moderation allow topic creation
+              {/* Conditional rendering for QuickTopicModal and CategoryRequestModal buttons */}
+              {isLevel3Category || // If it's a level 3 category, allow posting
+              (categoryData.level === 2 &&
+                !categoryData.requires_moderation) ? ( // Or a level 2 that doesn't require moderation
                 <>
-                  <QuickTopicModal
-                    preselectedCategoryId={category.id}
-                    trigger={
-                      <Button size="sm" className="w-full sm:w-auto">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Start Discussion
-                      </Button>
-                    }
-                  />
+                  {/* QuickTopicModal Trigger Button */}
+                  <Button
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={() => setQuickTopicModalOpen(true)} // Directly control modal state
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Start Discussion
+                  </Button>
 
-                  {/* Category request button */}
+                  {/* CategoryRequestModal Trigger Button - now uses DialogTrigger */}
+
                   <CategoryRequestModal
-                    currentCategoryId={category.id}
+                    isOpen={categoryRequestModalOpen}
+                    onClose={() => setCategoryRequestModalOpen(false)}
+                    initialParentCategoryId={categoryData?.id} // Use categoryData here
                     trigger={
+                      // Pass the button as a trigger
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full sm:w-auto"
+                        // REMOVED: onClick={() => setCategoryRequestModalOpen(true)}
                       >
                         <HelpCircle className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">
@@ -325,27 +476,32 @@ export default function CategorySlug() {
                   />
                 </>
               ) : (
-                // Level 1 categories and level 2 categories requiring moderation are for browsing only
                 <div className="flex flex-col items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
                     Browse Only - Select a{" "}
-                    {category.slug?.includes("general")
+                    {categoryData.slug?.includes("general")
                       ? "Category"
-                      : category.slug?.includes("tournaments")
+                      : categoryData.slug?.includes("tournaments")
                       ? "Location"
-                      : category.slug?.includes("usa") ||
-                        category.region === "USA"
+                      : categoryData.slug?.includes("usa") ||
+                        categoryData.region === "USA"
                       ? "State"
                       : "Province"}{" "}
                     to Post
                   </Badge>
+                  {/* CategoryRequestModal Trigger Button - now uses DialogTrigger */}
+
                   <CategoryRequestModal
-                    currentCategoryId={category.id}
+                    isOpen={categoryRequestModalOpen}
+                    onClose={() => setCategoryRequestModalOpen(false)}
+                    initialParentCategoryId={categoryData?.id} // Use categoryData here
                     trigger={
+                      // Pass the button as a trigger
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full sm:w-auto"
+                        // REMOVED: onClick={() => setCategoryRequestModalOpen(true)}
                       >
                         <HelpCircle className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">
@@ -363,7 +519,7 @@ export default function CategorySlug() {
       )}
 
       {/* Subcategories or Topics */}
-      {category && hasSubcategories ? (
+      {categoryData && hasSubcategories ? ( // Use categoryData here
         <>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -371,13 +527,18 @@ export default function CategorySlug() {
             </h2>
             <div className="text-xs sm:text-sm text-gray-500">
               Can't find what you're looking for?{" "}
+              {/* CategoryRequestModal Trigger Button - now uses DialogTrigger */}
               <CategoryRequestModal
-                currentCategoryId={category.id}
+                isOpen={categoryRequestModalOpen}
+                onClose={() => setCategoryRequestModalOpen(false)}
+                initialParentCategoryId={categoryData?.id} // Use categoryData here
                 trigger={
+                  // Pass the button as a trigger
                   <Button
                     variant="link"
                     size="sm"
                     className="p-0 h-auto text-blue-600 text-xs sm:text-sm"
+                    // REMOVED: onClick={() => setCategoryRequestModalOpen(true)}
                   >
                     Request a new category
                   </Button>
@@ -386,12 +547,12 @@ export default function CategorySlug() {
             </div>
           </div>
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
-            {subcategories!.map((subcat) => (
+            {subcategoriesData!.map((subcat) => (
               <SubcategoryCard key={subcat.id} subcat={subcat} />
             ))}
           </div>
         </>
-      ) : category ? (
+      ) : categoryData ? ( // Use categoryData here
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -399,7 +560,7 @@ export default function CategorySlug() {
             </h2>
           </div>
           <Card className="p-3 sm:p-6 w-full">
-            {topicsLoading ? (
+            {topicsLoading ? ( // Corrected variable name
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <div
@@ -408,100 +569,55 @@ export default function CategorySlug() {
                   ></div>
                 ))}
               </div>
-            ) : topics && topics.length > 0 ? (
+            ) : topicsData && topicsData.data.length > 0 ? (
               <div className="space-y-4">
-                {topics.map((topic) => (
-                  <div
+                {topicsData.data.map((topic: HookTopic) => (
+                  <PostCard
                     key={topic.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors gap-3 sm:gap-4"
-                  >
-                    <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 flex-shrink-0">
-                        {topic.is_pinned && (
-                          <Pin className="h-4 w-4 text-red-500" />
-                        )}
-                        <MessageSquare className="h-4 sm:h-5 w-4 sm:w-5 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <Link
-                            href={
-                              topic.slug && category.slug
-                                ? `/category/${category.slug}/${topic.slug}`
-                                : `/topic/${topic.id}`
-                            }
-                            className="font-medium text-gray-900 hover:text-blue-600 text-sm sm:text-base line-clamp-2 flex-1"
-                          >
-                            {topic.title}
-                          </Link>
-                          {/* Pass the topic directly, now that its type is fully compatible */}
-                          <AdminControls content={topic} contentType="topic" />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-xs sm:text-sm text-gray-500">
-                          <span>
-                            by {topic.profiles?.username || "Anonymous User"}
-                          </span>
-                          <span className="hidden sm:inline">•</span>
-                          <span>
-                            Created{" "}
-                            {formatDistanceToNow(
-                              new Date(topic.created_at ?? "")
-                            )}{" "}
-                            ago
-                          </span>
-                          {topic.last_reply_at &&
-                            (topic.reply_count ?? 0) > 0 && (
-                              <>
-                                <span>•</span>
-                                {topic.last_post_id ? (
-                                  <Link
-                                    href={`/category/${category.slug}/${topic.slug}#post-${topic.last_post_id}`}
-                                    className="hover:text-primary transition-colors"
-                                  >
-                                    Last reply{" "}
-                                    {formatDistanceToNow(
-                                      new Date(topic.last_reply_at ?? "")
-                                    )}{" "}
-                                    ago
-                                  </Link>
-                                ) : (
-                                  <span>
-                                    Last reply{" "}
-                                    {formatDistanceToNow(
-                                      new Date(topic.last_reply_at ?? "")
-                                    )}{" "}
-                                    ago
-                                  </span>
-                                )}
-                              </>
-                            )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between sm:justify-end space-x-4 sm:space-x-6 text-xs sm:text-sm text-gray-500 flex-shrink-0">
-                      <div className="text-center">
-                        <div className="flex items-center space-x-1">
-                          <MessageSquare className="h-3 sm:h-4 w-3 sm:w-4" />
-                          <span>{topic.reply_count || 0}</span>
-                        </div>
-                        <span className="text-xs hidden sm:block">replies</span>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center space-x-1">
-                          <User className="h-3 sm:h-4 w-3 sm:w-4" />
-                          <span>{topic.view_count || 0}</span>
-                        </div>
-                        <span className="text-xs hidden sm:block">views</span>
-                      </div>
-                    </div>
-                  </div>
+                    topic={
+                      {
+                        id: topic.id,
+                        created_at: topic.created_at ?? null,
+                        title: topic.title,
+                        content: topic.content ?? null,
+                        view_count: topic.view_count ?? null,
+                        reply_count: topic.reply_count ?? null,
+                        last_reply_at: topic.last_reply_at ?? null,
+                        author_id: topic.author_id ?? null,
+                        category_id: topic.category_id,
+                        is_locked: topic.is_locked ?? null,
+                        is_pinned: topic.is_pinned ?? null,
+                        is_hidden: topic.is_hidden ?? null,
+                        slug: topic.slug ?? null,
+                        hot_score: topic.hot_score ?? null,
+                        last_post_id: topic.last_post_id ?? null,
+                        moderation_status: topic.moderation_status ?? null,
+                        username: topic.profiles?.username ?? null,
+                        avatar_url: topic.profiles?.avatar_url ?? null,
+                        category_name: topic.categories?.name ?? null,
+                        category_color: topic.categories?.color ?? null,
+                        category_slug: topic.categories?.slug ?? null,
+                        parent_category_id:
+                          topic.categories?.parent_category_id ?? null,
+                        parent_category_slug: null,
+                        updated_at: topic.updated_at ?? null,
+                      } as PostCardTopic
+                    }
+                    onReport={handleReportTopic}
+                  />
                 ))}
+                <PaginationControls
+                  currentPage={topicsData.currentPage}
+                  totalPages={topicsData.totalPages}
+                  totalItems={topicsData.totalCount}
+                  itemsPerPage={10}
+                  onPageChange={handlePageChange}
+                />
               </div>
             ) : (
               <div className="text-center py-6 sm:py-8">
                 <MessageSquare className="h-10 sm:h-12 w-10 sm:w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="base sm:text-lg font-semibold text-gray-900 mb-2">
                   No topics yet
                 </h3>
                 <p className="text-gray-600 text-sm sm:text-base">
@@ -512,6 +628,28 @@ export default function CategorySlug() {
           </Card>
         </>
       ) : null}
+
+      {/* Quick Topic Modal */}
+      <QuickTopicModal
+        isOpen={quickTopicModalOpen}
+        onClose={() => setQuickTopicModalOpen(false)}
+        preselectedCategoryId={categoryData?.id} // Use categoryData here
+      />
+
+      {/* Category Request Modal */}
+      <CategoryRequestModal
+        isOpen={categoryRequestModalOpen}
+        onClose={() => setCategoryRequestModalOpen(false)}
+        initialParentCategoryId={categoryData?.id} // Use categoryData here
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={reportModal.isOpen}
+        onClose={() => setReportModal({ isOpen: false })}
+        topicId={reportModal.topicId}
+        contentType="topic"
+      />
     </div>
   );
 }

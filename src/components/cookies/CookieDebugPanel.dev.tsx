@@ -13,7 +13,7 @@ export const CookieDebugPanelDev: React.FC = () => {
   const trackingId = getSetting("google_analytics_id", "");
 
   return (
-    <Card className="fixed top-4 right-4 p-3 bg-muted/90 backdrop-blur-sm border z-50 max-w-sm">
+    <Card className="fixed top-20 right-4 p-3 bg-muted/90 backdrop-blur-sm border z-50 max-w-sm">
       <h4 className="font-semibold text-sm mb-2">Debug: Analytics Status</h4>
       <div className="space-y-2 text-xs">
         <div className="flex items-center justify-between">

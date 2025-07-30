@@ -1,16 +1,17 @@
+// src/hooks/useForumSettings.ts
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Database, Json } from "@/integrations/supabase/types"; // Import Database and Json
+import { Database, Json } from "@/integrations/supabase/types";
 
 // Type for a single row from the forum_settings table as it comes from Supabase
 type ForumSettingRow = Database["public"]["Tables"]["forum_settings"]["Row"];
 
 // Type for the value stored in the settingsMap (after processing)
-interface MappedSettingValue {
+export interface MappedSettingValue {
   value: Json; // The processed value, can be any JSON-compatible type
   type: string;
   category: string;
@@ -19,11 +20,18 @@ interface MappedSettingValue {
 }
 
 // Type for the final settings map returned by the hook
-interface ForumSettingsMap {
+export interface ForumSettingsMap {
   [key: string]: MappedSettingValue;
 }
 
-export const useForumSettings = () => {
+interface UseForumSettingsOptions {
+  // New: Optional initial data for hydration
+  initialData?: ForumSettingsMap;
+}
+
+export const useForumSettings = ({
+  initialData, // Destructure initialData
+}: UseForumSettingsOptions = {}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -31,53 +39,31 @@ export const useForumSettings = () => {
     data: settings,
     isLoading,
     refetch,
+    error, // FIXED: Expose the error object from useQuery
   } = useQuery<ForumSettingsMap>({
-    // Explicitly type the data returned by useQuery
     queryKey: ["forum-settings"],
     queryFn: async () => {
-      console.log("Fetching forum settings from database");
-
-      const { data, error } = await supabase
-        .from("forum_settings")
-        .select("*")
-        .order("category", { ascending: true })
-        .order("setting_key", { ascending: true });
+      console.log(
+        "Fetching forum settings via useForumSettings hook (client-side)",
+      );
+      const { data, error } = await supabase.from("forum_settings").select("*");
 
       if (error) {
         console.error("Error fetching forum settings:", error);
         throw error;
       }
 
-      // Convert to a more usable format
-      const settingsMap: ForumSettingsMap = {};
-      data?.forEach((setting: ForumSettingRow) => {
-        // Type 'setting' as ForumSettingRow
-        let value: Json = setting.setting_value; // Use Json type for value
-
-        console.log(
-          "Processing setting:",
-          setting.setting_key,
-          "raw value:",
-          value,
-          "type:",
-          typeof value
-        );
-
-        if (value === null || value === undefined) {
-          value = ""; // Default to empty string if null/undefined
-        } else {
-          // No need for 'value = value;' as it's redundant (no-self-assign fix)
-          // The value is already correctly typed as Json from Supabase.
+      const mappedSettings: ForumSettingsMap = {};
+      data.forEach((setting) => {
+        let value: Json = setting.setting_value;
+        // Ensure boolean values are correctly typed as boolean, not string
+        if (setting.setting_type === "boolean") {
+          value = value === "true" || value === true; // Handle both string "true" and boolean true
+        } else if (value === null || value === undefined) {
+          value = ""; // Default to empty string for null/undefined non-booleans
         }
 
-        console.log(
-          "Final processed value for",
-          setting.setting_key,
-          ":",
-          value
-        );
-
-        settingsMap[setting.setting_key] = {
+        mappedSettings[setting.setting_key] = {
           value,
           type: setting.setting_type,
           category: setting.category,
@@ -86,131 +72,102 @@ export const useForumSettings = () => {
         };
       });
 
-      console.log("Forum settings fetched and mapped:", settingsMap);
-      return settingsMap;
+      // Add fallback for 'category_request_enabled' if not present
+      if (!mappedSettings["category_request_enabled"]) {
+        mappedSettings["category_request_enabled"] = {
+          value: true, // Default to true if not found in DB
+          type: "boolean",
+          category: "moderation", // Or 'general', consistent with your other settings
+          description:
+            "Enable or disable category request feature (default fallback)",
+          isPublic: true,
+        };
+      }
+
+      console.log("Forum settings fetched:", mappedSettings);
+      return mappedSettings;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: false, // Don't always refetch on mount
+    initialData: initialData, // Pass initialData to useQuery
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const updateSettingMutation = useMutation<
-    void,
-    Error,
-    {
-      // Explicitly type mutation: Result, Error, Variables
-      key: string;
-      value: Json; // Changed 'any' to 'Json'
-      type?: string;
-      category?: string;
-      description?: string;
-    }
-  >({
+  const updateSettingMutation = useMutation({
     mutationFn: async ({
       key,
       value,
-      type = "string",
-      category = "general",
+      type,
+      category,
       description,
+    }: {
+      key: string;
+      value: Json;
+      type?: string;
+      category?: string;
+      description?: string;
     }) => {
-      console.log("Updating forum setting:", { key, value, type, category });
-
-      // For JSONB columns, you can often pass the value directly.
-      // Supabase's RPC will handle the serialization/deserialization.
-      // No need for manual toString() or JSON.stringify() unless the DB column expects a string representation
-      // of a specific type (e.g., a number stored as text). Given it's a 'setting_value' likely JSONB, direct pass is best.
-      const { error } = await supabase.rpc("set_forum_setting", {
-        key_name: key,
-        value: value, // Pass value directly as Json
-        setting_type: type,
-        category,
-        description,
-      });
+      console.log(`Updating setting: ${key} to ${value}`);
+      const { error } = await supabase
+        .from("forum_settings")
+        .upsert(
+          {
+            setting_key: key,
+            setting_value: value,
+            setting_type: type,
+            category: category,
+            description: description,
+          },
+          { onConflict: "setting_key" },
+        )
+        .select();
 
       if (error) {
-        console.error("Error updating forum setting:", error);
+        console.error("Error updating setting:", error);
+        toast({
+          title: "Error updating setting",
+          description: error.message,
+          variant: "destructive",
+        });
         throw error;
       }
+      toast({
+        title: "Setting updated",
+        description: `Successfully updated '${key}'.`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["forum-settings"] });
-      toast({
-        title: "Settings Updated",
-        description: "Forum settings have been saved successfully",
-      });
-    },
-    onError: (error: unknown) => {
-      // Type error as unknown
-      let errorMessage = "Failed to update forum settings";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof (error as { message: unknown }).message === "string"
-      ) {
-        errorMessage = (error as { message: string }).message;
-      }
-      console.error("Failed to update setting:", errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
     },
   });
 
-  // getSetting function now returns 'unknown' to force type narrowing by consumer
-  const getSetting = (key: string, defaultValue: unknown = ""): unknown => {
-    // Changed 'any' to 'unknown'
-    if (!settings) {
-      console.log(
-        "getSetting called but settings not loaded yet, returning default for key:",
-        key
-      );
+  const getSetting = <T extends Json>(
+    key: string,
+    defaultValue: T,
+  ): T | undefined => {
+    const setting = settings?.[key];
+    if (!setting || setting.value === null || setting.value === undefined) {
       return defaultValue;
     }
 
-    const setting = settings[key];
-    if (!setting) {
-      console.log(
-        "getSetting: No setting found for key:",
-        key,
-        "returning default:",
-        defaultValue
-      );
-      return defaultValue;
+    // Attempt to cast the value based on its stored type or infer
+    if (setting.type === "boolean") {
+      return (setting.value === true || setting.value === "true") as T;
     }
-
-    const value = setting.value;
-    console.log(
-      "getSetting called for key:",
-      key,
-      "value:",
-      value,
-      "type:",
-      typeof value,
-      "defaultValue:",
-      defaultValue
-    );
-
-    // Handle null/undefined values
-    if (value === null || value === undefined) {
-      return defaultValue;
+    if (setting.type === "number") {
+      return Number(setting.value) as T;
     }
-
-    return value;
+    if (setting.type === "string") {
+      return String(setting.value) as T;
+    }
+    // For other types like 'json' or if type is not specified, return as is
+    return setting.value as T;
   };
 
   const getSettingsByCategory = (category: string) => {
     if (!settings) return {};
 
-    const categorySettings: ForumSettingsMap = {}; // Type as ForumSettingsMap
+    const categorySettings: ForumSettingsMap = {};
     Object.entries(settings).forEach(([key, setting]) => {
-      // setting is implicitly MappedSettingValue due to ForumSettingsMap type
       if (setting.category === category) {
         categorySettings[key] = setting;
       }
@@ -224,7 +181,6 @@ export const useForumSettings = () => {
     refetch();
   };
 
-  // Add real-time updates for forum settings
   useEffect(() => {
     console.log("Setting up real-time subscription for forum settings");
 
@@ -241,7 +197,7 @@ export const useForumSettings = () => {
           console.log("Forum settings changed, refreshing cache:", payload);
           queryClient.invalidateQueries({ queryKey: ["forum-settings"] });
           refetch();
-        }
+        },
       )
       .subscribe();
 
@@ -259,5 +215,6 @@ export const useForumSettings = () => {
     getSetting,
     getSettingsByCategory,
     forceRefresh,
+    error, // FIXED: Return the error here
   };
 };

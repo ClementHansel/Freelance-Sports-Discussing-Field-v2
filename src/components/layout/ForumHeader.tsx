@@ -91,8 +91,8 @@ export default function ForumHeader() {
 
   return (
     <header className="bg-foreground border-b border-border shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4">
-        <div className="flex items-center justify-between h-12 sm:h-14">
+      <div className="max-w-7xl px-3 sm:px-4">
+        <div className="w-full flex items-center justify-between h-12 sm:h-14">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-background rounded-md flex items-center justify-center">
               <span className="text-black bg-background font-bold text-xs sm:text-sm">
@@ -154,12 +154,12 @@ export default function ForumHeader() {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/profile">
+                        <Link href="/dashboard/user/profile">
                           <span>Profile</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/settings">
+                        <Link href="/dashboard/user/settings">
                           <span>Settings</span>
                         </Link>
                       </DropdownMenuItem>
@@ -167,7 +167,10 @@ export default function ForumHeader() {
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
-                            <Link href="/admin" className="text-destructive">
+                            <Link
+                              href="/dashboard/admin"
+                              className="text-destructive"
+                            >
                               <span>
                                 <Shield className="mr-2 h-4 w-4" />
                                 Admin Panel

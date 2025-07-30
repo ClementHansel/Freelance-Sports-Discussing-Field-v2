@@ -1,10 +1,11 @@
+// src/components/forum/Forum.tsx
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
-// Import your Shadcn UI components (assuming paths are correct)
+// Import your Shadcn UI components
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,121 +24,192 @@ import {
   Eye,
 } from "lucide-react";
 
-// Import your custom hooks and components (ensure these files are also migrated and marked 'use client' if needed)
-import { useHotTopics } from "@/hooks/useHotTopics";
-import { useTopics } from "@/hooks/useTopics";
-import { useHotTopicsLegacy } from "@/hooks/useHotTopicsLegacy"; // Check if this is still needed or if useHotTopics is enough
-import { useMostCommentedTopics } from "@/hooks/useMostCommentedTopics";
-import { useMostViewedTopics } from "@/hooks/useMostViewedTopics";
+// Import your custom hooks and components
+import {
+  useHotTopics,
+  PaginatedHotTopicsResult,
+  HotTopic,
+} from "@/hooks/useHotTopics";
+import { useTopics, PaginatedTopicsResult, Topic } from "@/hooks/useTopics";
 import { useAuth } from "@/hooks/useAuth";
-import { useCategories } from "@/hooks/useCategories";
-import { useForumSettings } from "@/hooks/useForumSettings";
+import { useCategories, Category } from "@/hooks/useCategories";
+import { useForumSettings, ForumSettingsMap } from "@/hooks/useForumSettings";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
 import { PostCard } from "@/components/forum/PostCard";
 import { ReportModal } from "@/components/forum/ReportModal";
 import { QuickTopicModal } from "@/components/forum/QuickTopicModal";
-import { CategoryWithActivity } from "@/components/forum/category/CategoryRow";
 
-import { Topic as UseTopicsTopic } from "@/hooks/useTopics";
-import { HotTopic } from "@/hooks/useHotTopics";
-// Define a local interface for HotTopic that includes `is_hidden` to resolve the type error
-// This should ideally be updated in the `useHotTopics` hook's type definition.
-interface HotTopicWithHidden extends HotTopic {
-  // Correctly extends HotTopic
-  is_hidden?: boolean | null;
-}
-type UseHotTopicsTopicExtended = HotTopicWithHidden; // Use this extended type for hot topics
-
-import { MostCommentedTopic as UseMostCommentedTopic } from "@/hooks/useMostCommentedTopics"; // Import MostCommentedTopic
-import { MostViewedTopic as UseMostViewedTopic } from "@/hooks/useMostViewedTopics"; // Import MostViewedTopic
-
-// Align Forum type with CategoryWithActivity from CategoryRow.tsx
-// This resolves the type incompatibility as useCategories is expected to return CategoryWithActivity[]
-type Forum = CategoryWithActivity;
-
-// Define the type for a group of forums (e.g., "Canada" or "USA" forums)
-interface ForumGroup {
-  name: string;
-  forums: Forum[];
+// Define props interface for Forum component
+interface ForumProps {
+  initialHotTopics?: PaginatedHotTopicsResult;
+  initialNewTopics?: PaginatedTopicsResult;
+  initialTopTopics?: PaginatedTopicsResult;
+  initialLevel1Forums?: Category[];
+  initialLevel2Forums?: Category[];
+  initialLevel3Forums?: Category[];
+  initialForumSettings?: ForumSettingsMap;
 }
 
-export default function Forum() {
+// Define the structure that PostCard expects (flattened from Topic/HotTopic)
+interface PostCardTopic {
+  id: string;
+  created_at: string | null;
+  title: string;
+  content: string | null;
+  view_count: number | null;
+  reply_count: number | null;
+  last_reply_at: string | null;
+  author_id: string | null;
+  category_id: string;
+  is_locked: boolean | null;
+  is_pinned: boolean | null;
+  is_hidden: boolean | null;
+  slug: string | null;
+  hot_score: number | null;
+  last_post_id: string | null;
+  parent_category_id: string | null;
+  parent_category_slug: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  category_name: string | null;
+  category_color: string | null;
+  category_slug: string | null;
+  updated_at: string | null;
+  moderation_status: "approved" | "pending" | "rejected" | null;
+}
+
+export default function Forum({
+  initialHotTopics,
+  initialNewTopics,
+  initialTopTopics,
+  initialLevel1Forums,
+  initialLevel2Forums,
+  initialLevel3Forums,
+  initialForumSettings,
+}: ForumProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { getSetting } = useForumSettings();
-  const searchParams = useSearchParams(); // Correctly typed as URLSearchParams by Next.js
-  const router = useRouter(); // Initialize useRouter
 
+  const [activeTab, setActiveTab] = useState(searchParams.get("sort") || "new");
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1
+  );
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false);
   const [reportModal, setReportModal] = useState<{
     isOpen: boolean;
     topicId?: string;
-  }>({
-    isOpen: false,
+  }>({ isOpen: false });
+
+  // Pass initialData to hooks using an options object
+  const { data: hotTopicsData, isLoading: isLoadingHot } = useHotTopics({
+    page: activeTab === "hot" ? currentPage : 1, // page
+    limit: 10, // limit
+    initialData: initialHotTopics, // initialData
   });
 
-  // Pagination state for each tab
+  const { data: newTopicsData, isLoading: isLoadingNew } = useTopics({
+    page: activeTab === "new" ? currentPage : 1,
+    orderBy: "created_at",
+    ascending: false,
+    initialData: initialNewTopics,
+  });
 
-  const [newPage, setNewPage] = useState(1);
-  const [hotPage, setHotPage] = useState(1);
-  const [topPage, setTopPage] = useState(1); // State for 'top' topics pagination
-  const [mostCommentedPage, setMostCommentedPage] = useState(1);
-  const [mostViewedPage, setMostViewedPage] = useState(1);
+  const { data: topTopicsData, isLoading: isLoadingTop } = useTopics({
+    page: activeTab === "top" ? currentPage : 1,
+    orderBy: "view_count",
+    ascending: false,
+    initialData: initialTopTopics,
+  });
 
-  // Get current sort order from URL, default to 'new'
-  const currentSort = searchParams.get("sort") || "new"; // `searchParams` is URLSearchParams
+  const { data: level1Forums, isLoading: isLoadingLevel1 } = useCategories({
+    level: 1,
+    initialData: initialLevel1Forums,
+  });
+  const { data: level2Forums, isLoading: isLoadingLevel2 } = useCategories({
+    level: 2,
+    initialData: initialLevel2Forums,
+  });
+  const { data: level3Forums, isLoading: isLoadingLevel3 } = useCategories({
+    level: 3,
+    initialData: initialLevel3Forums,
+  });
 
-  // Fetch data for each tab
-  const { data: hotTopicsData, isLoading: hotTopicsLoading } = useHotTopics(
-    hotPage,
-    10
-  );
-  const { data: newTopicsData, isLoading: newTopicsLoading } = useTopics(
-    undefined,
-    newPage,
-    10,
-    "created_at",
-    false // Newest first
-  );
-  // Using useTopics for 'top' based on view_count
-  const { data: topTopicsData, isLoading: topTopicsLoading } = useTopics(
-    undefined,
-    topPage,
-    10,
-    "view_count", // Order by view_count for 'top'
-    false // Descending order (highest views first)
-  );
+  const { settings: forumSettings, isLoading: isLoadingSettings } =
+    useForumSettings({
+      initialData: initialForumSettings,
+    });
 
-  // Fetch categories for forum sections
-  // Changed 'null' to 'undefined' for parent_category_id to fetch all categories at the given level
-  const { data: level1Forums, isLoading: level1ForumsLoading } = useCategories(
-    undefined, // Changed from null
-    1
-  ) as { data: CategoryWithActivity[] | undefined; isLoading: boolean };
-  const { data: level2Forums, isLoading: level2ForumsLoading } = useCategories(
-    undefined, // Changed from null
-    2
-  ) as { data: CategoryWithActivity[] | undefined; isLoading: boolean };
-  const { data: level3Forums, isLoading: level3ForumsLoading } = useCategories(
-    undefined, // Changed from null
-    3
-  ) as { data: CategoryWithActivity[] | undefined; isLoading: boolean };
+  // Determine which topics to display based on activeTab
+  const currentTopics =
+    activeTab === "new"
+      ? hotTopicsData
+      : activeTab === "new"
+      ? newTopicsData
+      : topTopicsData;
 
-  const handleTabChange = (value: string) => {
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set("sort", value);
-    router.push(`/?${newSearchParams.toString()}`); // Use router.push to update URL
+  const isLoading =
+    isLoadingHot ||
+    isLoadingNew ||
+    isLoadingTop ||
+    isLoadingLevel1 ||
+    isLoadingLevel2 ||
+    isLoadingLevel3 ||
+    isLoadingSettings;
+
+  // Update URL search params when tab or page changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (activeTab !== "new") {
+      params.set("sort", activeTab);
+    } else {
+      params.delete("sort");
+    }
+    if (currentPage !== 1) {
+      params.set("page", currentPage.toString());
+    } else {
+      params.delete("page");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [activeTab, currentPage, router, searchParams]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const handleReport = (topicId: string) => {
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset page when changing tabs
+  };
+
+  const handleReportTopic = (topicId: string) => {
     setReportModal({ isOpen: true, topicId });
   };
 
-  // Function to render grouped forums (kept for Main Forums section if needed, but not used for Province/State anymore)
-  const renderGroupedForums = (forums: Forum[]) => {
-    const grouped: { [key: string]: Forum[] } = {};
+  // Safely access settings values, providing fallbacks
+  const advertisingEnabled =
+    (forumSettings?.["advertising_enabled"]?.value as string) === "true";
+
+  const forumName =
+    (forumSettings?.["forum_name"]?.value as string) || "Minor Hockey Talks";
+  const forumDescription =
+    (forumSettings?.["forum_description"]?.value as string) ||
+    "A community forum for minor hockey discussions";
+  const socialFacebook =
+    (forumSettings?.["social_facebook"]?.value as string) || "";
+  const socialTwitter =
+    (forumSettings?.["social_twitter"]?.value as string) || "";
+  const socialInstagram =
+    (forumSettings?.["social_instagram"]?.value as string) || "";
+  const socialYoutube =
+    (forumSettings?.["social_youtube"]?.value as string) || "";
+
+  const renderGroupedForums = (forums: Category[]) => {
+    const grouped: { [key: string]: Category[] } = {};
 
     forums.forEach((forum) => {
-      const groupName = forum.region || "Other Regions"; // Group by region or a default
+      const groupName = forum.region || "Other Regions";
       if (!grouped[groupName]) {
         grouped[groupName] = [];
       }
@@ -148,404 +220,301 @@ export default function Forum() {
 
     return sortedGroupNames.map((groupName) => (
       <div key={groupName} className="space-y-3">
-        <Suspense
-          fallback={
-            <Card className="p-6">
-              <div className="text-center">Loading content...</div>
-            </Card>
-          }
-        >
-          <h3 className="lg font-semibold text-foreground">{groupName}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {grouped[groupName].map(
-              (
-                forum: Forum // Explicitly cast to Forum
-              ) => (
-                <Link
-                  key={forum.id}
-                  href={`/category/${forum.slug}`} // Use Next.js Link
-                  className="group"
-                >
-                  <Card className="p-4 flex items-center space-x-3 hover:bg-muted/50 transition-colors">
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: forum.color ?? "" }} // Added nullish coalescing
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
-                        {forum.name}
-                      </h4>
-                      {forum.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {forum.description}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                </Link>
-              )
-            )}
-          </div>
-        </Suspense>
+        <h3 className="text-lg font-semibold text-foreground">{groupName}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {grouped[groupName].map((forum: Category) => (
+            <Link
+              key={forum.id}
+              href={`/category/${forum.slug}`}
+              className="group"
+            >
+              <Card className="p-4 flex items-center space-x-3 hover:bg-muted/50 transition-colors">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: forum.color ?? "" }}
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                    {forum.name}
+                  </h4>
+                  {forum.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {forum.description}
+                    </p>
+                  )}
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
     ));
   };
 
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="text-center">Loading forum...</div>
+      </Card>
+    );
+  }
+
   return (
     <div className="w-full space-y-6">
-      {/* Header - Re-added missing section */}
+      {/* Header */}
       <div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
-          {getSetting("forum_name", "Minor Hockey Talks") as string}
+          {forumName}
         </h1>
         <p className="mt-2 text-sm md:text-base text-muted-foreground leading-relaxed">
-          {
-            getSetting(
-              "forum_description",
-              "A community forum for minor hockey discussions"
-            ) as string
-          }
+          {forumDescription}
         </p>
       </div>
-
+      <span className="flex justify-center text-sm md:text-base text-foreground leading-relaxed">
+        Follow us
+      </span>
       {/* Social Media Links */}
-      <div className="flex justify-center gap-6 py-6">
-        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
-          {(() => {
-            const facebookUrl = getSetting("social_facebook", "");
-            const cleanUrl =
-              typeof facebookUrl === "string"
-                ? facebookUrl.replace(/^"(.*)"$/, "$1")
-                : "";
-            return (
-              cleanUrl &&
-              cleanUrl !== "" && (
-                <a
-                  href={cleanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                  aria-label="Facebook" // Add aria-label for accessibility
-                >
-                  <Facebook className="h-6 w-6" />
-                </a>
-              )
-            );
-          })()}
-        </a>
-
-        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
-          {(() => {
-            const twitterUrl = getSetting("social_twitter", "");
-            const cleanUrl =
-              typeof twitterUrl === "string"
-                ? twitterUrl.replace(/^"(.*)"$/, "$1")
-                : "";
-            return (
-              cleanUrl &&
-              cleanUrl !== "" && (
-                <a
-                  href={cleanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                  aria-label="Twitter" // Add aria-label for accessibility
-                >
-                  <Twitter className="h-6 w-6" />
-                </a>
-              )
-            );
-          })()}
-        </a>
-
-        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
-          {(() => {
-            const instagramUrl = getSetting("social_instagram", "");
-            const cleanUrl =
-              typeof instagramUrl === "string"
-                ? instagramUrl.replace(/^"(.*)"$/, "$1")
-                : "";
-            return (
-              cleanUrl &&
-              cleanUrl !== "" && (
-                <a
-                  href={cleanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                  aria-label="Instagram" // Add aria-label for accessibility
-                >
-                  <Instagram className="h-6 w-6" />
-                </a>
-              )
-            );
-          })()}
-        </a>
-
-        <a className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200">
-          {(() => {
-            const youtubeUrl = getSetting("social_youtube", "");
-            const cleanUrl =
-              typeof youtubeUrl === "string"
-                ? youtubeUrl.replace(/^"(.*)"$/, "$1")
-                : "";
-            return (
-              cleanUrl &&
-              cleanUrl !== "" && (
-                <a
-                  href={cleanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                  aria-label="Youtube" // Add aria-label for accessibility
-                >
-                  <Youtube className="h-6 w-6" />
-                </a>
-              )
-            );
-          })()}
-        </a>
+      <div className="flex justify-center gap-6 pb-4">
+        {socialFacebook && (
+          <a
+            href={socialFacebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200"
+            aria-label="Facebook"
+          >
+            <Facebook className="h-6 w-6" />
+          </a>
+        )}
+        {socialTwitter && (
+          <a
+            href={socialTwitter}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200"
+            aria-label="Twitter"
+          >
+            <Twitter className="h-6 w-6" />
+          </a>
+        )}
+        {socialInstagram && (
+          <a
+            href={socialInstagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200"
+            aria-label="Instagram"
+          >
+            <Instagram className="h-6 w-6" />
+          </a>
+        )}
+        {socialYoutube && (
+          <a
+            href={socialYoutube}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary transition-colors hover:scale-110 transform duration-200"
+            aria-label="YouTube"
+          >
+            <Youtube className="h-6 w-6" />
+          </a>
+        )}
       </div>
 
-      {/* Quick Topic Button */}
-      {user && (
-        <div className="flex justify-end mb-4">
-          <QuickTopicModal />
-        </div>
-      )}
-
-      {/* Hot Topics / New Posts / Top Posts Tabs */}
-      <div className="space-y-4">
-        <Tabs value={currentSort} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl p-1 shadow-inner">
-            <TabsTrigger
-              value="new"
-              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              <Clock className="h-4 w-4 mr-2" /> New
-            </TabsTrigger>
-            <TabsTrigger
-              value="hot"
-              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" /> Hot
-            </TabsTrigger>
-            <TabsTrigger
-              value="top"
-              className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              <Star className="h-4 w-4 mr-2" /> Top
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Hot Topics Tab */}
-          <TabsContent value="hot" className="space-y-4">
-            {hotTopicsLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-muted rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : hotTopicsData && hotTopicsData.data.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {hotTopicsData.data.map(
-                    (
-                      topic: UseHotTopicsTopicExtended // Use the extended type here
-                    ) => (
-                      <PostCard
-                        key={topic.id}
-                        topic={{
-                          id: topic.id,
-                          created_at: topic.created_at ?? null,
-                          title: topic.title,
-                          content: topic.content ?? null,
-                          view_count: topic.view_count ?? null,
-                          reply_count: topic.reply_count ?? null,
-                          last_reply_at: topic.last_reply_at ?? null, // Corrected property name
-                          author_id: topic.author_id ?? null,
-                          category_id: topic.category_id,
-                          is_locked: topic.is_locked ?? null,
-                          is_pinned: topic.is_pinned ?? null,
-                          is_hidden: topic.is_hidden ?? null, // Now properly typed in HotTopicWithHidden
-                          slug: topic.slug ?? null,
-                          hot_score: topic.hot_score ?? null,
-                          last_post_id: topic.last_post_id ?? null,
-                          parent_category_id: topic.parent_category_id ?? null,
-                          parent_category_slug:
-                            topic.parent_category_slug ?? null,
-                          username: topic.username ?? null,
-                          avatar_url: topic.avatar_url ?? null,
-                          category_name: topic.category_name ?? null,
-                          category_color: topic.category_color ?? null,
-                          category_slug: topic.category_slug ?? null,
-                          updated_at: topic.updated_at ?? null,
-                        }}
-                        onReport={handleReport}
-                      />
-                    )
-                  )}
-                </div>
-                <PaginationControls
-                  currentPage={hotPage}
-                  totalPages={hotTopicsData.totalPages}
-                  totalItems={hotTopicsData.totalCount}
-                  itemsPerPage={10}
-                  onPageChange={setHotPage}
-                  loading={hotTopicsLoading}
-                />
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No hot topics</h3>
-                <p className="text-muted-foreground">
-                  Check back later for trending discussions!
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* New Posts Tab */}
-          <TabsContent value="new" className="space-y-4">
-            {newTopicsLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-muted rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : newTopicsData && newTopicsData.data.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {newTopicsData.data.map((topic: UseTopicsTopic) => (
-                    <PostCard
-                      key={topic.id}
-                      topic={{
-                        id: topic.id,
-                        created_at: topic.created_at ?? null,
-                        title: topic.title,
-                        content: topic.content ?? null,
-                        view_count: topic.view_count ?? null,
-                        reply_count: topic.reply_count ?? null,
-                        author_id: topic.author_id ?? null,
-                        category_id: topic.category_id,
-                        is_locked: topic.is_locked ?? null,
-                        is_pinned: topic.is_pinned ?? null,
-                        is_hidden: topic.is_hidden ?? null, // Explicitly set
-                        username: topic.profiles?.username ?? null,
-                        avatar_url: topic.profiles?.avatar_url ?? null,
-                        category_name: topic.categories?.name ?? null,
-                        category_color: topic.categories?.color ?? null,
-                        category_slug: topic.categories?.slug ?? null,
-                        slug: topic.slug ?? null,
-                        hot_score: topic.hot_score ?? null,
-                        last_post_id: topic.last_post_id ?? null,
-                        parent_category_id:
-                          topic.categories?.parent_category_id ?? null,
-                        parent_category_slug: null, // Not directly available from useTopics, set to null
-                        last_reply_at: topic.last_reply_at ?? null, // Keep only one instance
-                        updated_at: topic.updated_at ?? null,
-                      }}
-                      onReport={handleReport}
-                    />
-                  ))}
-                </div>
-                <PaginationControls
-                  currentPage={newPage}
-                  totalPages={newTopicsData.totalPages}
-                  totalItems={newTopicsData.totalCount}
-                  itemsPerPage={10}
-                  onPageChange={setNewPage}
-                  loading={newTopicsLoading}
-                />
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-                <p className="text-muted-foreground">
-                  Be the first to start a discussion!
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Top Topics Tab */}
-          <TabsContent value="top" className="space-y-4">
-            {topTopicsLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-muted rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : topTopicsData && topTopicsData.data.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {topTopicsData.data.map((topic: UseTopicsTopic) => (
-                    <PostCard
-                      key={topic.id}
-                      topic={{
-                        id: topic.id,
-                        created_at: topic.created_at ?? null,
-                        title: topic.title,
-                        content: topic.content ?? null,
-                        view_count: topic.view_count ?? null,
-                        reply_count: topic.reply_count ?? null,
-                        author_id: topic.author_id ?? null,
-                        category_id: topic.category_id,
-                        is_locked: topic.is_locked ?? null,
-                        is_pinned: topic.is_pinned ?? null,
-                        is_hidden: topic.is_hidden ?? null,
-                        username: topic.profiles?.username ?? null,
-                        avatar_url: topic.profiles?.avatar_url ?? null,
-                        category_name: topic.categories?.name ?? null,
-                        category_color: topic.categories?.color ?? null,
-                        category_slug: topic.categories?.slug ?? null,
-                        slug: topic.slug ?? null,
-                        hot_score: topic.hot_score ?? null,
-                        last_post_id: topic.last_post_id ?? null,
-                        parent_category_id:
-                          topic.categories?.parent_category_id ?? null,
-                        parent_category_slug: null,
-                        last_reply_at: topic.last_reply_at ?? null,
-                        updated_at: topic.updated_at ?? null,
-                      }}
-                      onReport={handleReport}
-                    />
-                  ))}
-                </div>
-                <PaginationControls
-                  currentPage={topPage}
-                  totalPages={topTopicsData.totalPages}
-                  totalItems={topTopicsData.totalCount}
-                  itemsPerPage={10}
-                  onPageChange={setTopPage}
-                  loading={topTopicsLoading}
-                />
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No top topics</h3>
-                <p className="text-muted-foreground">
-                  No topics with significant views yet.
-                </p>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+      {/* Quick Topic / New Post Button - Always render */}
+      <div className="flex justify-end mb-4">
+        {/* The Button directly controls the state, no DialogTrigger needed here */}
+        <Button size="default" onClick={() => setQuickTopicModalOpen(true)}>
+          <MessageSquare className="h-5 w-5" />
+          New Topic
+        </Button>
       </div>
 
-      {/* Main Forums Section */}
+      {/* QuickTopicModal - now directly controlled by isOpen/onClose */}
+      <QuickTopicModal
+        isOpen={quickTopicModalOpen}
+        onClose={() => setQuickTopicModalOpen(false)}
+      />
+
+      {/* Tabs for Hot / New / Top Topics */}
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl p-1 shadow-inner">
+          <TabsTrigger
+            value="new"
+            className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+          >
+            <Clock className="mr-2 h-4 w-4" /> New
+          </TabsTrigger>
+          <TabsTrigger
+            value="hot"
+            className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+          >
+            <TrendingUp className="mr-2 h-4 w-4" /> Hot
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="top"
+            className="text-sm font-semibold rounded-lg px-3 py-2 transition-all hover:bg-primary/90 hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white"
+          >
+            <Star className="mr-2 h-4 w-4" /> Top
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="hot" className="mt-6">
+          {hotTopicsData?.data && hotTopicsData.data.length > 0 ? (
+            <div className="space-y-4">
+              {hotTopicsData.data.map((topic: HotTopic) => (
+                <PostCard
+                  key={topic.id}
+                  topic={topic} // HotTopic should now be compatible
+                  onReport={handleReportTopic}
+                />
+              ))}
+              <PaginationControls
+                currentPage={hotTopicsData.currentPage}
+                totalPages={hotTopicsData.totalPages}
+                totalItems={hotTopicsData.totalCount}
+                itemsPerPage={10}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No hot topics</h3>
+              <p className="text-muted-foreground">
+                Check back later for trending discussions!
+              </p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="new" className="mt-6">
+          {newTopicsData?.data && newTopicsData.data.length > 0 ? (
+            <div className="space-y-4">
+              {newTopicsData.data.map((topic: Topic) => (
+                <PostCard
+                  key={topic.id}
+                  // Explicitly map Topic to PostCardTopic's flattened structure
+                  topic={
+                    {
+                      id: topic.id,
+                      created_at: topic.created_at ?? null,
+                      title: topic.title,
+                      content: topic.content ?? null,
+                      view_count: topic.view_count ?? null,
+                      reply_count: topic.reply_count ?? null,
+                      last_reply_at: topic.last_reply_at ?? null,
+                      author_id: topic.author_id ?? null,
+                      category_id: topic.category_id,
+                      is_locked: topic.is_locked ?? null,
+                      is_pinned: topic.is_pinned ?? null,
+                      is_hidden: topic.is_hidden ?? null,
+                      slug: topic.slug ?? null,
+                      hot_score: topic.hot_score ?? null,
+                      last_post_id: topic.last_post_id ?? null,
+                      moderation_status: topic.moderation_status ?? null,
+                      // Flattened properties from 'profiles'
+                      username: topic.profiles?.username ?? null,
+                      avatar_url: topic.profiles?.avatar_url ?? null,
+                      // Flattened properties from 'categories'
+                      category_name: topic.categories?.name ?? null,
+                      category_color: topic.categories?.color ?? null,
+                      category_slug: topic.categories?.slug ?? null,
+                      parent_category_id:
+                        topic.categories?.parent_category_id ?? null,
+                      parent_category_slug: null,
+                      updated_at: topic.updated_at ?? null,
+                    } as PostCardTopic
+                  }
+                  onReport={handleReportTopic}
+                />
+              ))}
+              <PaginationControls
+                currentPage={newTopicsData.currentPage}
+                totalPages={newTopicsData.totalPages}
+                totalItems={newTopicsData.totalCount}
+                itemsPerPage={10}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No new topics</h3>
+              <p className="text-muted-foreground">
+                Be the first to create a new discussion!
+              </p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="top" className="mt-6">
+          {topTopicsData?.data && topTopicsData.data.length > 0 ? (
+            <div className="space-y-4">
+              {topTopicsData.data.map((topic: Topic) => (
+                <PostCard
+                  key={topic.id}
+                  // Explicitly map Topic to PostCardTopic's flattened structure
+                  topic={
+                    {
+                      id: topic.id,
+                      created_at: topic.created_at ?? null,
+                      title: topic.title,
+                      content: topic.content ?? null,
+                      view_count: topic.view_count ?? null,
+                      reply_count: topic.reply_count ?? null,
+                      last_reply_at: topic.last_reply_at ?? null,
+                      author_id: topic.author_id ?? null,
+                      category_id: topic.category_id,
+                      is_locked: topic.is_locked ?? null,
+                      is_pinned: topic.is_pinned ?? null,
+                      is_hidden: topic.is_hidden ?? null,
+                      slug: topic.slug ?? null,
+                      hot_score: topic.hot_score ?? null,
+                      last_post_id: topic.last_post_id ?? null,
+                      moderation_status: topic.moderation_status ?? null,
+                      // Flattened properties from 'profiles'
+                      username: topic.profiles?.username ?? null,
+                      avatar_url: topic.profiles?.avatar_url ?? null,
+                      // Flattened properties from 'categories'
+                      category_name: topic.categories?.name ?? null,
+                      category_color: topic.categories?.color ?? null,
+                      category_slug: topic.categories?.slug ?? null,
+                      parent_category_id:
+                        topic.categories?.parent_category_id ?? null,
+                      parent_category_slug: null,
+                      updated_at: topic.updated_at ?? null,
+                    } as PostCardTopic
+                  }
+                  onReport={handleReportTopic}
+                />
+              ))}
+              <PaginationControls
+                currentPage={topTopicsData.currentPage}
+                totalPages={topTopicsData.totalPages}
+                totalItems={topTopicsData.totalCount}
+                itemsPerPage={10}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No top topics</h3>
+              <p className="text-muted-foreground">
+                No topics have gained significant views yet.
+              </p>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Main Forums Section (Level 1 Categories) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Main Forums</h2>
@@ -554,42 +523,32 @@ export default function Forum() {
           </Button>
         </div>
 
-        {level1ForumsLoading ? (
+        {level1Forums && level1Forums.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="p-4 h-24 animate-pulse bg-muted" />
+            {level1Forums.map((forum) => (
+              <Link
+                key={forum.id}
+                href={`/category/${forum.slug}`}
+                className="group"
+              >
+                <Card className="p-4 flex items-center space-x-3 hover:bg-muted/50 transition-colors">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: forum.color ?? "" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                      {forum.name}
+                    </h4>
+                    {forum.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {forum.description}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              </Link>
             ))}
-          </div>
-        ) : level1Forums && level1Forums.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {level1Forums.map(
-              (
-                forum: Forum // Explicitly cast to Forum
-              ) => (
-                <Link
-                  key={forum.id}
-                  href={`/category/${forum.slug}`}
-                  className="group"
-                >
-                  <Card className="p-4 flex items-center space-x-3 hover:bg-muted/50 transition-colors">
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: forum.color ?? "" }} // Added nullish coalescing
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
-                        {forum.name}
-                      </h4>
-                      {forum.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {forum.description}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                </Link>
-              )
-            )}
           </div>
         ) : (
           <Card className="p-4 flex items-center gap-3 hover:bg-primary/10 border hover:shadow-md transition-all rounded-xl">
@@ -602,33 +561,22 @@ export default function Forum() {
         )}
       </div>
 
-      {/* Province/State Forums Section - UPDATED LOGIC */}
-      <div className="space-y-4">
+      {/* Province/State Forums Section (Level 2 Categories) */}
+      <div className="space-y-4 mb-2 md:mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
             Browse Province / State Forums
           </h2>
         </div>
 
-        {level2ForumsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Card
-                key={i}
-                className="p-4 hover:bg-accent/20 border transition-all rounded-xl"
-              />
-            ))}
-          </div>
-        ) : level2Forums && level2Forums.length > 0 ? (
+        {level2Forums && level2Forums.length > 0 ? (
           <div className="space-y-6">
             {(() => {
-              // Filter out tournament forums and group by country using parent_category_id
-              // IMPORTANT: Replace these placeholder UUIDs with the actual IDs from your Supabase 'categories' table
-              // for your "Canada" and "USA" parent categories.
+              // IMPORTANT: Replace with actual IDs from your Supabase categories table
               const CANADA_PARENT_CATEGORY_ID =
-                "11111111-1111-1111-1111-111111111111"; // e.g., 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
+                "11111111-1111-1111-1111-111111111111";
               const USA_PARENT_CATEGORY_ID =
-                "22222222-2222-2222-2222-222222222222"; // e.g., 'b2c3d4e5-f6a7-8901-2345-67890abcdef0'
+                "22222222-2222-2222-2222-222222222222";
 
               const canadianForums = level2Forums
                 .filter(
@@ -643,7 +591,7 @@ export default function Forum() {
                 )
                 .sort((a, b) => (a.region || "").localeCompare(b.region || ""));
 
-              const countries: ForumGroup[] = [];
+              const countries: { name: string; forums: Category[] }[] = [];
               if (canadianForums.length > 0) {
                 countries.push({ name: "Canada", forums: canadianForums });
               }
@@ -660,7 +608,7 @@ export default function Forum() {
                     {country.forums.map((forum) => (
                       <Link
                         key={forum.id}
-                        href={`/category/${forum.slug}`} // Use Next.js Link
+                        href={`/category/${forum.slug}`}
                         className="block"
                       >
                         <Card className="p-3 h-full flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer">

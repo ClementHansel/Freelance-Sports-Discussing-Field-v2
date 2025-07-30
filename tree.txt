@@ -13,7 +13,6 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   
 ª   +---(main)
 ª   ª   ª   layout.tsx
-ª   ª   ª   not-found.tsx
 ª   ª   ª   page.tsx
 ª   ª   ª   
 ª   ª   +---blog
@@ -32,16 +31,10 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   +---privacy
 ª   ª   ª       page.tsx
 ª   ª   ª       
-ª   ª   +---profile
-ª   ª   ª       page.tsx
-ª   ª   ª       
 ª   ª   +---rules
 ª   ª   ª       page.tsx
 ª   ª   ª       
 ª   ª   +---search
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---settings
 ª   ª   ª       page.tsx
 ª   ª   ª       
 ª   ª   +---terms
@@ -53,30 +46,6 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   +---vpn-blocked
 ª   ª           page.tsx
 ª   ª           
-ª   +---admin
-ª   ª   ª   page.tsx
-ª   ª   ª   
-ª   ª   +---advertising
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---content
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---moderation
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---seo
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---settings
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---spam
-ª   ª   ª       page.tsx
-ª   ª   ª       
-ª   ª   +---users
-ª   ª           page.tsx
-ª   ª           
 ª   +---ads.txt
 ª   ª       route.ts
 ª   ª       
@@ -84,7 +53,45 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   +---sentry-example-api
 ª   ª           route.ts
 ª   ª           
+ª   +---dashboard
+ª   ª   +---admin
+ª   ª   ª   ª   layout.tsx
+ª   ª   ª   ª   page.tsx
+ª   ª   ª   ª   
+ª   ª   ª   +---advertising
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---content
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---moderation
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---seo
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---settings
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---spam
+ª   ª   ª   ª       page.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---users
+ª   ª   ª           page.tsx
+ª   ª   ª           
+ª   ª   +---user
+ª   ª       ª   layout.tsx
+ª   ª       ª   
+ª   ª       +---profile
+ª   ª       ª       page.tsx
+ª   ª       ª       
+ª   ª       +---settings
+ª   ª               page.tsx
+ª   ª               
 ª   +---login
+ª   ª       page.tsx
+ª   ª       
+ª   +---not-found
 ª   ª       page.tsx
 ª   ª       
 ª   +---register
@@ -104,22 +111,6 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   StickyBanner.tsx
 ª   ª   VPNGuard.tsx
 ª   ª   
-ª   +---admin
-ª   ª   +---advertising
-ª   ª   ª       Advertising.tsx
-ª   ª   ª       
-ª   ª   +---content
-ª   ª   ª       Content.tsx
-ª   ª   ª       
-ª   ª   +---moderation
-ª   ª   ª       Moderation.tsx
-ª   ª   ª       
-ª   ª   +---seo
-ª   ª   ª       Seo.tsx
-ª   ª   ª       
-ª   ª   +---settings
-ª   ª           AdminSettings.tsx
-ª   ª           
 ª   +---ads
 ª   ª       AdBanner.tsx
 ª   ª       BetweenPostsAd.tsx
@@ -152,42 +143,56 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª       
 ª   +---dashboard
 ª   ª   +---admin
-ª   ª   ª   ª   AdminAdvertising.tsx
 ª   ª   ª   ª   AdminDashboard.tsx
 ª   ª   ª   ª   AdminTempUserInfo.tsx
-ª   ª   ª   ª   AnalyticsSettings.tsx
-ª   ª   ª   ª   BannedIPsManager.tsx
-ª   ª   ª   ª   BannedWordsManager.tsx
-ª   ª   ª   ª   BanUserModal.tsx
-ª   ª   ª   ª   CategoryRequestsManager.tsx
-ª   ª   ª   ª   CategorySeoManager.tsx
-ª   ª   ª   ª   EditProfileModal.tsx
-ª   ª   ª   ª   HomePageSeoManager.tsx
 ª   ª   ª   ª   InlineContentEditor.tsx
-ª   ª   ª   ª   IPActivityDetails.tsx
 ª   ª   ª   ª   IPTrackingMonitor.tsx
 ª   ª   ª   ª   LiveVisitorMonitor.tsx
-ª   ª   ª   ª   ModerationItemDetailsModal.tsx
-ª   ª   ª   ª   MoveTopicModal.tsx
-ª   ª   ª   ª   ReportDetailsModal.tsx
-ª   ª   ª   ª   RoleChangeModal.tsx
-ª   ª   ª   ª   SeoMetadataForm.tsx
-ª   ª   ª   ª   SpamManagement.tsx
-ª   ª   ª   ª   TopicSeoManager.tsx
-ª   ª   ª   ª   UserManagement.tsx
 ª   ª   ª   ª   
 ª   ª   ª   +---advertising
-ª   ª   ª           AdAnalytics.tsx
-ª   ª   ª           AdSpaceManager.tsx
-ª   ª   ª           AdvertisingSettings.tsx
-ª   ª   ª           HeaderScriptsManager.tsx
+ª   ª   ª   ª       AdAnalytics.tsx
+ª   ª   ª   ª       AdminAdvertising.tsx
+ª   ª   ª   ª       AdSpaceManager.tsx
+ª   ª   ª   ª       Advertising.tsx
+ª   ª   ª   ª       AdvertisingSettings.tsx
+ª   ª   ª   ª       HeaderScriptsManager.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---content
+ª   ª   ª   ª       Content.tsx
+ª   ª   ª   ª       MoveTopicModal.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---moderation
+ª   ª   ª   ª       CategoryRequestsManager.tsx
+ª   ª   ª   ª       Moderation.tsx
+ª   ª   ª   ª       ModerationItemDetailsModal.tsx
+ª   ª   ª   ª       ReportDetailsModal.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---seo
+ª   ª   ª   ª       CategorySeoManager.tsx
+ª   ª   ª   ª       HomePageSeoManager.tsx
+ª   ª   ª   ª       Seo.tsx
+ª   ª   ª   ª       SeoMetadataForm.tsx
+ª   ª   ª   ª       TopicSeoManager.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---settings
+ª   ª   ª   ª       AdminSettings.tsx
+ª   ª   ª   ª       AnalyticsSettings.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---spam
+ª   ª   ª   ª       BannedIPsManager.tsx
+ª   ª   ª   ª       BannedWordsManager.tsx
+ª   ª   ª   ª       IPActivityDetails.tsx
+ª   ª   ª   ª       SpamManagement.tsx
+ª   ª   ª   ª       
+ª   ª   ª   +---users-management
+ª   ª   ª           BanUserModal.tsx
+ª   ª   ª           EditProfileModal.tsx
+ª   ª   ª           RoleChangeModal.tsx
+ª   ª   ª           UserManagement.tsx
 ª   ª   ª           
 ª   ª   +---analytics
 ª   ª           AnalyticsProvider.tsx
 ª   ª           EnhancedHeaderCodeInjector.tsx
-ª   ª           GoogleAnalytics.tsx
-ª   ª           GoogleAnalyticsFixed.tsx
-ª   ª           HeaderCodeInjector.tsx
 ª   ª           
 ª   +---forum
 ª   ª   ª   AnonymousPostingNotice.tsx
@@ -207,15 +212,13 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 ª   ª   ª   SharedMenuContent.tsx
 ª   ª   ª   TopicView.tsx
 ª   ª   ª   
-ª   ª   +---admin-ui
-ª   ª   ª       AdminControls.tsx
-ª   ª   ª       AdminPostInfo.tsx
-ª   ª   ª       AdminTopicInfo.tsx
-ª   ª   ª       
 ª   ª   +---categories
 ª   ª   ª       Categories.tsx
 ª   ª   ª       
 ª   ª   +---category
+ª   ª   ª   ª   AdminControls.tsx
+ª   ª   ª   ª   AdminPostInfo.tsx
+ª   ª   ª   ª   AdminTopicInfo.tsx
 ª   ª   ª   ª   Category.tsx
 ª   ª   ª   ª   CategoryRequestModal.tsx
 ª   ª   ª   ª   CategoryRow.tsx
@@ -383,10 +386,12 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 +---integrations
 ª   +---supabase
 ª           client.ts
+ª           server.ts
 ª           types.ts
 ª           
 +---lib
-ª   ª   sentry.ts
+ª   ª   redis.ts
+ª   ª   serverDataFetcher.ts
 ª   ª   utils.ts
 ª   ª   
 ª   +---utils
@@ -404,4 +409,5 @@ C:\USERS\USER\DOCUMENTS\SOFTWARE-DEVELOPER\FREELANCER\SPORTS-DISSCUSSING-FIELD\N
 +---types
         admin-moderation.ts
         auth.ts
+        forum.ts
         

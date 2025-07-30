@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react"; // Import Suspense
+import React, { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,20 +13,100 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, User, Clock, Pin, Search } from "lucide-react";
+import {
+  MessageSquare,
+  User,
+  Clock,
+  Pin,
+  Search,
+  TrendingUp,
+  Star,
+  Plus,
+} from "lucide-react"; // Plus is already imported here
+import { PaginationControls } from "@/components/ui/pagination-controls"; // Import PaginationControls
+import { QuickTopicModal } from "@/components/forum/QuickTopicModal"; // Import QuickTopicModal
 
 import {
-  useTopicsLegacy as useTopics,
+  useTopics, // Use the updated useTopics hook
+  PaginatedTopicsResult,
   Topic as UseTopicsTopic,
-} from "@/hooks/useTopicsLegacy";
+} from "@/hooks/useTopics";
+import { useForumSettings, ForumSettingsMap } from "@/hooks/useForumSettings"; // Import useForumSettings
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth for canCreateTopic logic
 
-export default function Topics() {
-  // Explicitly type the data returned from useTopics
-  const { data: topics, isLoading } = useTopics() as {
-    data: UseTopicsTopic[] | undefined;
-    isLoading: boolean;
+// Define the allowed sort options for topics (consistent with serverDataFetcher)
+type TopicSortBy = "created_at" | "view_count" | "reply_count" | "hot_score";
+
+// Define props for the Topics client component
+interface TopicsProps {
+  initialTopics?: PaginatedTopicsResult;
+  initialForumSettings?: ForumSettingsMap;
+  currentPage: number;
+  sortBy: TopicSortBy;
+  errorOccurred?: boolean; // Prop to indicate if an error occurred during SSR
+}
+
+export default function Topics({
+  initialTopics,
+  initialForumSettings,
+  currentPage: initialCurrentPage,
+  sortBy: initialSortBy,
+  errorOccurred,
+}: TopicsProps) {
+  const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState(initialCurrentPage);
+  const [sortBy, setSortBy] = useState<TopicSortBy>(initialSortBy);
+  // FIXED: Declared quickTopicModalOpen state here
+  const [quickTopicModalOpen, setQuickTopicModalOpen] = useState(false);
+
+  // Determine ascending based on sortBy
+  const ascending = sortBy === "created_at" ? false : false; // Newest first for 'created_at', otherwise descending for 'hot/top'
+
+  // Use useTopics with initialData for hydration
+  const { data: topicsData, isLoading } = useTopics({
+    page: currentPage,
+    limit: 10, // Adjust limit as per your pagination needs
+    orderBy: sortBy,
+    ascending: ascending,
+    initialData: initialTopics,
+  });
+
+  // Use useForumSettings with initialData for hydration
+  const { settings: forumSettings } = useForumSettings({
+    initialData: initialForumSettings,
+  });
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
+
+  // Handle sort change
+  const handleSortChange = (value: string) => {
+    setSortBy(value as TopicSortBy); // Cast value to TopicSortBy
+    setCurrentPage(1); // Reset to first page on sort change
+  };
+
+  // Determine if user can create a topic
+  const canCreateTopic =
+    user ||
+    (forumSettings?.["anonymous_posting_enabled"]?.value === true &&
+      forumSettings?.["anonymous_topic_creation_enabled"]?.value === true);
+
+  // If an error occurred during SSR, display an error message
+  if (errorOccurred) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-red-600">
+          <h3 className="text-lg font-semibold mb-2">Error Loading Topics</h3>
+          <p>
+            We encountered an issue loading the topics. Please try again later.
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -36,156 +116,175 @@ export default function Topics() {
           <h1 className="text-2xl font-bold text-gray-900">All Topics</h1>
           <p className="text-gray-600">Browse all forum discussions</p>
         </div>
-        <Button asChild>
-          <Link href="/create">Create New Topic</Link>
-        </Button>
+        {canCreateTopic && (
+          <Button onClick={() => setQuickTopicModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Topic
+          </Button>
+        )}
       </div>
 
-      {/* Wrap the potentially problematic client-side components with Suspense */}
-      <Suspense
-        fallback={
-          <Card className="p-6">
-            <div className="text-center">Loading topics and filters...</div>
-          </Card>
-        }
-      >
-        {/* Filters */}
-        <Card className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input placeholder="Search topics..." className="pl-10" />
-              </div>
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input placeholder="Search topics..." className="pl-10" />
             </div>
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="general">General Discussion</SelectItem>
-                <SelectItem value="equipment">Equipment & Gear</SelectItem>
-                <SelectItem value="coaching">Coaching & Training</SelectItem>
-                <SelectItem value="tournaments">
-                  Tournaments & Events
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Sort by Latest" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">Latest Activity</SelectItem>
-                <SelectItem value="newest">Newest Topics</SelectItem>
-                <SelectItem value="popular">Most Popular</SelectItem>
-                <SelectItem value="replies">Most Replies</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </Card>
+          {/* Category Filter (Placeholder - requires fetching categories) */}
+          <Select>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {/* You would map your categories here */}
+              <SelectItem value="general">General Discussion</SelectItem>
+              <SelectItem value="equipment">Equipment & Gear</SelectItem>
+              <SelectItem value="coaching">Coaching & Training</SelectItem>
+              <SelectItem value="tournaments">Tournaments & Events</SelectItem>
+            </SelectContent>
+          </Select>
+          {/* Sort By Filter */}
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2" /> Latest Activity
+                </div>
+              </SelectItem>
+              <SelectItem value="view_count">
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 mr-2" /> Most Popular
+                </div>
+              </SelectItem>
+              <SelectItem value="reply_count">
+                <div className="flex items-center">
+                  <MessageSquare className="h-4 w-4 mr-2" /> Most Replies
+                </div>
+              </SelectItem>
+              {/* If your RPC for enriched topics returns hot_score, uncomment this */}
+              {/* <SelectItem value="hot_score">
+                <div className="flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-2" /> Hot Topics
+                </div>
+              </SelectItem> */}
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
 
-        {/* Topics List */}
-        <Card className="p-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="h-20 bg-gray-200 rounded animate-pulse"
-                ></div>
-              ))}
-            </div>
-          ) : topics && topics.length > 0 ? (
-            <div className="space-y-4">
-              {topics.map(
-                (
-                  topic: UseTopicsTopic // Explicitly type topic
-                ) => (
-                  <div
-                    key={topic.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className="flex items-center space-x-2">
-                        {topic.is_pinned && (
-                          <Pin className="h-4 w-4 text-red-500" />
-                        )}
-                        <MessageSquare className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <div className="flex-1">
-                        <Link
-                          href={
-                            topic.slug && topic.categories?.slug
-                              ? `/category/${topic.categories.slug}/${topic.slug}`
-                              : `/topic/${topic.id}`
-                          }
-                          className="font-medium text-gray-900 hover:text-blue-600"
-                        >
-                          {topic.title}
-                        </Link>
-                        <div className="flex items-center space-x-2 mt-1 text-sm text-gray-500">
-                          <span>
-                            by {topic.profiles?.username || "Unknown"}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {topic.categories?.name || "General"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-6 text-sm text-gray-500">
-                      <div className="text-center">
-                        <div className="flex items-center space-x-1">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>{topic.reply_count || 0}</span>
-                        </div>
-                        <span className="text-xs">replies</span>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center space-x-1">
-                          <User className="h-4 w-4" />
-                          <span>{topic.view_count || 0}</span>
-                        </div>
-                        <span className="text-xs">views</span>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span className="whitespace-nowrap">
-                            {/* FIX: Provide a fallback empty string for new Date() if values are null */}
-                            {formatDistanceToNow(
-                              new Date(
-                                topic.last_reply_at || topic.created_at || ""
-                              )
-                            )}{" "}
-                            ago
-                          </span>
-                        </div>
-                      </div>
+      {/* Topics List */}
+      <Card className="p-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-20 bg-gray-200 rounded animate-pulse"
+              ></div>
+            ))}
+          </div>
+        ) : topicsData && topicsData.data.length > 0 ? (
+          <div className="space-y-4">
+            {topicsData.data.map((topic: UseTopicsTopic) => (
+              <div
+                key={topic.id}
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start space-x-4 flex-1">
+                  <div className="flex items-center space-x-2">
+                    {topic.is_pinned && (
+                      <Pin className="h-4 w-4 text-red-500" />
+                    )}
+                    <MessageSquare className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <Link
+                      href={
+                        topic.slug && topic.categories?.slug
+                          ? `/category/${topic.categories.slug}/${topic.slug}`
+                          : `/topic/${topic.id}`
+                      }
+                      className="font-medium text-gray-900 hover:text-blue-600"
+                    >
+                      {topic.title}
+                    </Link>
+                    <div className="flex items-center space-x-2 mt-1 text-sm text-gray-500">
+                      <span>by {topic.profiles?.username || "Unknown"}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {topic.categories?.name || "General"}
+                      </Badge>
                     </div>
                   </div>
-                )
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No topics found
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Be the first to start a discussion!
-              </p>
-              <Button asChild>
-                <Link href="/create">Create First Topic</Link>
+                </div>
+
+                <div className="flex items-center space-x-6 text-sm text-gray-500">
+                  <div className="text-center">
+                    <div className="flex items-center space-x-1">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{topic.reply_count || 0}</span>
+                    </div>
+                    <span className="text-xs">replies</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center space-x-1">
+                      <User className="h-4 w-4" />
+                      <span>{topic.view_count || 0}</span>
+                    </div>
+                    <span className="text-xs">views</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="whitespace-nowrap">
+                        {formatDistanceToNow(
+                          new Date(
+                            topic.last_reply_at || topic.created_at || ""
+                          )
+                        )}{" "}
+                        ago
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <PaginationControls
+              currentPage={topicsData.currentPage}
+              totalPages={topicsData.totalPages}
+              totalItems={topicsData.totalCount}
+              itemsPerPage={10} // Match the limit used in useTopics
+              onPageChange={handlePageChange}
+            />
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No topics found
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Be the first to start a discussion!
+            </p>
+            {canCreateTopic && (
+              <Button onClick={() => setQuickTopicModalOpen(true)}>
+                Create First Topic
               </Button>
-            </div>
-          )}
-        </Card>
-      </Suspense>
+            )}
+          </div>
+        )}
+      </Card>
+      {/* Quick Topic Modal */}
+      <QuickTopicModal
+        isOpen={quickTopicModalOpen}
+        onClose={() => setQuickTopicModalOpen(false)}
+      />
     </div>
   );
 }

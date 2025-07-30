@@ -1,3 +1,4 @@
+// src\components\dashboard\admin\advertising\HeaderScriptsManager.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -57,7 +58,13 @@ export const HeaderScriptsManager = () => {
   // Get current header scripts from settings with safe parsing
   const getHeaderScripts = (): HeaderScript[] => {
     try {
-      const rawSetting = getSetting("header_scripts", "[]");
+      // Correctly type rawSetting to accept 'string | undefined' from getSetting
+      const rawSetting: string | undefined = getSetting("header_scripts", "[]");
+
+      // If rawSetting is undefined, treat it as an empty array
+      if (rawSetting === undefined) {
+        return [];
+      }
 
       // If it's already an array (parsed), return it
       if (Array.isArray(rawSetting)) {
@@ -66,17 +73,19 @@ export const HeaderScriptsManager = () => {
 
       // If it's a string, try to parse it
       if (typeof rawSetting === "string") {
+        // Check for empty string or string representations of null/undefined
         if (
-          rawSetting === "" ||
-          rawSetting === "null" ||
-          rawSetting === "undefined"
+          rawSetting.trim() === "" ||
+          rawSetting.toLowerCase() === "null" ||
+          rawSetting.toLowerCase() === "undefined"
         ) {
           return [];
         }
+        // Attempt to parse the JSON string
         return JSON.parse(rawSetting);
       }
 
-      // Fallback to empty array
+      // Fallback to empty array for any other unexpected type
       return [];
     } catch (error) {
       console.error("Error parsing header scripts:", error);
@@ -121,7 +130,7 @@ export const HeaderScriptsManager = () => {
     } else {
       // Add new script
       const newScript: HeaderScript = {
-        id: Date.now().toString(),
+        id: Date.now().toString(), // Simple unique ID for new scripts
         ...formData,
       };
       updatedScripts.push(newScript);

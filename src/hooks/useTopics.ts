@@ -1,24 +1,19 @@
+// src/hooks/useTopics.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types"; // Import Database type
+import { Database } from "@/integrations/supabase/types";
 
 // Define the exact return type for get_enriched_topics RPC function
-// This assumes your Supabase RPC function 'get_enriched_topics' in public schema
-// will return an array of objects with these properties.
-// You might need to adjust this type if your RPC function's actual return structure differs.
+// Based on types.ts -> Functions -> get_enriched_topics -> Returns
 type EnrichedTopicFromRPC =
-  Database["public"]["Functions"]["get_enriched_topics"]["Returns"][number] & {
-    is_hidden?: boolean | null; // Added if your RPC returns this but it's not in the auto-generated type
-    hot_score?: number | null; // Added if your RPC returns this but it's not in the auto-generated type
-    last_post_id?: string | null; // Added if your RPC returns this but it's not in the auto-generated type
-  };
+  Database["public"]["Functions"]["get_enriched_topics"]["Returns"][number];
 
-// Define the arguments type for get_enriched_topics RPC function
-// This now reflects the parameters your Supabase function *actually* accepts.
-type GetEnrichedTopicsArgs =
-  Database["public"]["Functions"]["get_enriched_topics"]["Args"];
+// Define the exact return type for get_hot_topics RPC function
+// Based on types.ts -> Functions -> get_hot_topics -> Returns
+type HotTopicFromRPC =
+  Database["public"]["Functions"]["get_hot_topics"]["Returns"][number];
 
 // Refine the Topic interface to match the structure returned by the RPC and subsequent mapping
 export interface Topic {
@@ -29,26 +24,87 @@ export interface Topic {
   category_id: string;
   is_pinned: boolean | null;
   is_locked: boolean | null;
-  is_hidden: boolean | null; // Changed to non-optional as it's directly mapped
+  is_hidden: boolean | null; // Not in RPC, explicitly nullable
   view_count: number | null;
   reply_count: number | null;
   last_reply_at: string | null;
   created_at: string | null;
   updated_at: string | null;
-  slug: string;
-  hot_score: number | null; // Changed to non-optional as it's directly mapped
-  last_post_id: string | null; // Changed to non-optional as it's directly mapped
-  moderation_status: string | null; // Changed to non-optional as it's directly mapped
-  profiles?: {
-    username: string;
+  slug: string | null;
+  hot_score: number | null; // RPC returns number for hot topics, explicitly nullable in enriched
+  last_post_id: string | null;
+  moderation_status: string | null; // RPC returns string, but we allow string | null
+
+  // ADDED/CONFIRMED: These fields are present in the raw topic data from the database table 'topics'
+  // but might not be returned by RPCs like get_enriched_topics.
+  // They are needed for the `Topic` interface to match `RawTopicData` for server-side fetching.
+  ip_address: string | null; // Assuming 'inet' maps to string | null
+  is_anonymous: boolean | null;
+  is_public: boolean | null;
+  canonical_url: string | null;
+
+  // Flattened relations from RPC
+  profiles: {
+    username: string | null;
     avatar_url: string | null;
+    // ADDED: id, bio, created_at, reputation, updated_at as they are selected in serverDataFetcher
+    id: string;
+    bio: string | null;
+    created_at: string | null;
+    reputation: number | null;
+    updated_at: string | null;
   } | null;
-  categories?: {
-    name: string;
+  categories: {
+    name: string | null;
     color: string | null;
-    slug: string;
-    parent_category_id?: string | null;
+    slug: string | null;
+    parent_category_id: string | null;
+    // ADDED: id as it is selected in serverDataFetcher
+    id: string;
   } | null;
+}
+
+// HotTopic interface: Define it directly from HotTopicFromRPC structure
+// It is NOT extending Topic anymore to avoid `moderation_status` conflict.
+export interface HotTopic {
+  id: string;
+  title: string;
+  content: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  author_id: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  category_id: string;
+  is_pinned: boolean | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  is_locked: boolean | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  is_hidden: boolean | null; // Not in RPC, explicitly nullable
+  view_count: number | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  reply_count: number | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  last_reply_at: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  created_at: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  updated_at: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  slug: string | null;
+  hot_score: number | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  last_post_id: string | null; // RPC returns non-nullable, but allow null for consistency with Topic
+  // moderation_status is NOT returned by get_hot_topics, so it's absent here.
+
+  // Direct properties from HotTopicFromRPC for profiles and categories
+  username: string;
+  avatar_url: string;
+  category_name: string;
+  category_color: string;
+  category_slug: string;
+  parent_category_slug: string | null;
+
+  // Re-add profiles and categories structure for consistency if needed by consumers
+  // These will be mapped from the direct properties above
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
+  categories: {
+    name: string;
+    color: string;
+    slug: string;
+    parent_category_id: string | null; // HotTopicFromRPC has parent_category_id as string
+  };
 }
 
 export interface PaginatedTopicsResult {
@@ -58,105 +114,135 @@ export interface PaginatedTopicsResult {
   currentPage: number;
 }
 
-export const useTopics = (
-  categoryId?: string,
-  page = 1,
-  limit = 10,
-  orderBy: string = "created_at",
-  ascending: boolean = false
-) => {
+export interface PaginatedHotTopicsResult {
+  data: HotTopic[]; // Use HotTopic[] for hot topics
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+interface UseTopicsOptions {
+  categoryId?: string | null; // Changed to allow null
+  page?: number;
+  limit?: number;
+  orderBy?: "created_at" | "view_count" | "reply_count" | "hot_score";
+  ascending?: boolean;
+  initialData?: PaginatedTopicsResult; // For SSR hydration
+  enabled?: boolean; // ADDED: enabled property
+}
+
+export const useTopics = (options?: UseTopicsOptions) => {
+  const {
+    categoryId,
+    page = 1,
+    limit = 10,
+    orderBy = "created_at",
+    ascending = false,
+    initialData,
+    enabled = true, // Default to true
+  } = options || {};
+
   const offset = (page - 1) * limit;
 
+  // Construct queryKey explicitly to ensure no 'null' values are passed
+  const queryKey = [
+    "topics",
+    categoryId === null ? undefined : categoryId, // Convert null to undefined
+    page,
+    limit,
+    orderBy,
+    ascending,
+  ].filter((item) => item !== undefined); // Filter out any undefined values
+
   return useQuery<PaginatedTopicsResult>({
-    // Explicitly type the useQuery return
-    queryKey: ["topics", categoryId, page, limit, orderBy, ascending], // Keep sorting params in queryKey for re-fetching on sort change
+    queryKey: queryKey, // Use the filtered queryKey
     queryFn: async () => {
       console.log(
-        "Fetching topics for category:",
-        categoryId,
-        "with optimized function. Sorting will be done client-side."
+        `Fetching topics for category ${
+          categoryId || "all"
+        } with order ${orderBy} ${ascending ? "ASC" : "DESC"}`,
       );
 
-      // Prepare arguments for the RPC call, without p_order_by and p_ascending
-      const rpcArgs: GetEnrichedTopicsArgs = {
-        p_category_id: categoryId ?? undefined,
-        p_limit: limit,
-        p_offset: offset,
-      };
+      const [topicsResult, countResult] = await Promise.all([
+        supabase.rpc("get_enriched_topics", {
+          // FIX: Pass undefined instead of null if categoryId is null
+          p_category_id: categoryId ?? undefined, // Use nullish coalescing to convert null to undefined
+          p_limit: limit,
+          p_offset: offset,
+        }),
+        supabase.rpc("get_enriched_topics_count", {
+          // FIX: Pass undefined instead of null if categoryId is null
+          p_category_id: categoryId ?? undefined, // Use nullish coalescing to convert null to undefined
+        }),
+      ]);
 
-      // Use the RPC function with its defined arguments
-      const [{ data: topics, error }, { data: totalCount, error: countError }] =
-        await Promise.all([
-          supabase.rpc("get_enriched_topics", rpcArgs),
-          supabase.rpc("get_enriched_topics_count", {
-            p_category_id: categoryId ?? undefined,
-          }),
-        ]);
-
-      if (error) {
-        console.error("Error fetching enriched topics:", error);
-        throw error;
+      if (topicsResult.error) {
+        console.error("Error fetching enriched topics:", topicsResult.error);
+        throw topicsResult.error;
+      }
+      if (countResult.error) {
+        console.error(
+          "Error fetching enriched topics count:",
+          countResult.error,
+        );
+        throw countResult.error;
       }
 
-      if (countError) {
-        console.error("Error fetching topics count:", countError);
-        throw countError;
-      }
-
-      if (!topics || topics.length === 0) {
-        return {
-          data: [],
-          totalCount: 0,
-          totalPages: 0,
-          currentPage: page,
-        } as PaginatedTopicsResult;
-      }
-
-      // Transform enriched data to match expected Topic interface
-      const enrichedTopics: Topic[] = topics.map(
-        (topic: EnrichedTopicFromRPC) => ({
-          id: topic.id,
-          title: topic.title,
-          content: topic.content,
-          author_id: topic.author_id,
-          category_id: topic.category_id,
-          is_pinned: topic.is_pinned,
-          is_locked: topic.is_locked,
-          is_hidden: topic.is_hidden ?? null, // Use nullish coalescing for safety
-          view_count: topic.view_count,
-          reply_count: topic.reply_count,
-          last_reply_at: topic.last_reply_at,
-          created_at: topic.created_at,
-          updated_at: topic.updated_at,
-          slug: topic.slug,
-          hot_score: topic.hot_score ?? null, // Use nullish coalescing for safety
-          last_post_id: topic.last_post_id ?? null, // Use nullish coalescing for safety
-          moderation_status: topic.moderation_status ?? null, // Use nullish coalescing for safety
-          profiles: topic.author_username
-            ? {
-                username: topic.author_username,
-                avatar_url: topic.author_avatar_url,
-              }
-            : null,
-          categories: topic.category_name
-            ? {
-                name: topic.category_name,
-                color: topic.category_color,
-                slug: topic.category_slug,
-                parent_category_id: topic.parent_category_id,
-              }
-            : null,
-        })
-      );
+      const enrichedTopics = (
+        topicsResult.data as EnrichedTopicFromRPC[]
+      ).map((item) => ({
+        id: item.id,
+        title: item.title,
+        content: item.content || null,
+        author_id: item.author_id || null,
+        category_id: item.category_id,
+        is_pinned: item.is_pinned,
+        is_locked: item.is_locked,
+        is_hidden: null, // Not returned by RPC, explicitly null
+        view_count: item.view_count,
+        reply_count: item.reply_count,
+        last_reply_at: item.last_reply_at,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        slug: item.slug,
+        hot_score: null, // Not returned by get_enriched_topics RPC, explicitly null
+        last_post_id: item.last_post_id,
+        moderation_status: item.moderation_status || null,
+        // Ensure these match the updated Topic interface
+        ip_address: null, // RPC does not return this, explicitly null
+        is_anonymous: null, // RPC does not return this, explicitly null
+        is_public: null, // RPC does not return this, explicitly null
+        canonical_url: null, // RPC does not return this, explicitly null
+        profiles: item.author_username
+          ? {
+            username: item.author_username,
+            avatar_url: item.author_avatar_url,
+            id: "", // Default or fetch if needed
+            bio: null,
+            created_at: null,
+            reputation: null,
+            updated_at: null,
+          }
+          : null,
+        categories: item.category_name
+          ? {
+            name: item.category_name,
+            color: item.category_color,
+            slug: item.category_slug,
+            parent_category_id: item.parent_category_id || null,
+            id: "", // Default or fetch if needed
+          }
+          : null,
+      }));
 
       // --- Client-side sorting ---
       const sortedTopics = [...enrichedTopics].sort((a, b) => {
-        let valA: number, valB: number; // Changed 'any' to 'number'
+        let valA: number | string | null, valB: number | string | null;
 
         switch (orderBy) {
           case "created_at":
-            valA = new Date(a.created_at || 0).getTime();
-            valB = new Date(b.created_at || 0).getTime();
+            valA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            valB = b.created_at ? new Date(b.created_at).getTime() : 0;
             break;
           case "view_count":
             valA = a.view_count ?? 0;
@@ -171,16 +257,13 @@ export const useTopics = (
             valB = b.hot_score ?? 0;
             break;
           default:
-            valA = new Date(a.created_at || 0).getTime(); // Default to created_at
-            valB = new Date(b.created_at || 0).getTime();
+            valA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            valB = b.created_at ? new Date(b.created_at).getTime() : 0;
             break;
         }
 
-        if (valA < valB) {
-          return ascending ? -1 : 1;
-        }
-        if (valA > valB) {
-          return ascending ? 1 : -1;
+        if (typeof valA === "number" && typeof valB === "number") {
+          return ascending ? valA - valB : valB - valA;
         }
         return 0;
       });
@@ -189,19 +272,22 @@ export const useTopics = (
       console.log(
         "Optimized topics fetched and client-side sorted:",
         sortedTopics.length,
-        "topics"
+        "topics",
       );
 
-      const totalPages = Math.ceil((totalCount as number) / limit);
+      const totalCount = countResult.data as number;
+      const totalPages = Math.ceil(totalCount / limit);
 
       return {
         data: sortedTopics,
-        totalCount: totalCount as number,
+        totalCount,
         totalPages,
         currentPage: page,
       };
     },
-    staleTime: 3 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    initialData: initialData, // Hydrate with initial data
+    enabled: enabled, // Use the enabled option
   });
 };

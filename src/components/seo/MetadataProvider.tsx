@@ -1,3 +1,4 @@
+// src\components\seo\MetadataProvider.tsx
 "use client";
 
 import React, {
@@ -57,8 +58,12 @@ export const MetadataProvider: React.FC<MetadataProviderProps> = ({
     setCustomMetadata((prev) => ({ ...prev, ...metadata }));
   }, []); // No dependencies needed as it only sets state
 
-  const defaultTitle = getSetting("site_name") as string | null;
-  const defaultDescription = getSetting("site_description") as string | null;
+  // FIXED: Added null as the second argument (defaultValue) to getSetting
+  const defaultTitle = getSetting("site_name", null) as string | null;
+  // FIXED: Added null as the second argument (defaultValue) to getSetting
+  const defaultDescription = getSetting("site_description", null) as
+    | string
+    | null;
 
   const currentPath =
     typeof window !== "undefined" ? `${window.location.origin}${pathname}` : "";
@@ -139,32 +144,35 @@ export const MetadataProvider: React.FC<MetadataProviderProps> = ({
     // Merge custom metadata set by components
     metadata = { ...metadata, ...customMetadata };
 
+    // FIXED: Added null as the second argument (defaultValue) to getSetting calls
     const finalTitle =
       metadata.title ||
-      (getSetting("meta_title") as string | null) ||
-      (getSetting("site_name") as string | null) ||
+      (getSetting("meta_title", null) as string | null) ||
+      (getSetting("site_name", null) as string | null) ||
       "Forum";
     const finalDescription =
       metadata.description ||
-      (getSetting("meta_description") as string | null) ||
-      (getSetting("site_description") as string | null) ||
+      (getSetting("meta_description", null) as string | null) ||
+      (getSetting("site_description", null) as string | null) ||
       "A community forum.";
     const finalKeywords =
       metadata.keywords ||
-      (getSetting("meta_keywords") as string | null) ||
+      (getSetting("meta_keywords", null) as string | null) ||
       "forum, community, discussion";
     const finalCanonical =
       metadata.canonical ||
       currentPath ||
-      (getSetting("canonical_url") as string | null);
+      (getSetting("canonical_url", null) as string | null);
     const finalOgTitle = metadata.ogTitle || finalTitle;
     const finalOgDescription = metadata.ogDescription || finalDescription;
     const finalOgImage =
       metadata.ogImage ||
-      (getSetting("og_image") as string | null) ||
+      (getSetting("og_image", null) as string | null) ||
       "/images/default-og.jpg";
 
-    document.title = (getSetting("site_name") as string | null) ?? "Forum"; // Explicitly cast and provide fallback
+    // FIXED: Added null as the second argument (defaultValue) to getSetting
+    document.title =
+      (getSetting("site_name", null) as string | null) ?? "Forum"; // Explicitly cast and provide fallback
 
     updateMetaTag("title", finalTitle);
     updateMetaTag("description", finalDescription);
@@ -203,9 +211,9 @@ export const MetadataProvider: React.FC<MetadataProviderProps> = ({
     customMetadata,
     getSetting,
     currentPath,
-    defaultTitle,
-    defaultDescription,
-    user?.id, // Added user.id as a dependency
+    defaultTitle, // These will now correctly reflect the initial getSetting calls
+    defaultDescription, // These will now correctly reflect the initial getSetting calls
+    user?.id,
   ]);
 
   return (

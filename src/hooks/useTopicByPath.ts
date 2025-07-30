@@ -1,20 +1,44 @@
+// src/hooks/useTopicByPath.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Topic as UseTopicsTopic } from "./useTopics"; // Import the Topic interface from useTopics
+import { Database, Tables } from "@/integrations/supabase/types"; // Import Database and Tables types
 
-// Define a type for the author information to avoid 'any' and resolve type errors
-type AuthorInfo =
-  | { profiles: { username: string; avatar_url: string | null } }
-  | { temporary_users: { display_name: string } }
-  | null;
+// Define a type for the data returned directly from the Supabase select query
+// This needs to include all columns from 'topics' table AND the selected joined columns.
+type TopicQueryResult = Tables<"topics"> & {
+  categories: Tables<"categories"> | null;
+  profiles: Tables<"profiles"> | null;
+  is_hidden: boolean | null;
+  hot_score: number | null;
+  last_post_id: string | null;
+  is_public: boolean | null;
+  ip_address: unknown; // Keep as unknown as per Supabase types.ts
+};
+
+// Define the options interface for useTopicByPath
+interface UseTopicByPathOptions {
+  categorySlug: string;
+  subcategorySlug?: string;
+  topicSlug?: string;
+  initialData?: UseTopicsTopic | null; // Allow initial data for SSR hydration
+  enabled?: boolean; // Allow disabling the query
+}
 
 export const useTopicByPath = (
-  categorySlug: string,
-  subcategorySlug?: string,
-  topicSlug?: string
+  options: UseTopicByPathOptions, // Accept a single options object
 ) => {
-  return useQuery({
+  const {
+    categorySlug,
+    subcategorySlug,
+    topicSlug,
+    initialData,
+    enabled = true,
+  } = options;
+
+  return useQuery<UseTopicsTopic | null>({ // Explicitly type the query result
     queryKey: ["topic-by-path", categorySlug, subcategorySlug, topicSlug],
     queryFn: async () => {
       console.log("Fetching topic by path:", {
@@ -71,62 +95,80 @@ export const useTopicByPath = (
         throw categoryError;
       }
 
-      // Get topic by slug and category
       const { data: topicData, error: topicError } = await supabase
         .from("topics")
         .select(
           `
           *,
-          categories (name, color, slug, parent_category_id, parent_category:categories!parent_category_id(slug, name))
-          `
+          profiles ( username, avatar_url, id, bio, created_at, reputation, updated_at ),
+          categories ( id, name, slug, color, parent_category_id )
+          `, // Expanded select to include all fields needed by UseTopicsTopic
         )
         .eq("slug", topicSlug)
         .eq("category_id", categoryData.id)
-        .single();
+        .single<TopicQueryResult>(); // Explicitly type the result of the select query
 
       if (topicError) {
         console.error("Error fetching topic:", topicError);
         throw topicError;
       }
 
-      // Fetch author information separately based on whether it's a temporary user or regular user
-      let authorInfo: AuthorInfo = null; // Explicitly type authorInfo
-      if (topicData.author_id) {
-        // First try to get from profiles
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("username, avatar_url")
-          .eq("id", topicData.author_id)
-          .maybeSingle();
-
-        if (profile) {
-          authorInfo = { profiles: profile };
-        } else {
-          // Try temporary users
-          const { data: tempUser } = await supabase
-            .from("temporary_users")
-            .select("display_name")
-            .eq("id", topicData.author_id)
-            .maybeSingle();
-
-          if (tempUser) {
-            authorInfo = { temporary_users: { display_name: "Guest" } };
+      // Map topicData to UseTopicsTopic, ensuring all fields are present and correctly typed
+      const mappedTopic: UseTopicsTopic = {
+        id: topicData.id,
+        title: topicData.title,
+        content: topicData.content || null,
+        author_id: topicData.author_id || null,
+        category_id: topicData.category_id,
+        is_pinned: topicData.is_pinned || null,
+        is_locked: topicData.is_locked || null,
+        // These fields might not be directly in TopicQueryResult from a simple select,
+        // so we explicitly map them or default to null.
+        is_hidden: topicData.is_hidden ?? null, // Use nullish coalescing
+        view_count: topicData.view_count || null,
+        reply_count: topicData.reply_count || null,
+        last_reply_at: topicData.last_reply_at || null,
+        created_at: topicData.created_at || null,
+        updated_at: topicData.updated_at || null,
+        slug: topicData.slug || null,
+        hot_score: topicData.hot_score ?? null, // Use nullish coalescing
+        last_post_id: topicData.last_post_id ?? null, // Use nullish coalescing
+        moderation_status: topicData.moderation_status || null,
+        ip_address: (topicData.ip_address as string) || null, // Cast 'unknown' to 'string' then nullish coalescing
+        is_anonymous: topicData.is_anonymous ?? null, // Use nullish coalescing
+        is_public: topicData.is_public ?? null, // Use nullish coalescing
+        canonical_url: topicData.canonical_url || null,
+        profiles: topicData.profiles
+          ? {
+            username: topicData.profiles.username,
+            avatar_url: topicData.profiles.avatar_url,
+            id: topicData.profiles.id,
+            bio: topicData.profiles.bio,
+            created_at: topicData.profiles.created_at,
+            reputation: topicData.profiles.reputation,
+            updated_at: topicData.profiles.updated_at,
           }
-        }
-      }
-
-      // Combine the data, conditionally spreading authorInfo
-      const data = {
-        ...topicData,
-        ...(authorInfo || {}), // Only spread if authorInfo is not null
+          : null,
+        categories: topicData.categories
+          ? {
+            id: topicData.categories.id,
+            name: topicData.categories.name,
+            color: topicData.categories.color,
+            slug: topicData.categories.slug,
+            parent_category_id: topicData.categories.parent_category_id || null,
+          }
+          : null,
       };
 
       // Increment view count
-      await supabase.rpc("increment_view_count", { topic_id: data.id });
+      await supabase.rpc("increment_view_count", { topic_id: mappedTopic.id });
 
-      console.log("Topic fetched by path:", data);
-      return data;
+      console.log("Topic fetched by path:", mappedTopic);
+      return mappedTopic;
     },
-    enabled: !!categorySlug && !!topicSlug,
+    enabled: enabled && !!categorySlug && !!topicSlug, // Use the enabled option
+    initialData: initialData, // Hydrate with initial data
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
